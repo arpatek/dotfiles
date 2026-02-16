@@ -1,0 +1,76 @@
+# ┌──────────────────────────────────────────────────────────────┐
+# │ arpatek – Zsh Aliases                                        │
+# └──────────────────────────────────────────────────────────────┘
+
+
+# ──[ Basic Quality-of-Life Aliases ]──────────────────────────────────────────
+alias la='eza -A --icons --git'                 # Show hidden files (except . and ..)
+alias l='eza -CF --icons'                       # Column view with classification symbols
+alias ll='eza -lagh --icons --git'              # Long listing, human-readable, icons, git status
+alias lll='eza -lagSh --icons --git'            # Sort by size, human-readable, icons, git status
+alias ltree='eza -T --level=5 --icons --git'    # Recursive tree view, icons, git info
+
+# ──[ Navigation ]─────────────────────────────────────────────────────────────
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+alias ~='cd ~'
+
+# ──[ Git Shortcuts ]──────────────────────────────────────────────────────────
+alias gs='git status'
+alias ga='git add'
+alias gc='git commit -m'
+alias gp='git push'
+alias gl='git pull'
+alias gd='git diff'
+alias gco='git checkout'
+
+# ──[ Shell Config Access ]────────────────────────────────────────────────────
+alias zshconfig='nvim ~/.zshrc'
+alias aliases='nvim ~/.zsh_aliases'
+
+# ──[ Networking & Tools ]─────────────────────────────────────────────────────
+alias ports='lsof -i -P -n'
+alias ipinfo='ip a'
+alias pingg='ping 8.8.8.8'
+
+# ──[ System & Updates ]───────────────────────────────────────────────────────
+alias reboot='sudo reboot'
+alias shutdown='sudo shutdown now'
+alias reload='exec zsh'
+
+# ──[ Universal System Update ]────────────────────────────────────────────────
+1up() {
+  echo "[*] Running system update..."
+
+  if command -v brew &>/dev/null; then
+    echo "[>] Updating with Homebrew..."
+    brew update && brew upgrade && brew cleanup
+  elif command -v nala &>/dev/null; then
+    echo "[>] Updating with nala..."
+    sudo nala update && sudo nala upgrade -y && sudo nala autoremove -y
+    return
+  elif command -v apt &>/dev/null; then
+    echo "[>] Updating with apt..."
+    sudo apt update && sudo apt upgrade -y && sudo apt autoremove -y
+    return
+  elif command -v dnf &>/dev/null; then
+    echo "[>] Updating with dnf..."
+    sudo dnf upgrade --refresh -y
+    return
+  elif command -v yum &>/dev/null; then
+    echo "[>] Updating with yum..."
+    sudo yum update -y
+    return
+  elif command -v apk &>/dev/null; then
+    echo "[>] Updating with apk..."
+    sudo apk update && sudo apk upgrade
+    return
+  else
+    echo "[!] No supported package manager found."
+    return 1
+  fi
+}
+
+# ──[ SSH Shortcuts ]──────────────────────────────────────────────────────────
+# alias devvm='ssh youruser@10.10.10.10'
