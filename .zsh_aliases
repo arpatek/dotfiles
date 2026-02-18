@@ -1,5 +1,5 @@
 # ┌──────────────────────────────────────────────────────────────┐
-# │ arpatek – Zsh Aliases                                        │
+# │ arpatek - Zsh Aliases                                        │
 # └──────────────────────────────────────────────────────────────┘
 
 
@@ -73,4 +73,6 @@ alias reload='exec zsh'
 }
 
 # ──[ SSH Shortcuts ]──────────────────────────────────────────────────────────
-# alias devvm='ssh youruser@10.10.10.10'
+alias pi='ssh netrunner'
+alias rhel='ssh rhel-0'
+alias dev='ssh dev-ubuntu'

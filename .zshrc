@@ -1,10 +1,20 @@
 # ┌──────────────────────────────────────────────────────────────┐
-# │ arpatek – Zsh Configuration                                  │
+# │ arpatek - Zsh Configuration                                  │
 # │ A modern, minimal Zsh setup with plugins and a custom theme  │
 # └──────────────────────────────────────────────────────────────┘
 
 # ──[ Plugin Manager ]─────────────────────────────────────────────────────────
-source ~/.zinit/bin/zinit.zsh
+# Load Zinit (cross-platform)
+
+if [ -f ~/.local/share/zinit/zinit.git/zinit.zsh ]; then
+    source ~/.local/share/zinit/zinit.git/zinit.zsh
+elif [ -f /opt/homebrew/opt/zinit/bin/zinit.zsh ]; then
+    source /opt/homebrew/opt/zinit/bin/zinit.zsh
+elif [ -f ~/.zinit/bin/zinit.zsh ]; then
+    source ~/.zinit/bin/zinit.zsh
+elif [ -f /usr/local/opt/zinit/bin/zinit.zsh ]; then
+    source /usr/local/opt/zinit/bin/zinit.zsh
+fi
 
 # ──[ Completion System (Flags + Descriptions) ]───────────────────────────────
 autoload -Uz compinit
@@ -25,7 +35,7 @@ zinit light zsh-users/zsh-autosuggestions
 ZSH_AUTOSUGGEST_STRATEGY=(history completion)
 
 # ──[ Custom Theme ]───────────────────────────────────────────────────────────
-source ~/.zsh/themes/gg3.zsh-theme
+source ~/.zsh/themes/arpatek.zsh-theme
 
 # ──[ Syntax Highlighting ]────────────────────────────────────────────────────
 zinit light zsh-users/zsh-syntax-highlighting
@@ -45,6 +55,26 @@ export LESS_TERMCAP_se=$'\e[0m'
 export LESS_TERMCAP_us=$'\e[1;32m'
 export LESS_TERMCAP_ue=$'\e[0m'
 
-# ──[ Homebrew  ]──────────────────────────────────────────────────────────────
-export PATH="$HOME/bin:/opt/homebrew/bin:$PATH"
-setopt NO_NOMATCH
+# ──[ PATH Export ]─────────────────────────────────────────────────────────────
+# Add ~/bin if it exists
+[ -d "$HOME/bin" ] && PATH="$HOME/bin:$PATH"
+
+# Add Homebrew if installed
+if [ -d "/opt/homebrew/bin" ]; then
+    PATH="/opt/homebrew/bin:$PATH"
+elif [ -d "/usr/local/bin" ]; then
+    PATH="/usr/local/bin:$PATH"
+fi
+
+export PATH
+
+# ──[ Zinit Additions ]────────────────────────────────────────────────────────
+# Load a few important annexes, without Turbo
+# (this is currently required for annexes)
+zinit light-mode for \
+    zdharma-continuum/zinit-annex-as-monitor \
+    zdharma-continuum/zinit-annex-bin-gem-node \
+    zdharma-continuum/zinit-annex-patch-dl \
+    zdharma-continuum/zinit-annex-rust
+
+### End of Zinit's installer chunk
