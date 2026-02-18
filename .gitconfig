@@ -1,0 +1,43 @@
+# ┌──────────────────────┐
+# │ arpatek - Git Config │
+# └──────────────────────┘
+
+[user]
+  name = arpatek
+  email = arpatek@proton.me
+
+[color]
+  ui = auto
+
+[alias]
+  st = status
+  co = checkout
+  br = branch
+  cm = commit
+  lg = log --oneline --graph --decorate --all
+  amend = commit --amend --no-edit
+  last = log -1 HEAD
+
+[core]
+  editor = nvim
+  autocrlf = input
+  pager = less -R
+
+[init]
+  defaultBranch = main
+
+[push]
+  default = simple
+
+[pull]
+  rebase = false
+
+[merge]
+  ff = only
+
+[commit]
+  gpgsign = false
+
+[credential]
+  helper = store
+
