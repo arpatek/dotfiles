@@ -1,0 +1,127 @@
+#!/usr/bin/env bash
+# =============================================================================
+# Script Name: upu
+# Description: Universal Package Updater – detects package manager and updates/
+#              upgrades system packages with visual feedback.
+# Author: Juan Garcia (arpatek)
+# Created: 2026-02-26
+# Version: 1.0
+# =============================================================================
+
+
+
+set -e
+
+# ──[ ANSI Color Codes (Associative Array) ]───────────────────────────────────
+declare -A C=(
+  [black]=$'\033[0;30m'
+  [red]=$'\033[0;31m'
+  [green]=$'\033[0;32m'
+  [yellow]=$'\033[0;33m'
+  [blue]=$'\033[0;34m'
+  [purple]=$'\033[0;35m'
+  [cyan]=$'\033[0;36m'
+  [white]=$'\033[0;37m'
+  [reset]=$'\033[0m'
+)
+
+# ──[ String Decoration Functions ]────────────────────────────────────────────
+BANNER() {
+  printf "%s[%s^%s]%s" "${C[yellow]}" "${C[purple]}" "${C[yellow]}" "${C[reset]}";
+}
+
+PLUS() {
+  printf "%s[%s+%s]%s" "${C[yellow]}" "${C[green]}" "${C[yellow]}" "${C[reset]}";
+}
+
+COMPLETE() {
+  printf "%s[%s*%s]%s" "${C[yellow]}" "${C[blue]}" "${C[yellow]}" "${C[reset]}";
+}
+
+FAILED() {
+  printf "%s[%s!%s]%s" "${C[yellow]}" "${C[red]}" "${C[yellow]}" "${C[reset]}";
+}
+
+# ──[ Privileged Session Caching Pattern ]─────────────────────────────────────
+sudo -v || exit 1
+
+while true; do
+  sudo -n true
+  sleep 60
+  kill -0 "$$" || exit
+done 2>/dev/null &
+
+# ──[ Universal Package Updater ]──────────────────────────────────────────────
+printf "%s Initializing Update Sequence" "$(BANNER)"
+for i in {1..6}; do
+    sleep 0.5
+    echo -n "."
+done
+echo
+printf "%s Checking Package Manager" "$(BANNER)"
+echo
+sleep 1
+
+if command -v nala >/dev/null 2>&1; then
+  printf "%s Package manager [nala] Found\n" "$(COMPLETE)"
+  sleep 2
+  printf "%s Updating Packages\n" "$(PLUS)"
+  sleep 2
+  sudo nala update
+  sleep 1
+  printf "%s Upgrading Packages\n" "$(PLUS)"
+  sleep 2
+  sudo nala full-upgrade -y
+  sleep 1
+  printf "%s Update Complete\n" "$(COMPLETE)"
+elif command -v apt >/dev/null 2>&1; then
+  printf "%s Package manager [apt] Found\n" "$(COMPLETE)"
+  sleep 2
+  printf "%s Updating Packages\n" "$(PLUS)"
+  sleep 2
+  sudo apt update
+  sleep 1
+  printf "%s Upgrading Packages\n" "$(PLUS)"
+  sleep 2
+  sudo apt full-upgrade -y
+  sleep 1
+  printf "%s Update Complete\n" "$(COMPLETE)"
+elif command -v dnf >/dev/null 2>&1; then
+  printf "%s Package manager [dnf] Found\n" "$(COMPLETE)"
+  sleep 2
+  printf "%s Updating & Upgrading Packages\n" "$(PLUS)"
+  sleep 2
+  sudo dnf update -y
+  sleep 1
+  printf "%s Update Complete\n" "$(COMPLETE)"
+elif command -v pacman >/dev/null 2>&1; then
+  printf "%s Package manager [pacman] Found\n" "$(COMPLETE)"
+  sleep 2
+  printf "%s Updating & Upgrading Packages\n" "$(PLUS)"
+  sleep 2
+  sudo pacman -Syu --noconfirm
+  sleep 1
+  printf "%s Update Complete\n" "$(COMPLETE)"
+elif command -v yum >/dev/null 2>&1; then
+  printf "%s Package manager [yum] Found\n" "$(COMPLETE)"
+  sleep 2
+  printf "%s Updating & Upgrading Packages\n" "$(PLUS)"
+  sleep 2
+  sudo yum update -y
+  sleep 1
+  printf "%s Update Complete\n" "$(COMPLETE)"
+elif command -v brew >/dev/null 2>&1; then
+  printf "%s Package manager [brew] Found\n" "$(COMPLETE)"
+  sleep 2
+  printf "%s Updating Packages\n" "$(PLUS)"
+  sleep 2
+  brew update
+  sleep 1
+  printf "%s Upgrading Packages\n" "$(PLUS)"
+  sleep 2
+  brew upgrade
+  sleep 1
+  printf "%s Update Complete\n" "$(COMPLETE)"
+else
+  printf "%s No Supported Package Manager Found\n" "$(FAILED)"
+fi
