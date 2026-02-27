@@ -8,8 +8,6 @@
 # Version: 1.0
 # =============================================================================
 
-
-
 set -e
 
 # ──[ ANSI Color Codes (Associative Array) ]───────────────────────────────────
@@ -27,19 +25,19 @@ declare -A C=(
 
 # ──[ String Decoration Functions ]────────────────────────────────────────────
 BANNER() {
-  printf "%s[%s^%s]%s" "${C[yellow]}" "${C[purple]}" "${C[yellow]}" "${C[reset]}";
+  printf "%s[%s^%s]%s" "${C[yellow]}" "${C[purple]}" "${C[yellow]}" "${C[reset]}"
 }
 
 PLUS() {
-  printf "%s[%s+%s]%s" "${C[yellow]}" "${C[green]}" "${C[yellow]}" "${C[reset]}";
+  printf "%s[%s+%s]%s" "${C[yellow]}" "${C[green]}" "${C[yellow]}" "${C[reset]}"
 }
 
 COMPLETE() {
-  printf "%s[%s*%s]%s" "${C[yellow]}" "${C[blue]}" "${C[yellow]}" "${C[reset]}";
+  printf "%s[%s*%s]%s" "${C[yellow]}" "${C[blue]}" "${C[yellow]}" "${C[reset]}"
 }
 
 FAILED() {
-  printf "%s[%s!%s]%s" "${C[yellow]}" "${C[red]}" "${C[yellow]}" "${C[reset]}";
+  printf "%s[%s!%s]%s" "${C[yellow]}" "${C[red]}" "${C[yellow]}" "${C[reset]}"
 }
 
 # ──[ Privileged Session Caching Pattern ]─────────────────────────────────────
@@ -53,9 +51,9 @@ done 2>/dev/null &
 
 # ──[ Universal Package Updater ]──────────────────────────────────────────────
 printf "%s Initializing Update Sequence" "$(BANNER)"
-for i in {1..6}; do
-    sleep 0.5
-    echo -n "."
+for _ in {1..6}; do
+  sleep 0.5
+  echo -n "."
 done
 echo
 printf "%s Checking Package Manager" "$(BANNER)"
