@@ -37,7 +37,5 @@
 
 [commit]
   gpgsign = false
-
-[credential]
-  helper = store
+  template = ~/.git-commit-template
 
