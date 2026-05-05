@@ -4,8 +4,7 @@
 # └──────────────────────────────────────────────────────────────┘
 
 # ──[ Plugin Manager ]─────────────────────────────────────────────────────────
-# Load Zinit (cross-platform)
-
+# Try common Zinit install locations in order — Linux default, Homebrew, legacy
 if [ -f ~/.local/share/zinit/zinit.git/zinit.zsh ]; then
     source ~/.local/share/zinit/zinit.git/zinit.zsh
 elif [ -f /opt/homebrew/opt/zinit/bin/zinit.zsh ]; then
@@ -17,13 +16,17 @@ elif [ -f /usr/local/opt/zinit/bin/zinit.zsh ]; then
 fi
 
 # ──[ Completion System (Flags + Descriptions) ]───────────────────────────────
+# zsh-completions must load before compinit to register its completions
 zinit light zsh-users/zsh-completions
 autoload -Uz compinit
 compinit
 zmodload zsh/complist
 
+# Navigate completion menu with arrow keys
 zstyle ':completion:*' menu select
+# Show descriptions alongside completions
 zstyle ':completion:*' verbose yes
+# Style completion group headers in blue
 zstyle ':completion:*:descriptions' format '%F{blue}-- %d --%f'
 
 # ──[ Git Plugin (Oh-My-Zsh, Minimal) ]────────────────────────────────────────
@@ -33,6 +36,7 @@ source ${ZINIT[PLUGINS_DIR]}/ohmyzsh---ohmyzsh/plugins/git/git.plugin.zsh
 
 # ──[ Autosuggestions ]────────────────────────────────────────────────────────
 zinit light zsh-users/zsh-autosuggestions
+# Try history first, fall back to completion engine if no history match
 ZSH_AUTOSUGGEST_STRATEGY=(history completion)
 
 # ──[ Custom Theme ]───────────────────────────────────────────────────────────
@@ -45,15 +49,24 @@ zinit light zsh-users/zsh-syntax-highlighting
 [[ -f ~/.zsh_aliases ]] && source ~/.zsh_aliases
 
 # ──[ Colored Man Pages ]──────────────────────────────────────────────────────
+# Tell less to pass ANSI color codes through raw (-R)
 export LESS='-R'
 export MANPAGER='less -R'
 
+# LESS_TERMCAP_* maps terminal capabilities to ANSI escape sequences
+# mb = start blink      → bold red
 export LESS_TERMCAP_mb=$'\e[1;31m'
+# md = start bold       → bold cyan
 export LESS_TERMCAP_md=$'\e[1;36m'
+# me = end bold/blink   → reset
 export LESS_TERMCAP_me=$'\e[0m'
+# so = start standout   → yellow on blue (search highlights)
 export LESS_TERMCAP_so=$'\e[01;44;33m'
+# se = end standout     → reset
 export LESS_TERMCAP_se=$'\e[0m'
+# us = start underline  → bold green
 export LESS_TERMCAP_us=$'\e[1;32m'
+# ue = end underline    → reset
 export LESS_TERMCAP_ue=$'\e[0m'
 
 # ──[ Default Editor ]─────────────────────────────────────────────────────────
@@ -63,16 +76,16 @@ export EDITOR='nvim'
 HISTFILE=~/.zsh_history
 HISTSIZE=50000
 SAVEHIST=50000
-setopt HIST_IGNORE_DUPS
-setopt HIST_IGNORE_SPACE
-setopt SHARE_HISTORY
-setopt HIST_VERIFY
+setopt HIST_IGNORE_DUPS   # skip recording if same as previous entry
+setopt HIST_IGNORE_SPACE  # skip recording commands prefixed with a space
+setopt SHARE_HISTORY      # share history across all open sessions in real time
+setopt HIST_VERIFY        # expand !! in place before executing
 
 # ──[ Shell Behavior ]─────────────────────────────────────────────────────────
-setopt AUTO_CD
-setopt CORRECT
-setopt GLOB_DOTS
-setopt NO_BEEP
+setopt AUTO_CD    # type a directory name alone to cd into it
+setopt CORRECT    # suggest corrections for mistyped commands
+setopt GLOB_DOTS  # include dotfiles in glob patterns without needing .*
+setopt NO_BEEP    # disable terminal bell on errors or no match
 
 # ──[ PATH Export ]────────────────────────────────────────────────────────────
 # Add ~/bin if it exists
