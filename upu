@@ -5,12 +5,18 @@
 #              upgrades system packages with visual feedback.
 # Author: Juan Garcia (arpatek)
 # Created: 2026-02-26
-# Version: 1.0
+# Version: 1.1
 # =============================================================================
 
-set -e
+# ──[ Bash Version Check ]─────────────────────────────────────────────────────
+if ((BASH_VERSINFO[0] < 4)); then
+  printf "upu requires bash 4 or higher (detected: %s)\n" "$BASH_VERSION" >&2
+  exit 1
+fi
 
-# ──[ ANSI Color Codes (Associative Array) ]───────────────────────────────────
+set -eo pipefail
+
+# ──[ ANSI Color Codes ]───────────────────────────────────────────────────────
 declare -A C=(
   [black]=$'\033[0;30m'
   [red]=$'\033[0;31m'
@@ -24,102 +30,230 @@ declare -A C=(
 )
 
 # ──[ String Decoration Functions ]────────────────────────────────────────────
-BANNER() {
-  printf "%s[%s^%s]%s" "${C[yellow]}" "${C[purple]}" "${C[yellow]}" "${C[reset]}"
+BANNER() { printf "%s[%s^%s]%s" "${C[yellow]}" "${C[purple]}" "${C[yellow]}" "${C[reset]}"; }
+PLUS() { printf "%s[%s+%s]%s" "${C[yellow]}" "${C[green]}" "${C[yellow]}" "${C[reset]}"; }
+COMPLETE() { printf "%s[%s*%s]%s" "${C[yellow]}" "${C[blue]}" "${C[yellow]}" "${C[reset]}"; }
+FAILED() { printf "%s[%s!%s]%s" "${C[yellow]}" "${C[red]}" "${C[yellow]}" "${C[reset]}"; }
+
+# ──[ Error Trap ]─────────────────────────────────────────────────────────────
+trap 'printf "\n%s Something went wrong. Update aborted.\n" "$(FAILED)"' ERR
+
+# ──[ Argument Parsing ]───────────────────────────────────────────────────────
+VERSION="1.1"
+DRY_RUN=false
+
+usage() {
+  printf "Usage: upu [OPTIONS]\n"
+  printf "Options:\n"
+  printf "  -h, --help      Show this help message\n"
+  printf "  -V, --version   Show version\n"
+  printf "  -n, --dry-run   Print commands without executing them\n"
 }
 
-PLUS() {
-  printf "%s[%s+%s]%s" "${C[yellow]}" "${C[green]}" "${C[yellow]}" "${C[reset]}"
-}
-
-COMPLETE() {
-  printf "%s[%s*%s]%s" "${C[yellow]}" "${C[blue]}" "${C[yellow]}" "${C[reset]}"
-}
-
-FAILED() {
-  printf "%s[%s!%s]%s" "${C[yellow]}" "${C[red]}" "${C[yellow]}" "${C[reset]}"
-}
-
-# ──[ Privileged Session Caching Pattern ]─────────────────────────────────────
-sudo -v || exit 1
-
-while true; do
-  sudo -n true
-  sleep 60
-  kill -0 "$$" || exit
-done 2>/dev/null &
-
-# ──[ Universal Package Updater ]──────────────────────────────────────────────
-printf "%s Initializing Update Sequence" "$(BANNER)"
-for _ in {1..6}; do
-  sleep 0.5
-  echo -n "."
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+  -h | --help)
+    usage
+    exit 0
+    ;;
+  -V | --version)
+    printf "upu %s\n" "$VERSION"
+    exit 0
+    ;;
+  -n | --dry-run) DRY_RUN=true ;;
+  *)
+    printf "Unknown option: %s\n" "$1" >&2
+    usage >&2
+    exit 1
+    ;;
+  esac
+  shift
 done
-echo
-printf "%s Checking Package Manager" "$(BANNER)"
-echo
+
+# ──[ Dry-run Runner ]─────────────────────────────────────────────────────────
+run() {
+  if $DRY_RUN; then
+    printf "%s [dry-run] %s\n" "$(PLUS)" "$*"
+  else
+    "$@"
+  fi
+}
+
+# ──[ Package Manager Detection ]──────────────────────────────────────────────
+printf "%s Initializing Update Sequence" "$(BANNER)"
+for _ in {1..3}; do
+  sleep 0.3
+  printf "."
+done
+printf "\n"
+
+printf "%s Checking Package Manager\n" "$(BANNER)"
 sleep 1
 
-if command -v nala >/dev/null 2>&1; then
-  printf "%s Package manager [nala] Found\n" "$(COMPLETE)"
-  sleep 2
-  printf "%s Updating Packages\n" "$(PLUS)"
-  sleep 2
-  sudo nala update
-  sleep 1
-  printf "%s Upgrading Packages\n" "$(PLUS)"
-  sleep 2
-  sudo nala full-upgrade -y
-  sleep 1
-  printf "%s Update Complete\n" "$(COMPLETE)"
-elif command -v apt >/dev/null 2>&1; then
-  printf "%s Package manager [apt] Found\n" "$(COMPLETE)"
-  sleep 2
-  printf "%s Updating Packages\n" "$(PLUS)"
-  sleep 2
-  sudo apt update
-  sleep 1
-  printf "%s Upgrading Packages\n" "$(PLUS)"
-  sleep 2
-  sudo apt full-upgrade -y
-  sleep 1
-  printf "%s Update Complete\n" "$(COMPLETE)"
-elif command -v dnf >/dev/null 2>&1; then
-  printf "%s Package manager [dnf] Found\n" "$(COMPLETE)"
-  sleep 2
-  printf "%s Updating & Upgrading Packages\n" "$(PLUS)"
-  sleep 2
-  sudo dnf update -y
-  sleep 1
-  printf "%s Update Complete\n" "$(COMPLETE)"
-elif command -v pacman >/dev/null 2>&1; then
-  printf "%s Package manager [pacman] Found\n" "$(COMPLETE)"
-  sleep 2
-  printf "%s Updating & Upgrading Packages\n" "$(PLUS)"
-  sleep 2
-  sudo pacman -Syu --noconfirm
-  sleep 1
-  printf "%s Update Complete\n" "$(COMPLETE)"
-elif command -v yum >/dev/null 2>&1; then
-  printf "%s Package manager [yum] Found\n" "$(COMPLETE)"
-  sleep 2
-  printf "%s Updating & Upgrading Packages\n" "$(PLUS)"
-  sleep 2
-  sudo yum update -y
-  sleep 1
-  printf "%s Update Complete\n" "$(COMPLETE)"
-elif command -v brew >/dev/null 2>&1; then
-  printf "%s Package manager [brew] Found\n" "$(COMPLETE)"
-  sleep 2
-  printf "%s Updating Packages\n" "$(PLUS)"
-  sleep 2
-  brew update
-  sleep 1
-  printf "%s Upgrading Packages\n" "$(PLUS)"
-  sleep 2
-  brew upgrade
-  sleep 1
-  printf "%s Update Complete\n" "$(COMPLETE)"
-else
+PKG_MGR=""
+for pm in nala apt dnf pacman yum zypper apk xbps-install emerge pkg brew; do
+  if command -v "$pm" >/dev/null 2>&1; then
+    PKG_MGR="$pm"
+    break
+  fi
+done
+
+if [[ -z "$PKG_MGR" ]]; then
   printf "%s No Supported Package Manager Found\n" "$(FAILED)"
+  exit 1
 fi
+
+# ──[ Privileged Session Caching (skipped for brew) ]──────────────────────────
+if [[ "$PKG_MGR" != "brew" ]] && ! $DRY_RUN; then
+  sudo -v || exit 1
+  while true; do
+    sudo -n true
+    sleep 60
+    kill -0 "$$" || exit
+  done 2>/dev/null &
+fi
+
+# ──[ Universal Package Updater ]──────────────────────────────────────────────
+case "$PKG_MGR" in
+nala)
+  printf "%s Package manager nala Found\n" "$(COMPLETE)"
+  sleep 1
+  printf "%s Updating Packages\n" "$(PLUS)"
+  run sudo nala update
+  sleep 1
+  printf "%s Upgrading Packages\n" "$(PLUS)"
+  run sudo nala full-upgrade -y
+  sleep 1
+  printf "%s Removing Unused Packages\n" "$(PLUS)"
+  run sudo apt autoremove -y
+  run sudo apt autoclean
+  sleep 1
+  printf "%s Update Complete\n" "$(COMPLETE)"
+  ;;
+apt)
+  printf "%s Package manager apt Found\n" "$(COMPLETE)"
+  sleep 1
+  printf "%s Updating Packages\n" "$(PLUS)"
+  run sudo apt update
+  sleep 1
+  printf "%s Upgrading Packages\n" "$(PLUS)"
+  run sudo apt full-upgrade -y
+  sleep 1
+  printf "%s Removing Unused Packages\n" "$(PLUS)"
+  run sudo apt autoremove -y
+  run sudo apt autoclean
+  sleep 1
+  printf "%s Update Complete\n" "$(COMPLETE)"
+  ;;
+dnf)
+  printf "%s Package manager dnf Found\n" "$(COMPLETE)"
+  sleep 1
+  printf "%s Updating & Upgrading Packages\n" "$(PLUS)"
+  run sudo dnf update -y
+  sleep 1
+  printf "%s Removing Unused Packages\n" "$(PLUS)"
+  run sudo dnf autoremove -y
+  sleep 1
+  printf "%s Update Complete\n" "$(COMPLETE)"
+  ;;
+pacman)
+  printf "%s Package manager pacman Found\n" "$(COMPLETE)"
+  sleep 1
+  printf "%s Updating & Upgrading Packages\n" "$(PLUS)"
+  run sudo pacman -Syu --noconfirm
+  sleep 1
+  printf "%s Removing Orphaned Packages\n" "$(PLUS)"
+  if $DRY_RUN; then
+    printf "%s [dry-run] sudo pacman -Rns <orphans> --noconfirm\n" "$(PLUS)"
+  else
+    orphans=$(pacman -Qtdq 2>/dev/null || true)
+    [[ -n "$orphans" ]] && sudo pacman -Rns "$orphans" --noconfirm
+  fi
+  sleep 1
+  printf "%s Update Complete\n" "$(COMPLETE)"
+  ;;
+yum)
+  printf "%s Package manager yum Found\n" "$(COMPLETE)"
+  sleep 1
+  printf "%s Updating & Upgrading Packages\n" "$(PLUS)"
+  run sudo yum update -y
+  sleep 1
+  printf "%s Removing Unused Packages\n" "$(PLUS)"
+  run sudo yum autoremove -y
+  sleep 1
+  printf "%s Update Complete\n" "$(COMPLETE)"
+  ;;
+zypper)
+  printf "%s Package manager zypper Found\n" "$(COMPLETE)"
+  sleep 1
+  printf "%s Updating & Upgrading Packages\n" "$(PLUS)"
+  run sudo zypper refresh
+  run sudo zypper update -y
+  sleep 1
+  printf "%s Cleaning Cache\n" "$(PLUS)"
+  run sudo zypper clean
+  sleep 1
+  printf "%s Update Complete\n" "$(COMPLETE)"
+  ;;
+apk)
+  printf "%s Package manager apk Found\n" "$(COMPLETE)"
+  sleep 1
+  printf "%s Updating & Upgrading Packages\n" "$(PLUS)"
+  run sudo apk update
+  run sudo apk upgrade
+  sleep 1
+  printf "%s Cleaning Cache\n" "$(PLUS)"
+  run sudo apk cache clean
+  sleep 1
+  printf "%s Update Complete\n" "$(COMPLETE)"
+  ;;
+xbps-install)
+  printf "%s Package manager xbps Found\n" "$(COMPLETE)"
+  sleep 1
+  printf "%s Updating & Upgrading Packages\n" "$(PLUS)"
+  run sudo xbps-install -Su
+  sleep 1
+  printf "%s Removing Unused Packages\n" "$(PLUS)"
+  run sudo xbps-remove -Oo
+  sleep 1
+  printf "%s Update Complete\n" "$(COMPLETE)"
+  ;;
+emerge)
+  printf "%s Package manager emerge Found\n" "$(COMPLETE)"
+  sleep 1
+  printf "%s Syncing & Upgrading Packages\n" "$(PLUS)"
+  run sudo emerge --sync
+  run sudo emerge -uDN @world
+  sleep 1
+  printf "%s Removing Unused Packages\n" "$(PLUS)"
+  run sudo emerge --depclean
+  sleep 1
+  printf "%s Update Complete\n" "$(COMPLETE)"
+  ;;
+pkg)
+  printf "%s Package manager pkg Found\n" "$(COMPLETE)"
+  sleep 1
+  printf "%s Updating & Upgrading Packages\n" "$(PLUS)"
+  run sudo pkg update
+  run sudo pkg upgrade -y
+  sleep 1
+  printf "%s Removing Unused Packages\n" "$(PLUS)"
+  run sudo pkg autoremove -y
+  sleep 1
+  printf "%s Update Complete\n" "$(COMPLETE)"
+  ;;
+brew)
+  printf "%s Package manager brew Found\n" "$(COMPLETE)"
+  sleep 1
+  printf "%s Updating Packages\n" "$(PLUS)"
+  run brew update
+  sleep 1
+  printf "%s Upgrading Packages\n" "$(PLUS)"
+  run brew upgrade
+  sleep 1
+  printf "%s Cleaning Up\n" "$(PLUS)"
+  run brew cleanup
+  sleep 1
+  printf "%s Update Complete\n" "$(COMPLETE)"
+  ;;
+esac
