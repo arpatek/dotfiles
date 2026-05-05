@@ -18,6 +18,7 @@ Personal dotfiles for Zsh, tmux, Vim/Neovim, Git, and SSH — managed via symlin
 | `.config/nvim/init.vim` | Neovim config |
 | `.ssh/config` | SSH config template — admin hosts and git deploy keys |
 | `install.sh` | Symlink installer |
+| `uninstall.sh` | Removes symlinks, uninstalls upu, optionally restores backups |
 | `upu` | Universal Package Updater script |
 
 ---
@@ -53,6 +54,14 @@ cd ~/dotfiles
 
 The install script creates the required directories, symlinks all dotfiles into place, and installs `upu` to `/usr/local/bin` so it is available system-wide. The SSH config is copied rather than symlinked so each host can have its own entries without affecting the template.
 
+**To uninstall**
+
+```bash
+./uninstall.sh
+```
+
+Removes all symlinks, uninstalls `upu` from `/usr/local/bin`, and prompts to restore the most recent backup created by `install.sh`.
+
 ---
 
 ## SSH Keys
@@ -85,6 +94,19 @@ Options:
 ```
 
 **Supported package managers:** `nala`, `apt`, `dnf`, `pacman`, `yum`, `zypper`, `apk`, `xbps`, `emerge`, `pkg`, `brew`
+
+---
+
+## Zsh — Features
+
+| Feature | Detail |
+|---|---|
+| Plugin manager | Zinit with autosuggestions, syntax highlighting, completions |
+| History | 50,000 entries, no duplicates, shared across sessions, space-prefixed commands excluded |
+| `AUTO_CD` | Type a directory name to navigate into it without `cd` |
+| `CORRECT` | Suggests corrections for mistyped commands |
+| `GLOB_DOTS` | Glob patterns include dotfiles without needing `.*` |
+| `NO_BEEP` | Disables terminal bell on completion errors |
 
 ---
 
