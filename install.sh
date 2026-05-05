@@ -38,6 +38,14 @@ trap 'printf "\n%s Installation failed. Aborting.\n" "$(FAILED)"' ERR
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKUP_DIR="$HOME/.dotfiles_backup/$(date +%Y%m%d_%H%M%S)"
 
+# ──[ Privileged Session Caching ]─────────────────────────────────────────────
+sudo -v || exit 1
+while true; do
+  sudo -n true
+  sleep 60
+  kill -0 "$$" || exit
+done 2>/dev/null &
+
 # ──[ Backup Function ]────────────────────────────────────────────────────────
 # Backs up a file or directory only if it exists and is not already a symlink
 backup() {
@@ -59,33 +67,48 @@ link() {
 }
 
 # ──[ Installation ]───────────────────────────────────────────────────────────
-printf "%s Starting Dotfiles Installation\n\n" "$(BANNER)"
+printf "%s Starting Dotfiles Installation\n" "$(BANNER)"
+sleep 1
 
 printf "%s Creating Directories\n" "$(BANNER)"
+sleep 0.5
 mkdir -p ~/.zsh/themes
 mkdir -p ~/.config/nvim
 mkdir -p ~/.ssh/
 printf "%s Directories ready\n\n" "$(COMPLETE)"
+sleep 1
 
 printf "%s Symlinking Dotfiles\n" "$(BANNER)"
+sleep 0.5
 link "$DOTFILES_DIR/.zshrc"                        ~/.zshrc
+sleep 0.2
 link "$DOTFILES_DIR/.zsh_aliases"                  ~/.zsh_aliases
+sleep 0.2
 link "$DOTFILES_DIR/.zsh/themes/arpatek.zsh-theme" ~/.zsh/themes/arpatek.zsh-theme
+sleep 0.2
 link "$DOTFILES_DIR/.tmux.conf"                    ~/.tmux.conf
+sleep 0.2
 link "$DOTFILES_DIR/.gitconfig"                    ~/.gitconfig
+sleep 0.2
 link "$DOTFILES_DIR/.vimrc"                        ~/.vimrc
+sleep 0.2
 link "$DOTFILES_DIR/.config/nvim/init.vim"         ~/.config/nvim/init.vim
 printf "\n"
+sleep 1
 
 printf "%s Installing SSH Config\n" "$(BANNER)"
+sleep 0.5
 backup ~/.ssh/config
 cp "$DOTFILES_DIR/.ssh/config" ~/.ssh/config
 chmod 600 ~/.ssh/config
 printf "%s SSH config installed\n\n" "$(COMPLETE)"
+sleep 1
 
 printf "%s Installing upu\n" "$(BANNER)"
+sleep 0.5
 sudo ln -sf "$DOTFILES_DIR/upu" /usr/local/bin/upu
 printf "%s upu installed to /usr/local/bin/upu\n\n" "$(COMPLETE)"
+sleep 1
 
 printf "%s Installation Complete\n" "$(COMPLETE)"
 [[ -d "$BACKUP_DIR" ]] && printf "%s Backups saved to %s\n" "$(PLUS)" "$BACKUP_DIR"
