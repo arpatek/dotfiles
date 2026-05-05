@@ -17,6 +17,7 @@ elif [ -f /usr/local/opt/zinit/bin/zinit.zsh ]; then
 fi
 
 # ──[ Completion System (Flags + Descriptions) ]───────────────────────────────
+zinit light zsh-users/zsh-completions
 autoload -Uz compinit
 compinit
 zmodload zsh/complist
@@ -57,6 +58,21 @@ export LESS_TERMCAP_ue=$'\e[0m'
 
 # ──[ Default Editor ]─────────────────────────────────────────────────────────
 export EDITOR='nvim'
+
+# ──[ History ]────────────────────────────────────────────────────────────────
+HISTFILE=~/.zsh_history
+HISTSIZE=50000
+SAVEHIST=50000
+setopt HIST_IGNORE_DUPS
+setopt HIST_IGNORE_SPACE
+setopt SHARE_HISTORY
+setopt HIST_VERIFY
+
+# ──[ Shell Behavior ]─────────────────────────────────────────────────────────
+setopt AUTO_CD
+setopt CORRECT
+setopt GLOB_DOTS
+setopt NO_BEEP
 
 # ──[ PATH Export ]────────────────────────────────────────────────────────────
 # Add ~/bin if it exists
