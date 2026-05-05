@@ -22,3 +22,6 @@ ln -sf "$DOTFILES_DIR/.config/nvim/init.vim" ~/.config/nvim/init.vim
 # Copy SSH Config File
 cp "$DOTFILES_DIR/.ssh/config" ~/.ssh/config
 chmod 600 ~/.ssh/config
+
+# Install upu to /usr/local/bin
+sudo ln -sf "$DOTFILES_DIR/upu" /usr/local/bin/upu
