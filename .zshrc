@@ -55,9 +55,15 @@ export LESS_TERMCAP_se=$'\e[0m'
 export LESS_TERMCAP_us=$'\e[1;32m'
 export LESS_TERMCAP_ue=$'\e[0m'
 
-# ──[ PATH Export ]─────────────────────────────────────────────────────────────
+# ──[ Default Editor ]─────────────────────────────────────────────────────────
+export EDITOR='nvim'
+
+# ──[ PATH Export ]────────────────────────────────────────────────────────────
 # Add ~/bin if it exists
 [ -d "$HOME/bin" ] && PATH="$HOME/bin:$PATH"
+
+# Add ~/.local/bin if it exists
+[ -d "$HOME/.local/bin" ] && PATH="$HOME/.local/bin:$PATH"
 
 # Add Homebrew if installed
 if [ -d "/opt/homebrew/bin" ]; then
