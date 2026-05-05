@@ -26,7 +26,7 @@ Personal dotfiles for Zsh, tmux, Vim/Neovim, Git, and SSH — managed via symlin
 
 - Bash 4+
 - Zsh
-- [Zinit](https://github.com/zdharma-continuum/zinit) — installed automatically on first shell load
+- [Zinit](https://github.com/zdharma-continuum/zinit) — must be installed before sourcing `.zshrc`
 - [eza](https://github.com/eza-community/eza) — used by shell aliases
 - Neovim — primary editor
 - tmux
@@ -34,6 +34,16 @@ Personal dotfiles for Zsh, tmux, Vim/Neovim, Git, and SSH — managed via symlin
 ---
 
 ## Installation
+
+**1. Install Zinit**
+
+```bash
+bash -c "$(curl --fail --show-error --silent --location https://raw.githubusercontent.com/zdharma-continuum/zinit/HEAD/scripts/install.sh)"
+```
+
+> When prompted to install recommended extras, choose **no** — plugins are already configured in `.zshrc`
+
+**2. Clone and run the installer**
 
 ```bash
 git clone git@codeberg.org:arpatek/dotfiles.git ~/dotfiles
