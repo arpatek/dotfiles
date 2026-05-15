@@ -111,7 +111,7 @@ Options:
 | `ip` | `ip --color=auto` |
 | `mkdir` | `mkdir -pv` |
 | `gs` / `ga` / `gc` / `gp` / `gl` | Git shortcuts |
-| `pi` / `dev` | SSH into configured hosts |
+| `pi` / `rhel` / `dev` | SSH into configured hosts |
 | `ports` | `lsof -i -P -n` |
 | `reload` | `exec zsh` |
 
