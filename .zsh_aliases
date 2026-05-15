@@ -14,7 +14,6 @@ alias ltree='eza -T --level=5 --icons --git'    # Recursive tree view, icons, gi
 alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
-alias ~='cd ~'
 
 # ──[ Git Shortcuts ]──────────────────────────────────────────────────────────
 alias gs='git status'
@@ -29,9 +28,14 @@ alias gco='git checkout'
 alias zshconfig='nvim ~/.zshrc'
 alias aliases='nvim ~/.zsh_aliases'
 
+# ──[ Core Overrides ]─────────────────────────────────────────────────────────
+alias grep='grep --color=auto'
+alias diff='diff --color=auto'
+alias ip='ip --color=auto'
+alias mkdir='mkdir -pv'           # always create parents, print each dir made
+
 # ──[ Networking & Tools ]─────────────────────────────────────────────────────
 alias ports='lsof -i -P -n'
-alias ipinfo='ip a'
 alias pingg='ping 8.8.8.8'
 
 # ──[ System & Updates ]───────────────────────────────────────────────────────
