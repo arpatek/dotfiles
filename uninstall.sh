@@ -1,70 +1,94 @@
 #!/usr/bin/env bash
 # =============================================================================
 # Script Name: uninstall.sh
-# Description: Dotfiles uninstaller — removes symlinks, uninstalls upu, and
-#              optionally restores backups created by install.sh.
+# Description: Dotfiles uninstaller — removes all symlinks, installed tools,
+#              and bootstrapped environments, leaving a clean system state.
 # Author: Juan Garcia (arpatek)
-# Version: 1.0
+# Created: 2026-05-05
+# Version: 3.0
 # =============================================================================
 
-# ──[ Bash Version Check ]─────────────────────────────────────────────────────
+# ──[ Bash Version Check ]──────────────────────────────────────────────────────
 if ((BASH_VERSINFO[0] < 4)); then
   printf "uninstall.sh requires bash 4 or higher (detected: %s)\n" "$BASH_VERSION" >&2
   exit 1
 fi
 
-set -eo pipefail
+# Uninstallers must be resilient — do NOT use set -e here.
+# Individual failures are logged and skipped so a broken step never leaves
+# the shell in an unusable state (e.g. PATH gone after .zshrc is removed).
+set -o pipefail
 
-# ──[ ANSI Color Codes ]───────────────────────────────────────────────────────
-declare -A C=(
-  [red]=$'\033[0;31m'
-  [green]=$'\033[0;32m'
-  [yellow]=$'\033[0;33m'
-  [blue]=$'\033[0;34m'
-  [purple]=$'\033[0;35m'
-  [reset]=$'\033[0m'
-)
+# ──[ Paths ]───────────────────────────────────────────────────────────────────
+DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# ──[ Decoration Functions ]───────────────────────────────────────────────────
-BANNER()   { printf "%s[%s^%s]%s" "${C[yellow]}" "${C[purple]}" "${C[yellow]}" "${C[reset]}"; }
-PLUS()     { printf "%s[%s+%s]%s" "${C[yellow]}" "${C[green]}"  "${C[yellow]}" "${C[reset]}"; }
-COMPLETE() { printf "%s[%s*%s]%s" "${C[yellow]}" "${C[blue]}"   "${C[yellow]}" "${C[reset]}"; }
-FAILED()   { printf "%s[%s!%s]%s" "${C[yellow]}" "${C[red]}"    "${C[yellow]}" "${C[reset]}"; }
+# ──[ Shared Utilities ]────────────────────────────────────────────────────────
+source "$DOTFILES_DIR/lib.sh"
 
-# ──[ Error Trap ]─────────────────────────────────────────────────────────────
-trap 'printf "\n%s Uninstall failed. Aborting.\n" "$(FAILED)"' ERR
+# ──[ Privileged Session Caching ]──────────────────────────────────────────────
+cache_sudo
 
-# ──[ Privileged Session Caching ]─────────────────────────────────────────────
-sudo -v || exit 1
-while true; do
-  sudo -n true
-  sleep 60
-  kill -0 "$$" || exit
-done 2>/dev/null &
+# ──[ Helpers ]─────────────────────────────────────────────────────────────────
+ERRORS=0
 
-# ──[ Remove Symlink Function ]─────────────────────────────────────────────────
+warn() {
+  printf "%s %s\n" "$(FAILED)" "$1" >&2
+  (( ERRORS++ )) || true
+}
+
 unlink_file() {
   local target="$1"
   if [[ -L "$target" ]]; then
-    rm "$target"
-    printf "%s Removed %s\n" "$(COMPLETE)" "$target"
+    rm "$target" && printf "%s Removed symlink %s\n" "$(COMPLETE)" "$target" \
+      || warn "Could not remove symlink $target"
   else
     printf "%s Skipped %s (not a symlink)\n" "$(PLUS)" "$target"
   fi
-  sleep 0.2
 }
 
-# ──[ Restore Function ]───────────────────────────────────────────────────────
+remove_dir() {
+  local target="$1"
+  local label="${2:-$target}"
+  if [[ -d "$target" ]]; then
+    rm -rf "$target" && printf "%s Removed %s\n" "$(COMPLETE)" "$label" \
+      || warn "Could not fully remove $label"
+  else
+    printf "%s Not found, skipping: %s\n" "$(PLUS)" "$label"
+  fi
+}
+
+remove_file() {
+  local target="$1"
+  local use_sudo="${2:-false}"
+  if [[ -f "$target" || -L "$target" ]]; then
+    if $use_sudo; then
+      sudo rm -f "$target" && printf "%s Removed %s\n" "$(COMPLETE)" "$target" \
+        || warn "Could not remove $target"
+    else
+      rm -f "$target" && printf "%s Removed %s\n" "$(COMPLETE)" "$target" \
+        || warn "Could not remove $target"
+    fi
+  else
+    printf "%s Not found, skipping: %s\n" "$(PLUS)" "$target"
+  fi
+}
+
+confirm() {
+  printf "%s %s [y/N] " "$(BANNER)" "$1"
+  read -r reply
+  [[ "$reply" =~ ^[Yy]$ ]]
+}
+
+# ──[ Restore Backups ]─────────────────────────────────────────────────────────
 restore_backups() {
   local backup_base="$HOME/.dotfiles_backup"
   if [[ ! -d "$backup_base" ]]; then
-    printf "%s No backup directory found at %s\n" "$(PLUS)" "$backup_base"
+    printf "%s No backup directory found\n" "$(PLUS)"
     return
   fi
 
   local latest
   latest=$(ls -t "$backup_base" | head -1)
-
   if [[ -z "$latest" ]]; then
     printf "%s No backups found\n" "$(PLUS)"
     return
@@ -74,54 +98,131 @@ restore_backups() {
   sleep 0.5
   for file in "$backup_base/$latest"/.*  "$backup_base/$latest"/*; do
     [[ -e "$file" ]] || continue
-    cp -r "$file" "$HOME/"
-    printf "%s Restored %s\n" "$(COMPLETE)" "$(basename "$file")"
-    sleep 0.2
+    cp -r "$file" "$HOME/" && printf "%s Restored %s\n" "$(COMPLETE)" "$(basename "$file")" \
+      || warn "Could not restore $(basename "$file")"
   done
 }
 
-# ──[ Uninstallation ]─────────────────────────────────────────────────────────
-printf "%s Starting Dotfiles Uninstall\n" "$(BANNER)"
+# ──[ Uninstallation ]──────────────────────────────────────────────────────────
+# ORDER MATTERS: tools and data first, shell config and symlinks last.
+# Removing .zshrc early destroys PATH for the rest of the script.
+printf "%s Starting Full Dotfiles Uninstall\n" "$(BANNER)"
 sleep 1
 
-printf "%s Removing Symlinks\n" "$(BANNER)"
+# ── lazygit ───────────────────────────────────────────────────────────────────
+printf "%s Removing lazygit\n" "$(BANNER)"
 sleep 0.5
-unlink_file ~/.zshrc
-unlink_file ~/.zsh_aliases
+remove_file /usr/local/bin/lazygit true
+printf "\n"
+
+# ── Go ────────────────────────────────────────────────────────────────────────
+printf "%s Removing Go\n" "$(BANNER)"
+sleep 0.5
+# The module cache sets files read-only — go clean -modcache handles this;
+# plain rm -rf will fail with "Permission denied" on every cached module file
+if command -v go >/dev/null 2>&1 && [[ -d "$HOME/go/pkg/mod" ]]; then
+  printf "%s Cleaning Go module cache...\n" "$(PLUS)"
+  go clean -modcache || warn "go clean -modcache failed"
+fi
+if [[ -d /usr/local/go ]]; then
+  sudo rm -rf /usr/local/go && printf "%s Removed /usr/local/go\n" "$(COMPLETE)" \
+    || warn "Could not remove /usr/local/go"
+else
+  printf "%s /usr/local/go not found, skipping\n" "$(PLUS)"
+fi
+remove_dir "$HOME/go" "~/go (GOPATH)"
+printf "\n"
+
+# ── LazyVim / Neovim config ───────────────────────────────────────────────────
+printf "%s Removing LazyVim / Neovim config\n" "$(BANNER)"
+sleep 0.5
+unlink_file "$HOME/.config/nvim/init.vim"
+remove_dir "$HOME/.config/nvim"      "~/.config/nvim"
+remove_dir "$HOME/.local/share/nvim" "~/.local/share/nvim (plugin data)"
+remove_dir "$HOME/.local/state/nvim" "~/.local/state/nvim"
+remove_dir "$HOME/.cache/nvim"       "~/.cache/nvim"
+printf "\n"
+
+# ── pyenv ─────────────────────────────────────────────────────────────────────
+printf "%s Removing pyenv\n" "$(BANNER)"
+sleep 0.5
+remove_dir "$HOME/.pyenv" "~/.pyenv"
+printf "\n"
+
+# ── zinit ─────────────────────────────────────────────────────────────────────
+printf "%s Removing zinit\n" "$(BANNER)"
+sleep 0.5
+remove_dir "$HOME/.local/share/zinit" "~/.local/share/zinit"
+printf "\n"
+
+# ── Fonts ─────────────────────────────────────────────────────────────────────
+printf "%s Removing JetBrains Mono Nerd Font\n" "$(BANNER)"
+sleep 0.5
+remove_dir "$HOME/.local/share/fonts/JetBrainsMono" "~/.local/share/fonts/JetBrainsMono"
+if command -v fc-cache >/dev/null 2>&1; then
+  fc-cache -f && printf "%s Font cache refreshed\n" "$(COMPLETE)" \
+    || warn "fc-cache failed"
+fi
+printf "\n"
+
+# ── upu ───────────────────────────────────────────────────────────────────────
+printf "%s Removing upu\n" "$(BANNER)"
+sleep 0.5
+remove_file /usr/local/bin/upu true
+printf "\n"
+
+# ── SSH Config ────────────────────────────────────────────────────────────────
+printf "%s Removing SSH Config\n" "$(BANNER)"
+sleep 0.5
+remove_file ~/.ssh/config
+printf "\n"
+
+# ── Default shell — revert before dotfiles are removed ───────────────────────
+printf "%s Reverting default shell to bash\n" "$(BANNER)"
+sleep 0.5
+BASH_BIN="$(command -v bash 2>/dev/null || true)"
+if [[ -n "$BASH_BIN" && "$SHELL" != "$BASH_BIN" ]]; then
+  sudo chsh -s "$BASH_BIN" "$USER" \
+    && printf "%s Default shell reverted to %s\n\n" "$(COMPLETE)" "$BASH_BIN" \
+    || warn "chsh failed — revert shell manually: sudo chsh -s $BASH_BIN $USER"
+else
+  printf "%s Shell already bash or bash not found, skipping\n\n" "$(PLUS)"
+fi
+
+# ── Dotfile symlinks — last, so PATH stays intact throughout ─────────────────
+printf "%s Removing Dotfile Symlinks\n" "$(BANNER)"
+sleep 0.5
 unlink_file ~/.zsh/themes/arpatek.zsh-theme
 unlink_file ~/.tmux.conf
 unlink_file ~/.gitconfig
 unlink_file ~/.vimrc
-unlink_file ~/.config/nvim/init.vim
+unlink_file ~/.editorconfig
+unlink_file ~/.curlrc
+unlink_file ~/.config/lazygit/config.yml
+unlink_file ~/.zsh_aliases
+unlink_file ~/.zprofile
+# .zshrc removed absolutely last — removing it earlier kills PATH in the
+# current shell session and makes every subsequent command fail
+unlink_file ~/.zshrc
+remove_dir "$HOME/.zsh" "~/.zsh"
 printf "\n"
 sleep 1
 
-printf "%s Removing SSH Config\n" "$(BANNER)"
-sleep 0.5
-if [[ -f ~/.ssh/config ]]; then
-  rm ~/.ssh/config
-  printf "%s SSH config removed\n\n" "$(COMPLETE)"
-else
-  printf "%s SSH config not found, skipping\n\n" "$(PLUS)"
-fi
-sleep 1
-
-printf "%s Removing upu\n" "$(BANNER)"
-sleep 0.5
-if [[ -L /usr/local/bin/upu ]]; then
-  sudo rm /usr/local/bin/upu
-  printf "%s upu removed from /usr/local/bin\n\n" "$(COMPLETE)"
-else
-  printf "%s upu not found at /usr/local/bin, skipping\n\n" "$(PLUS)"
-fi
-sleep 1
-
-printf "%s Restore Backups? [y/N] " "$(BANNER)"
-read -r reply
-if [[ "$reply" =~ ^[Yy]$ ]]; then
+# ── Backups ───────────────────────────────────────────────────────────────────
+if confirm "Restore pre-install backups from ~/.dotfiles_backup?"; then
   printf "\n"
   restore_backups
   printf "\n"
 fi
 
-printf "%s Uninstall Complete\n" "$(COMPLETE)"
+if confirm "Delete ~/.dotfiles_backup?"; then
+  remove_dir "$HOME/.dotfiles_backup" "~/.dotfiles_backup"
+  printf "\n"
+fi
+
+if (( ERRORS > 0 )); then
+  printf "%s Uninstall finished with %d warning(s) — check output above\n" \
+    "$(FAILED)" "$ERRORS"
+else
+  printf "%s Uninstall Complete — system restored to clean state\n" "$(COMPLETE)"
+fi
