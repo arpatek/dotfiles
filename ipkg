@@ -33,7 +33,7 @@ fi
 
 # ──[ Package Manager Detection ]───────────────────────────────────────────────
 PKG_MGR=""
-for pm in nala apt dnf pacman yum zypper apk; do
+for pm in nala apt dnf pacman yum zypper apk xbps-install pkg; do
   if command -v "$pm" >/dev/null 2>&1; then
     PKG_MGR="$pm"
     break
@@ -64,7 +64,9 @@ case "$PKG_MGR" in
     REMOVE_CMD="sudo $PKG_MGR remove -y"
     ;;
   dnf | yum)
-    LIST_INSTALL="$PKG_MGR repoquery --available --quiet 2>/dev/null | sort -u"
+    # repoquery streams results as repos are queried — fzf opens immediately
+    # but the list fills in over ~30s on large Fedora repo sets
+    LIST_INSTALL="$PKG_MGR repoquery --available --quiet --qf '%{name}' 2>/dev/null | sort -u"
     LIST_REMOVE="rpm -qa --qf '%{NAME}\n' 2>/dev/null | sort -u"
     PREVIEW_INSTALL="$PKG_MGR info {2} 2>/dev/null"
     PREVIEW_REMOVE="$PKG_MGR info {2} 2>/dev/null"
@@ -72,8 +74,10 @@ case "$PKG_MGR" in
     REMOVE_CMD="sudo $PKG_MGR remove -y"
     ;;
   zypper)
-    LIST_INSTALL="zypper packages --not-installed-only 2>/dev/null | awk -F'|' 'NR>2{gsub(/ /,\"\",\$3); print \$3}' | sort -u"
-    LIST_REMOVE="zypper packages --installed-only 2>/dev/null | awk -F'|' 'NR>2{gsub(/ /,\"\",\$3); print \$3}' | sort -u"
+    # --no-refresh suppresses stdout status lines that would corrupt the list;
+    # filter on NF>=4 and skip the Name header and -- separator rows
+    LIST_INSTALL="zypper --no-refresh packages --not-installed-only 2>/dev/null | awk -F'|' 'NF>=4 && \$3 !~ /^ *Name *$|^ *-+/{gsub(/ /,\"\",\$3); if(\$3) print \$3}' | sort -u"
+    LIST_REMOVE="zypper --no-refresh packages --installed-only 2>/dev/null | awk -F'|' 'NF>=4 && \$3 !~ /^ *Name *$|^ *-+/{gsub(/ /,\"\",\$3); if(\$3) print \$3}' | sort -u"
     PREVIEW_INSTALL='zypper info {2} 2>/dev/null'
     PREVIEW_REMOVE='zypper info {2} 2>/dev/null'
     INSTALL_CMD="sudo zypper install -y"
@@ -82,10 +86,27 @@ case "$PKG_MGR" in
   apk)
     LIST_INSTALL='apk search --quiet 2>/dev/null | sort'
     LIST_REMOVE='apk info 2>/dev/null | sort'
-    PREVIEW_INSTALL='apk info -a {2} 2>/dev/null'
+    # apk info -a only works for installed packages; use search for install preview
+    PREVIEW_INSTALL='apk search -v {2} 2>/dev/null | head -20'
     PREVIEW_REMOVE='apk info -a {2} 2>/dev/null'
     INSTALL_CMD="sudo apk add"
     REMOVE_CMD="sudo apk del"
+    ;;
+  xbps-install)
+    LIST_INSTALL="xbps-query -Rs '*' 2>/dev/null | awk '{print \$2}' | sed 's/-[0-9][^-]*\$//' | sort -u"
+    LIST_REMOVE="xbps-query -l 2>/dev/null | awk '{print \$2}' | sed 's/-[0-9][^-]*\$//' | sort -u"
+    PREVIEW_INSTALL='xbps-query -RS {2} 2>/dev/null'
+    PREVIEW_REMOVE='xbps-query -S {2} 2>/dev/null'
+    INSTALL_CMD="sudo xbps-install -y"
+    REMOVE_CMD="sudo xbps-remove -Ro"
+    ;;
+  pkg)
+    LIST_INSTALL='pkg rquery "%n" 2>/dev/null | sort -u'
+    LIST_REMOVE='pkg query "%n" 2>/dev/null | sort -u'
+    PREVIEW_INSTALL='pkg search -S name -Q description {2} 2>/dev/null | head -40'
+    PREVIEW_REMOVE='pkg info {2} 2>/dev/null'
+    INSTALL_CMD="sudo pkg install -y"
+    REMOVE_CMD="sudo pkg delete -y"
     ;;
 esac
 
