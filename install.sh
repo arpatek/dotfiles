@@ -86,7 +86,19 @@ bootstrap_epel() {
   fi
 
   printf "%s Enabling EPEL...\n" "$(PLUS)"
-  sudo dnf install -y epel-release
+
+  local rhel_ver
+  rhel_ver=$(rpm -E %rhel 2>/dev/null)
+
+  # On actual RHEL, epel-release is not in the default repos — install from the
+  # Fedora EPEL URL. On CentOS/AlmaLinux/Rocky it is available as a package.
+  if grep -qi "red hat enterprise" /etc/redhat-release 2>/dev/null; then
+    sudo dnf install -y \
+      "https://dl.fedoraproject.org/pub/epel/epel-release-latest-${rhel_ver}.noarch.rpm"
+  else
+    sudo dnf install -y epel-release
+  fi
+
   printf "%s EPEL enabled\n" "$(COMPLETE)"
 }
 
