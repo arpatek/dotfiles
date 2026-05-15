@@ -245,7 +245,7 @@ bootstrap_go() {
   # grep -oP (Perl regex) is not reliable on all Debian builds — use basic grep
   # || true prevents a failed parse from aborting the script via set -eo pipefail
   go_version=$(curl -fsSL "https://go.dev/dl/?mode=json" \
-    | grep -o '"version":"go[^"]*"' | head -1 | grep -o 'go[^"]*') || true
+    | grep '"version"' | grep -o 'go[0-9][^"]*' | head -1 | tr -d '\r') || true
 
   if [[ -z "$go_version" ]]; then
     printf "%s Could not determine latest Go version — skipping\n" "$(PLUS)"
@@ -278,7 +278,7 @@ bootstrap_lazygit() {
   printf "%s Installing lazygit...\n" "$(PLUS)"
   local lg_tag lg_ver tmp_dir
   lg_tag=$(curl -fsSL "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" \
-    | grep '"tag_name"' | grep -o 'v[0-9][^"]*') || true
+    | grep '"tag_name"' | grep -o 'v[0-9][^"]*' | tr -d '\r') || true
   lg_ver="${lg_tag#v}"
 
   if [[ -z "$lg_tag" ]]; then
@@ -398,7 +398,7 @@ bootstrap_yazi() {
   printf "%s Installing yazi...\n" "$(PLUS)"
   local yazi_tag tmp_dir
   yazi_tag=$(curl -fsSL "https://api.github.com/repos/sxyazi/yazi/releases/latest" \
-    | grep '"tag_name"' | grep -o 'v[0-9][^"]*') || true
+    | grep '"tag_name"' | grep -o 'v[0-9][^"]*' | tr -d '\r') || true
 
   if [[ -z "$yazi_tag" ]]; then
     printf "%s Could not determine latest yazi version — skipping\n" "$(PLUS)"
