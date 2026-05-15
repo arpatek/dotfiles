@@ -104,8 +104,8 @@ bootstrap_packages() {
     [curl]="curl"         [wget]="wget"
     [eza]="eza"           [btop]="btop"
     [ncdu]="ncdu"         [asciinema]="asciinema"
-    [lynx]="lynx"         [tmate]="tmate"
-    [yazi]="yazi"         [gcc]="gcc"
+    [lynx]="lynx"         [yazi]="yazi"
+    [gcc]="gcc"
     [make]="make"
   )
 
@@ -168,10 +168,6 @@ bootstrap_packages() {
       ;;
     pacman)
       sudo pacman -S --noconfirm "${PYTHON_DEPS_PACMAN[@]}"
-      ;;
-    brew)
-      # Homebrew Python is pre-built — no build deps needed
-      printf "%s brew Python is pre-built, skipping build deps\n" "$(COMPLETE)"
       ;;
   esac
   printf "%s Python build dependencies installed\n" "$(COMPLETE)"
@@ -322,47 +318,6 @@ bootstrap_lazyvim() {
   fi
 }
 
-bootstrap_speedtest() {
-  if command -v speedtest >/dev/null 2>&1; then
-    printf "%s Speedtest CLI already installed\n" "$(COMPLETE)"
-    return
-  fi
-
-  printf "%s Installing Ookla Speedtest CLI...\n" "$(PLUS)"
-
-  # Ookla distributes via packagecloud.io — each distro family needs its own
-  # repo script before the package can be installed
-  if command -v dnf >/dev/null 2>&1 || command -v yum >/dev/null 2>&1; then
-    curl -fsSL \
-      https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.rpm.sh \
-      | sudo bash
-    local pm
-    pm="$(command -v dnf 2>/dev/null || command -v yum)"
-    sudo "$pm" install -y speedtest
-  elif command -v apt >/dev/null 2>&1 || command -v nala >/dev/null 2>&1; then
-    curl -fsSL \
-      https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh \
-      | sudo bash
-    sudo apt-get install -y speedtest
-  elif command -v pacman >/dev/null 2>&1; then
-    # AUR — requires yay or paru
-    if command -v yay >/dev/null 2>&1; then
-      yay -S --noconfirm speedtest-cli
-    elif command -v paru >/dev/null 2>&1; then
-      paru -S --noconfirm speedtest-cli
-    else
-      printf "%s Arch: install speedtest-cli from AUR manually (yay/paru required)\n" \
-        "$(PLUS)"
-      return
-    fi
-  else
-    printf "%s No supported distro detected for speedtest — skipping\n" "$(PLUS)"
-    return
-  fi
-
-  printf "%s Speedtest CLI installed\n" "$(COMPLETE)"
-}
-
 # ──[ Installation ]────────────────────────────────────────────────────────────
 printf "%s Starting Dotfiles Installation\n" "$(BANNER)"
 sleep 1
@@ -373,7 +328,6 @@ if ! $SKIP_PACKAGES; then
   bootstrap_packages
   bootstrap_go
   bootstrap_lazygit
-  bootstrap_speedtest
   bootstrap_pyenv
   bootstrap_zinit
   bootstrap_fonts

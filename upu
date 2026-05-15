@@ -79,7 +79,7 @@ printf "%s Checking Package Manager\n" "$(BANNER)"
 sleep 1
 
 PKG_MGR=""
-for pm in nala apt dnf pacman yum zypper apk xbps-install emerge pkg brew; do
+for pm in nala apt dnf pacman yum zypper apk xbps-install emerge pkg; do
   if command -v "$pm" >/dev/null 2>&1; then
     PKG_MGR="$pm"
     break
@@ -91,8 +91,8 @@ if [[ -z "$PKG_MGR" ]]; then
   exit 1
 fi
 
-# ──[ Privileged Session Caching (skipped for brew) ]───────────────────────────
-if [[ "$PKG_MGR" != "brew" ]] && ! $DRY_RUN; then
+# ──[ Privileged Session Caching ]──────────────────────────────────────────────
+if ! $DRY_RUN; then
   cache_sudo
 fi
 
@@ -222,20 +222,6 @@ pkg)
   sleep 1
   printf "%s Removing Unused Packages\n" "$(PLUS)"
   run sudo pkg autoremove -y
-  sleep 1
-  printf "%s Update Complete\n" "$(COMPLETE)"
-  ;;
-brew)
-  printf "%s Package manager brew Found\n" "$(COMPLETE)"
-  sleep 1
-  printf "%s Updating Packages\n" "$(PLUS)"
-  run brew update
-  sleep 1
-  printf "%s Upgrading Packages\n" "$(PLUS)"
-  run brew upgrade
-  sleep 1
-  printf "%s Cleaning Up\n" "$(PLUS)"
-  run brew cleanup
   sleep 1
   printf "%s Update Complete\n" "$(COMPLETE)"
   ;;
