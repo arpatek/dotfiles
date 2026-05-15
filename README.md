@@ -111,6 +111,7 @@ Options:
 | `ip` | `ip --color=auto` |
 | `mkdir` | `mkdir -pv` |
 | `gs` / `ga` / `gc` / `gp` / `gl` | Git shortcuts |
+| `ssh` | Wraps ssh with `TERM=xterm-256color` to fix Ghostty terminfo errors on remotes |
 | `pi` / `rhel` / `dev` | SSH into configured hosts |
 | `ports` | `lsof -i -P -n` |
 | `reload` | `exec zsh` |

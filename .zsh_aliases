@@ -44,6 +44,10 @@ alias shutdown='sudo shutdown now'
 alias reload='exec zsh'
 
 # ──[ SSH Shortcuts ]──────────────────────────────────────────────────────────
+# Ghostty sets TERM=xterm-ghostty which remote machines may not have in their
+# terminfo database. Wrapping ssh downgrades TERM for the session only.
+ssh() { TERM=xterm-256color command ssh "$@"; }
+
 alias pi='ssh netrunner'
 alias rhel='ssh rhel-0'
 alias dev='ssh ubuntu-0'
