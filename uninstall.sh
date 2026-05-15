@@ -115,6 +115,28 @@ sleep 0.5
 remove_file /usr/local/bin/lazygit true
 printf "\n"
 
+# ── yazi ──────────────────────────────────────────────────────────────────────
+printf "%s Removing yazi\n" "$(BANNER)"
+sleep 0.5
+remove_file /usr/local/bin/yazi true
+remove_file /usr/local/bin/ya   true
+printf "\n"
+
+# ── eza ───────────────────────────────────────────────────────────────────────
+# Only remove if installed to /usr/local/bin (bootstrap install on RHEL).
+# On Debian/Ubuntu it lands in /usr/bin via apt — leave that alone.
+printf "%s Removing eza\n" "$(BANNER)"
+sleep 0.5
+remove_file /usr/local/bin/eza true
+printf "\n"
+
+# ── bat ───────────────────────────────────────────────────────────────────────
+# On Debian/Ubuntu, bootstrap_bat symlinks batcat → ~/.local/bin/bat.
+printf "%s Removing bat symlink\n" "$(BANNER)"
+sleep 0.5
+remove_file "$HOME/.local/bin/bat"
+printf "\n"
+
 # ── Go ────────────────────────────────────────────────────────────────────────
 printf "%s Removing Go\n" "$(BANNER)"
 sleep 0.5
