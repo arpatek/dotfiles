@@ -77,6 +77,19 @@ link() {
   printf "%s Linked %s\n" "$(COMPLETE)" "$dst"
 }
 
+bootstrap_epel() {
+  command -v dnf >/dev/null 2>&1 || return 0
+
+  if dnf repolist enabled 2>/dev/null | grep -qi "epel"; then
+    printf "%s EPEL already enabled\n" "$(COMPLETE)"
+    return
+  fi
+
+  printf "%s Enabling EPEL...\n" "$(PLUS)"
+  sudo dnf install -y epel-release
+  printf "%s EPEL enabled\n" "$(COMPLETE)"
+}
+
 # ──[ Package Bootstrap ]───────────────────────────────────────────────────────
 bootstrap_packages() {
   local pm=""
@@ -102,7 +115,7 @@ bootstrap_packages() {
     [zsh]="zsh"           [git]="git"
     [tmux]="tmux"         [neovim]="nvim"
     [curl]="curl"         [wget]="wget"
-    [eza]="eza"           [btop]="btop"
+    [btop]="btop"
     [ncdu]="ncdu"         [asciinema]="asciinema"
     [lynx]="lynx"         [unzip]="unzip"
     [fontconfig]="fc-cache" [gcc]="gcc"
@@ -417,6 +430,55 @@ bootstrap_yazi() {
   printf "%s yazi %s installed\n" "$(COMPLETE)" "$yazi_tag"
 }
 
+bootstrap_eza() {
+  if command -v eza >/dev/null 2>&1; then
+    printf "%s eza already installed\n" "$(COMPLETE)"
+    return
+  fi
+
+  local pm=""
+  for candidate in nala apt dnf pacman yum zypper apk; do
+    if command -v "$candidate" >/dev/null 2>&1; then
+      pm="$candidate"
+      break
+    fi
+  done
+
+  # Try package manager first — eza is in repos on Debian/Ubuntu and Arch
+  case "$pm" in
+    nala | apt) sudo "$pm" install -y eza 2>/dev/null && command -v eza >/dev/null 2>&1 && { printf "%s eza installed\n" "$(COMPLETE)"; return; } ;;
+    pacman)     sudo pacman -S --noconfirm eza 2>/dev/null && command -v eza >/dev/null 2>&1 && { printf "%s eza installed\n" "$(COMPLETE)"; return; } ;;
+  esac
+
+  # Fall back to GitHub releases (RHEL, and any other distro without eza in repos)
+  local arch
+  case "$(uname -m)" in
+    x86_64)  arch="x86_64" ;;
+    aarch64) arch="aarch64" ;;
+    *) printf "%s Unsupported architecture for eza: %s\n" "$(FAILED)" "$(uname -m)" >&2; return 1 ;;
+  esac
+
+  printf "%s Installing eza...\n" "$(PLUS)"
+  local eza_tag tmp_dir
+  eza_tag=$(curl -fsSL "https://api.github.com/repos/eza-community/eza/releases/latest" \
+    | grep '"tag_name"' | grep -o 'v[0-9][^"]*' | tr -d '\r') || true
+
+  if [[ -z "$eza_tag" ]]; then
+    printf "%s Could not determine latest eza version\n" "$(FAILED)" >&2
+    return 1
+  fi
+
+  tmp_dir="$(mktemp -d)"
+  trap 'rm -rf "$tmp_dir"' RETURN
+
+  curl -fsSL \
+    "https://github.com/eza-community/eza/releases/download/${eza_tag}/eza_${arch}-unknown-linux-gnu.tar.gz" \
+    -o "$tmp_dir/eza.tar.gz"
+  tar -xf "$tmp_dir/eza.tar.gz" -C "$tmp_dir"
+  sudo install "$tmp_dir/eza" -D -t /usr/local/bin/
+  printf "%s eza %s installed\n" "$(COMPLETE)" "$eza_tag"
+}
+
 # ──[ Installation ]────────────────────────────────────────────────────────────
 printf "%s Starting Dotfiles Installation\n" "$(BANNER)"
 sleep 1
@@ -424,11 +486,13 @@ sleep 1
 if ! $SKIP_PACKAGES; then
   printf "%s Bootstrapping Dependencies\n" "$(BANNER)"
   sleep 0.5
+  bootstrap_epel
   bootstrap_packages
   bootstrap_go
   bootstrap_lazygit
   bootstrap_bat
   bootstrap_yazi
+  bootstrap_eza
   bootstrap_pyenv
   bootstrap_zinit
   bootstrap_fonts
