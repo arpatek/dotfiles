@@ -80,6 +80,13 @@ link() {
 bootstrap_epel() {
   command -v dnf >/dev/null 2>&1 || return 0
 
+  # Fedora is the upstream of RHEL — EPEL targets downstream distros only.
+  # Everything in EPEL is already in Fedora's own repos; skip entirely.
+  if grep -qi "^ID=fedora" /etc/os-release 2>/dev/null; then
+    printf "%s Fedora detected — skipping EPEL (not needed)\n" "$(COMPLETE)"
+    return
+  fi
+
   if dnf repolist enabled 2>/dev/null | grep -qi "epel"; then
     printf "%s EPEL already enabled\n" "$(COMPLETE)"
     return
