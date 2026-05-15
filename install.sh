@@ -131,7 +131,11 @@ bootstrap_packages() {
   # ── Collect missing core tools ─────────────────────────────────────────────
   local missing=()
   for tool in "${!TOOLS[@]}"; do
-    if ! command -v "${TOOLS[$tool]}" >/dev/null 2>&1; then
+    local bin="${TOOLS[$tool]}"
+    # Debian/Ubuntu ship bat as batcat — accept either binary as "found"
+    if [[ "$tool" == "bat" ]] && command -v batcat >/dev/null 2>&1; then
+      printf "%s Found:   %s (as batcat)\n" "$(COMPLETE)" "$tool"
+    elif ! command -v "$bin" >/dev/null 2>&1; then
       missing+=("$tool")
       printf "%s Missing: %s\n" "$(PLUS)" "$tool"
     else
@@ -143,17 +147,29 @@ bootstrap_packages() {
   if (( ${#missing[@]} > 0 )); then
     printf "\n%s Installing %d missing package(s)...\n" "$(BANNER)" "${#missing[@]}"
     sleep 0.5
-    case "$pm" in
-      nala)         sudo nala install -y "${missing[@]}" ;;
-      apt)          sudo apt install -y  "${missing[@]}" ;;
-      dnf | yum)    sudo "$pm" install -y "${missing[@]}" ;;
-      pacman)       sudo pacman -S --noconfirm "${missing[@]}" ;;
-      zypper)       sudo zypper install -y "${missing[@]}" ;;
-      apk)          sudo apk add "${missing[@]}" ;;
-    esac
+    # Install one at a time so a package absent from the repos skips gracefully
+    # rather than aborting the entire run (e.g. yazi on Debian/Ubuntu).
+    for pkg in "${missing[@]}"; do
+      case "$pm" in
+        nala)        sudo nala install -y "$pkg"          || printf "%s Skipped: %s (not in repos)\n" "$(PLUS)" "$pkg" ;;
+        apt)         sudo apt install -y  "$pkg"          || printf "%s Skipped: %s (not in repos)\n" "$(PLUS)" "$pkg" ;;
+        dnf | yum)   sudo "$pm" install -y "$pkg"        || printf "%s Skipped: %s (not in repos)\n" "$(PLUS)" "$pkg" ;;
+        pacman)      sudo pacman -S --noconfirm "$pkg"   || printf "%s Skipped: %s (not in repos)\n" "$(PLUS)" "$pkg" ;;
+        zypper)      sudo zypper install -y "$pkg"       || printf "%s Skipped: %s (not in repos)\n" "$(PLUS)" "$pkg" ;;
+        apk)         sudo apk add "$pkg"                 || printf "%s Skipped: %s (not in repos)\n" "$(PLUS)" "$pkg" ;;
+      esac
+    done
     printf "%s Core packages installed\n" "$(COMPLETE)"
   else
     printf "%s All core packages already present\n" "$(COMPLETE)"
+  fi
+
+  # ── Debian/Ubuntu bat → batcat symlink ────────────────────────────────────
+  # After install, if bat is still not directly callable but batcat is, wire it.
+  if ! command -v bat >/dev/null 2>&1 && command -v batcat >/dev/null 2>&1; then
+    mkdir -p "$HOME/.local/bin"
+    ln -sf "$(command -v batcat)" "$HOME/.local/bin/bat"
+    printf "%s Symlinked batcat → ~/.local/bin/bat\n" "$(COMPLETE)"
   fi
 
   # ── Install Python build dependencies ────────────────────────────────────
