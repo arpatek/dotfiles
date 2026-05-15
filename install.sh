@@ -133,7 +133,7 @@ bootstrap_packages() {
     [tmux]="tmux"         [neovim]="nvim"
     [curl]="curl"         [wget]="wget"
     [btop]="btop"
-    [ncdu]="ncdu"         [asciinema]="asciinema"
+    [ncdu]="ncdu"
     [lynx]="lynx"         [unzip]="unzip"
     [fontconfig]="fc-cache" [gcc]="gcc"
     [make]="make"
