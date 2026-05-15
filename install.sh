@@ -80,7 +80,7 @@ link() {
 # ──[ Package Bootstrap ]───────────────────────────────────────────────────────
 bootstrap_packages() {
   local pm=""
-  for candidate in nala apt dnf pacman yum zypper apk brew; do
+  for candidate in nala apt dnf pacman yum zypper apk; do
     if command -v "$candidate" >/dev/null 2>&1; then
       pm="$candidate"
       break
@@ -150,7 +150,6 @@ bootstrap_packages() {
       pacman)       sudo pacman -S --noconfirm "${missing[@]}" ;;
       zypper)       sudo zypper install -y "${missing[@]}" ;;
       apk)          sudo apk add "${missing[@]}" ;;
-      brew)         brew install "${missing[@]}" ;;
     esac
     printf "%s Core packages installed\n" "$(COMPLETE)"
   else
@@ -202,18 +201,6 @@ bootstrap_zinit() {
 }
 
 bootstrap_fonts() {
-  # macOS: Homebrew has a cask for this
-  if command -v brew >/dev/null 2>&1; then
-    if brew list --cask font-jetbrains-mono-nerd-font >/dev/null 2>&1; then
-      printf "%s JetBrains Mono Nerd Font already installed\n" "$(COMPLETE)"
-    else
-      printf "%s Installing JetBrains Mono Nerd Font...\n" "$(PLUS)"
-      brew install --cask font-jetbrains-mono-nerd-font
-      printf "%s JetBrains Mono Nerd Font installed\n" "$(COMPLETE)"
-    fi
-    return
-  fi
-
   # Linux: fontconfig must be present for font discovery
   if ! command -v fc-cache >/dev/null 2>&1; then
     printf "%s fontconfig not found — skipping font install\n" "$(PLUS)"
