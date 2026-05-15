@@ -44,7 +44,6 @@ cd ~/dotfiles
 The installer will:
 - Detect your distro and install missing packages
 - Install Go, lazygit, pyenv, zinit, and JetBrains Mono Nerd Font
-- Install the Ookla Speedtest CLI
 - Clone the LazyVim starter (requires nvim ≥ 0.9; falls back to `init.vim`)
 - Symlink all dotfiles into place
 - Set zsh as your default shell via `chsh`
