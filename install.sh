@@ -104,9 +104,8 @@ bootstrap_packages() {
     [curl]="curl"         [wget]="wget"
     [eza]="eza"           [btop]="btop"
     [ncdu]="ncdu"         [asciinema]="asciinema"
-    [lynx]="lynx"         [yazi]="yazi"
+    [lynx]="lynx"         [unzip]="unzip"
     [gcc]="gcc"           [make]="make"
-    [bat]="bat"
   )
 
   # ── Python build dependencies (pyenv compiles CPython from source) ─────────
@@ -131,11 +130,7 @@ bootstrap_packages() {
   # ── Collect missing core tools ─────────────────────────────────────────────
   local missing=()
   for tool in "${!TOOLS[@]}"; do
-    local bin="${TOOLS[$tool]}"
-    # Debian/Ubuntu ship bat as batcat — accept either binary as "found"
-    if [[ "$tool" == "bat" ]] && command -v batcat >/dev/null 2>&1; then
-      printf "%s Found:   %s (as batcat)\n" "$(COMPLETE)" "$tool"
-    elif ! command -v "$bin" >/dev/null 2>&1; then
+    if ! command -v "${TOOLS[$tool]}" >/dev/null 2>&1; then
       missing+=("$tool")
       printf "%s Missing: %s\n" "$(PLUS)" "$tool"
     else
@@ -162,14 +157,6 @@ bootstrap_packages() {
     printf "%s Core packages installed\n" "$(COMPLETE)"
   else
     printf "%s All core packages already present\n" "$(COMPLETE)"
-  fi
-
-  # ── Debian/Ubuntu bat → batcat symlink ────────────────────────────────────
-  # After install, if bat is still not directly callable but batcat is, wire it.
-  if ! command -v bat >/dev/null 2>&1 && command -v batcat >/dev/null 2>&1; then
-    mkdir -p "$HOME/.local/bin"
-    ln -sf "$(command -v batcat)" "$HOME/.local/bin/bat"
-    printf "%s Symlinked batcat → ~/.local/bin/bat\n" "$(COMPLETE)"
   fi
 
   # ── Install Python build dependencies ────────────────────────────────────
@@ -334,6 +321,81 @@ bootstrap_lazyvim() {
   fi
 }
 
+bootstrap_bat() {
+  if command -v bat >/dev/null 2>&1; then
+    printf "%s bat already installed\n" "$(COMPLETE)"
+    return
+  fi
+
+  # Debian/Ubuntu install bat as batcat to avoid a conflict with an unrelated
+  # system package — if it's already present just wire up the symlink.
+  if command -v batcat >/dev/null 2>&1; then
+    mkdir -p "$HOME/.local/bin"
+    ln -sf "$(command -v batcat)" "$HOME/.local/bin/bat"
+    printf "%s bat symlinked from batcat\n" "$(COMPLETE)"
+    return
+  fi
+
+  local pm=""
+  for candidate in nala apt dnf pacman yum zypper apk; do
+    if command -v "$candidate" >/dev/null 2>&1; then
+      pm="$candidate"
+      break
+    fi
+  done
+
+  printf "%s Installing bat...\n" "$(PLUS)"
+  case "$pm" in
+    nala | apt)  sudo "$pm" install -y bat ;;
+    dnf | yum)   sudo "$pm" install -y bat ;;
+    pacman)      sudo pacman -S --noconfirm bat ;;
+    zypper)      sudo zypper install -y bat ;;
+    apk)         sudo apk add bat ;;
+    *)
+      printf "%s No supported package manager — skipping bat\n" "$(PLUS)"
+      return
+      ;;
+  esac
+
+  # After install on Debian/Ubuntu the binary lands as batcat
+  if ! command -v bat >/dev/null 2>&1 && command -v batcat >/dev/null 2>&1; then
+    mkdir -p "$HOME/.local/bin"
+    ln -sf "$(command -v batcat)" "$HOME/.local/bin/bat"
+    printf "%s bat symlinked from batcat\n" "$(COMPLETE)"
+  else
+    printf "%s bat installed\n" "$(COMPLETE)"
+  fi
+}
+
+bootstrap_yazi() {
+  if command -v yazi >/dev/null 2>&1; then
+    printf "%s yazi already installed\n" "$(COMPLETE)"
+    return
+  fi
+
+  local arch
+  case "$(uname -m)" in
+    x86_64)  arch="x86_64" ;;
+    aarch64) arch="aarch64" ;;
+    *) printf "%s Unsupported architecture for yazi: %s\n" "$(FAILED)" "$(uname -m)" >&2; return 1 ;;
+  esac
+
+  printf "%s Installing yazi...\n" "$(PLUS)"
+  local yazi_tag tmp_dir
+  yazi_tag=$(curl -fsSL "https://api.github.com/repos/sxyazi/yazi/releases/latest" \
+    | grep -oP '"tag_name":\s*"\K[^"]+')
+  tmp_dir="$(mktemp -d)"
+  trap 'rm -rf "$tmp_dir"' RETURN
+
+  curl -fsSL \
+    "https://github.com/sxyazi/yazi/releases/download/${yazi_tag}/yazi-${arch}-unknown-linux-gnu.zip" \
+    -o "$tmp_dir/yazi.zip"
+  unzip -q "$tmp_dir/yazi.zip" -d "$tmp_dir"
+  sudo install "$tmp_dir/yazi-${arch}-unknown-linux-gnu/yazi" -D -t /usr/local/bin/
+  sudo install "$tmp_dir/yazi-${arch}-unknown-linux-gnu/ya"   -D -t /usr/local/bin/
+  printf "%s yazi %s installed\n" "$(COMPLETE)" "$yazi_tag"
+}
+
 # ──[ Installation ]────────────────────────────────────────────────────────────
 printf "%s Starting Dotfiles Installation\n" "$(BANNER)"
 sleep 1
@@ -344,6 +406,8 @@ if ! $SKIP_PACKAGES; then
   bootstrap_packages
   bootstrap_go
   bootstrap_lazygit
+  bootstrap_bat
+  bootstrap_yazi
   bootstrap_pyenv
   bootstrap_zinit
   bootstrap_fonts
