@@ -99,6 +99,11 @@ bootstrap_epel() {
     sudo dnf install -y epel-release
   fi
 
+  # Many EPEL packages require CRB — enable it now to avoid missing deps later
+  if command -v crb >/dev/null 2>&1; then
+    sudo crb enable
+  fi
+
   printf "%s EPEL enabled\n" "$(COMPLETE)"
 }
 
