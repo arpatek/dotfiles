@@ -4,15 +4,11 @@
 # └──────────────────────────────────────────────────────────────┘
 
 # ──[ Plugin Manager ]──────────────────────────────────────────────────────────
-# Try common Zinit install locations in order — Linux default, Homebrew, legacy
+# Try standard Zinit install locations — new default, legacy fallback
 if [ -f ~/.local/share/zinit/zinit.git/zinit.zsh ]; then
     source ~/.local/share/zinit/zinit.git/zinit.zsh
-elif [ -f /opt/homebrew/opt/zinit/bin/zinit.zsh ]; then
-    source /opt/homebrew/opt/zinit/bin/zinit.zsh
 elif [ -f ~/.zinit/bin/zinit.zsh ]; then
     source ~/.zinit/bin/zinit.zsh
-elif [ -f /usr/local/opt/zinit/bin/zinit.zsh ]; then
-    source /usr/local/opt/zinit/bin/zinit.zsh
 fi
 
 # ──[ Zinit Annexes ]───────────────────────────────────────────────────────────
@@ -138,12 +134,7 @@ setopt NO_BEEP    # disable terminal bell on errors or no match
 # ──[ PATH Export ]─────────────────────────────────────────────────────────────
 [ -d "$HOME/bin" ]        && PATH="$HOME/bin:$PATH"
 [ -d "$HOME/.local/bin" ] && PATH="$HOME/.local/bin:$PATH"
-
-if [ -d "/opt/homebrew/bin" ]; then
-    PATH="/opt/homebrew/bin:$PATH"
-elif [ -d "/usr/local/bin" ]; then
-    PATH="/usr/local/bin:$PATH"
-fi
+[ -d "/usr/local/bin" ]   && PATH="/usr/local/bin:$PATH"
 
 export PATH
 
