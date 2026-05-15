@@ -29,6 +29,8 @@ alias zshconfig='nvim ~/.zshrc'
 alias aliases='nvim ~/.zsh_aliases'
 
 # ──[ Core Overrides ]─────────────────────────────────────────────────────────
+alias cat='bat --plain'            # drop-in cat replacement — no decorations
+alias bcat='bat'                   # full bat with line numbers, syntax highlighting, and pager
 alias grep='grep --color=auto'
 alias diff='diff --color=auto'
 alias ip='ip --color=auto'

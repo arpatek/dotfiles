@@ -105,8 +105,8 @@ bootstrap_packages() {
     [eza]="eza"           [btop]="btop"
     [ncdu]="ncdu"         [asciinema]="asciinema"
     [lynx]="lynx"         [yazi]="yazi"
-    [gcc]="gcc"
-    [make]="make"
+    [gcc]="gcc"           [make]="make"
+    [bat]="bat"
   )
 
   # ── Python build dependencies (pyenv compiles CPython from source) ─────────
