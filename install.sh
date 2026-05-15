@@ -377,10 +377,10 @@ chmod 600 ~/.ssh/config
 printf "%s SSH config installed\n\n" "$(COMPLETE)"
 sleep 1
 
-printf "%s Installing upu\n" "$(BANNER)"
+printf "%s Installing lpu\n" "$(BANNER)"
 sleep 0.5
-sudo ln -sf "$DOTFILES_DIR/upu" /usr/local/bin/upu
-printf "%s upu installed to /usr/local/bin/upu\n\n" "$(COMPLETE)"
+sudo ln -sf "$DOTFILES_DIR/lpu" /usr/local/bin/lpu
+printf "%s lpu installed to /usr/local/bin/lpu\n\n" "$(COMPLETE)"
 sleep 1
 
 printf "%s Installing ipkg\n" "$(BANNER)"

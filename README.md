@@ -13,7 +13,7 @@ Personal dotfiles for Zsh, tmux, Vim/Neovim, Git, and SSH — Linux-first, manag
 | `lib.sh` | Shared utilities — colors, decoration functions, `cache_sudo` |
 | `install.sh` | Full bootstrap — packages, tools, pyenv, zinit, fonts, LazyVim, symlinks |
 | `uninstall.sh` | Full cleanup — removes all tools, symlinks, and bootstrapped environments |
-| `upu` | Universal Package Updater |
+| `lpu` | Linux Package Updater |
 | `ipkg` | Interactive package browser — fuzzy-find to install or remove packages |
 | `.zshrc` | Zsh config — Zinit, fzf, zoxide, pyenv, Go, plugins |
 | `.zprofile` | Login shell env — PATH, pyenv, Go (active for non-interactive SSH) |
@@ -66,12 +66,12 @@ Removes all symlinks, tools, Go, pyenv, zinit, LazyVim, fonts, and reverts the d
 
 ---
 
-## upu — Universal Package Updater
+## lpu — Linux Package Updater
 
 Detects the system package manager and runs a full update/upgrade cycle with cleanup.
 
 ```
-Usage: upu [OPTIONS]
+Usage: lpu [OPTIONS]
 Options:
   -h, --help      Show this help message
   -V, --version   Show version

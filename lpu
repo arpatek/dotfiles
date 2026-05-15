@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Script Name: upu
-# Description: Universal Package Updater – detects package manager and updates/
+# Script Name: lpu
+# Description: Linux Package Updater – detects package manager and updates/
 #              upgrades system packages with visual feedback.
 # Author: Juan Garcia (arpatek)
 # Created: 2026-02-26
@@ -10,7 +10,7 @@
 
 # ──[ Bash Version Check ]──────────────────────────────────────────────────────
 if ((BASH_VERSINFO[0] < 4)); then
-  printf "upu requires bash 4 or higher (detected: %s)\n" "$BASH_VERSION" >&2
+  printf "lpu requires bash 4 or higher (detected: %s)\n" "$BASH_VERSION" >&2
   exit 1
 fi
 
@@ -31,7 +31,7 @@ VERSION="1.2"
 DRY_RUN=false
 
 usage() {
-  printf "Usage: upu [OPTIONS]\n"
+  printf "Usage: lpu [OPTIONS]\n"
   printf "Options:\n"
   printf "  -h, --help      Show this help message\n"
   printf "  -V, --version   Show version\n"
@@ -45,7 +45,7 @@ while [[ $# -gt 0 ]]; do
     exit 0
     ;;
   -V | --version)
-    printf "upu %s\n" "$VERSION"
+    printf "lpu %s\n" "$VERSION"
     exit 0
     ;;
   -n | --dry-run) DRY_RUN=true ;;
@@ -96,7 +96,7 @@ if ! $DRY_RUN; then
   cache_sudo
 fi
 
-# ──[ Universal Package Updater ]───────────────────────────────────────────────
+# ──[ Linux Package Updater ]───────────────────────────────────────────────────
 case "$PKG_MGR" in
 nala)
   printf "%s Package manager nala Found\n" "$(COMPLETE)"
