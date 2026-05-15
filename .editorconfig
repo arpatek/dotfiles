@@ -1,0 +1,40 @@
+# ┌──────────────────────────────────────────────────────────────┐
+# │ arpatek - EditorConfig                                       │
+# │ Enforces consistent coding style across editors and IDEs.    │
+# │ Supported by VS Code, JetBrains, Vim, Neovim, Emacs, Nano.  │
+# └──────────────────────────────────────────────────────────────┘
+# See https://editorconfig.org for documentation.
+
+root = true
+
+# ──[ Defaults (all files) ]───────────────────────────────────────────────────
+[*]
+charset              = utf-8
+end_of_line          = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style         = space
+indent_size          = 4
+
+# ──[ Web / Config (2 spaces) ]────────────────────────────────────────────────
+[*.{json,jsonc,yaml,yml,toml,html,css,scss,js,ts,jsx,tsx,vue,svelte}]
+indent_size = 2
+
+# ──[ Markdown ]───────────────────────────────────────────────────────────────
+# Trailing spaces have meaning in Markdown (line break) — don't strip them
+[*.{md,mdx}]
+trim_trailing_whitespace = false
+indent_size = 2
+
+# ──[ Makefiles ]──────────────────────────────────────────────────────────────
+# Make requires real tabs — spaces will break recipes
+[Makefile]
+indent_style = tab
+
+# ──[ Go ]─────────────────────────────────────────────────────────────────────
+[*.go]
+indent_style = tab
+
+# ──[ Shell ]──────────────────────────────────────────────────────────────────
+[*.{sh,bash,zsh}]
+indent_size = 2
