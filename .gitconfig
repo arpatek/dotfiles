@@ -35,6 +35,15 @@
 [merge]
   ff = only
 
+[fetch]
+  prune = true
+
+[rebase]
+  autosquash = true
+
+[diff]
+  colorMoved = default
+
 [commit]
   gpgsign = false
   template = ~/.git-commit-template
