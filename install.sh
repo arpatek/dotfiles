@@ -277,7 +277,7 @@ bootstrap_lazygit() {
   printf "%s Installing lazygit...\n" "$(PLUS)"
   local lg_tag lg_ver tmp_dir
   lg_tag=$(curl -fsSL "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" \
-    | grep -o '"tag_name":"[^"]*"' | grep -o 'v[^"]*') || true
+    | grep '"tag_name"' | grep -o 'v[0-9][^"]*') || true
   lg_ver="${lg_tag#v}"
 
   if [[ -z "$lg_tag" ]]; then
@@ -397,7 +397,7 @@ bootstrap_yazi() {
   printf "%s Installing yazi...\n" "$(PLUS)"
   local yazi_tag tmp_dir
   yazi_tag=$(curl -fsSL "https://api.github.com/repos/sxyazi/yazi/releases/latest" \
-    | grep -o '"tag_name":"[^"]*"' | grep -o 'v[^"]*') || true
+    | grep '"tag_name"' | grep -o 'v[0-9][^"]*') || true
 
   if [[ -z "$yazi_tag" ]]; then
     printf "%s Could not determine latest yazi version — skipping\n" "$(PLUS)"
