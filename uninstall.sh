@@ -196,6 +196,7 @@ unlink_file ~/.zsh/themes/arpatek.zsh-theme
 unlink_file ~/.tmux.conf
 unlink_file ~/.gitconfig
 unlink_file ~/.vimrc
+unlink_file ~/.git-commit-template
 unlink_file ~/.editorconfig
 unlink_file ~/.curlrc
 unlink_file ~/.config/lazygit/config.yml

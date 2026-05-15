@@ -357,6 +357,8 @@ link "$DOTFILES_DIR/.gitconfig"                          ~/.gitconfig
 sleep 0.2
 link "$DOTFILES_DIR/.vimrc"                              ~/.vimrc
 sleep 0.2
+link "$DOTFILES_DIR/.git-commit-template"                ~/.git-commit-template
+sleep 0.2
 link "$DOTFILES_DIR/.zprofile"                           ~/.zprofile
 sleep 0.2
 link "$DOTFILES_DIR/.editorconfig"                       ~/.editorconfig
