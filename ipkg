@@ -103,6 +103,7 @@ chmod +x "$INSTALL_SCRIPT" "$REMOVE_SCRIPT"
 
 # ──[ Interactive Browser ]─────────────────────────────────────────────────────
 fzf_args=(
+  --height 100%
   --multi
   --prompt '[INSTALL] > '
   --header "[$PKG_MGR] alt+r: remove mode  alt+i: install mode  tab: multi-select"
