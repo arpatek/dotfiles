@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # =============================================================================
 # Script Name: ipkg
-# Description: Interactive package browser — fuzzy-find and install packages
-#              using fzf with a live preview of package details.
+# Description: Interactive package browser — fuzzy-find to install or remove
+#              packages. alt+i: install mode, alt+r: remove mode.
 # Author: Juan Garcia (arpatek)
 # Created: 2026-05-15
-# Version: 1.0
+# Version: 2.0
 # =============================================================================
 
 # ──[ Bash Version Check ]──────────────────────────────────────────────────────
@@ -15,6 +15,9 @@ if ((BASH_VERSINFO[0] < 4)); then
 fi
 
 set -eo pipefail
+
+# ──[ Error Trap ]──────────────────────────────────────────────────────────────
+trap 'printf "\n%s Something went wrong.\n" "$(FAILED)"' ERR
 
 # ──[ Paths ]───────────────────────────────────────────────────────────────────
 DOTFILES_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
@@ -43,68 +46,104 @@ if [[ -z "$PKG_MGR" ]]; then
 fi
 
 # ──[ Per-manager Commands ]────────────────────────────────────────────────────
-# PREVIEW and LIST_CMD are substituted now so fzf receives a static string
-# with no runtime variable lookups
 case "$PKG_MGR" in
   pacman)
-    LIST_CMD='pacman -Slq 2>/dev/null'
-    PREVIEW='pacman -Sii {} 2>/dev/null'
+    LIST_INSTALL='pacman -Slq 2>/dev/null'
+    LIST_REMOVE='pacman -Qqe 2>/dev/null'
+    PREVIEW_INSTALL='pacman -Sii {2} 2>/dev/null'
+    PREVIEW_REMOVE='pacman -Qi {2} 2>/dev/null'
     INSTALL_CMD="sudo pacman -S --noconfirm"
+    REMOVE_CMD="sudo pacman -Rns --noconfirm"
     ;;
-  nala)
-    LIST_CMD='apt-cache pkgnames 2>/dev/null | sort'
-    PREVIEW='apt-cache show {} 2>/dev/null | head -60'
-    INSTALL_CMD="sudo nala install -y"
+  nala | apt)
+    LIST_INSTALL='apt-cache pkgnames 2>/dev/null | sort'
+    LIST_REMOVE='apt list --installed 2>/dev/null | awk -F/ '\''NR>1{print $1}'\'' | sort'
+    PREVIEW_INSTALL='apt-cache show {2} 2>/dev/null | head -60'
+    PREVIEW_REMOVE='dpkg -s {2} 2>/dev/null | head -40'
+    INSTALL_CMD="sudo $PKG_MGR install -y"
+    REMOVE_CMD="sudo $PKG_MGR remove -y"
     ;;
-  apt)
-    LIST_CMD='apt-cache pkgnames 2>/dev/null | sort'
-    PREVIEW='apt-cache show {} 2>/dev/null | head -60'
-    INSTALL_CMD="sudo apt install -y"
-    ;;
-  dnf)
-    LIST_CMD='dnf repoquery --available --quiet 2>/dev/null | sort -u'
-    PREVIEW='dnf info {} 2>/dev/null'
-    INSTALL_CMD="sudo dnf install -y"
-    ;;
-  yum)
-    LIST_CMD='yum list available --quiet 2>/dev/null | awk "NR>2{print \$1}" | sort -u'
-    PREVIEW='yum info {} 2>/dev/null'
-    INSTALL_CMD="sudo yum install -y"
+  dnf | yum)
+    LIST_INSTALL="$PKG_MGR repoquery --available --quiet 2>/dev/null | sort -u"
+    LIST_REMOVE="$PKG_MGR list installed --quiet 2>/dev/null | awk 'NR>1{print \$1}' | sort -u"
+    PREVIEW_INSTALL="$PKG_MGR info {2} 2>/dev/null"
+    PREVIEW_REMOVE="$PKG_MGR info {2} 2>/dev/null"
+    INSTALL_CMD="sudo $PKG_MGR install -y"
+    REMOVE_CMD="sudo $PKG_MGR remove -y"
     ;;
   zypper)
-    LIST_CMD='zypper packages --not-installed-only 2>/dev/null | awk -F"|" "NR>2{gsub(/ /,\"\",\$3); print \$3}" | sort -u'
-    PREVIEW='zypper info {} 2>/dev/null'
+    LIST_INSTALL="zypper packages --not-installed-only 2>/dev/null | awk -F'|' 'NR>2{gsub(/ /,\"\",\$3); print \$3}' | sort -u"
+    LIST_REMOVE="zypper packages --installed-only 2>/dev/null | awk -F'|' 'NR>2{gsub(/ /,\"\",\$3); print \$3}' | sort -u"
+    PREVIEW_INSTALL='zypper info {2} 2>/dev/null'
+    PREVIEW_REMOVE='zypper info {2} 2>/dev/null'
     INSTALL_CMD="sudo zypper install -y"
+    REMOVE_CMD="sudo zypper remove -y"
     ;;
   apk)
-    LIST_CMD='apk search --quiet 2>/dev/null | sort'
-    PREVIEW='apk info -a {} 2>/dev/null'
+    LIST_INSTALL='apk search --quiet 2>/dev/null | sort'
+    LIST_REMOVE='apk info 2>/dev/null | sort'
+    PREVIEW_INSTALL='apk info -a {2} 2>/dev/null'
+    PREVIEW_REMOVE='apk info -a {2} 2>/dev/null'
     INSTALL_CMD="sudo apk add"
+    REMOVE_CMD="sudo apk del"
     ;;
 esac
+
+# ──[ List Scripts ]────────────────────────────────────────────────────────────
+# fzf reload binds run in a subshell that has no access to shell functions or
+# variables from this script. Writing the list commands to temp executables
+# lets the bind strings call them directly by path with no variable expansion.
+INSTALL_SCRIPT=$(mktemp)
+REMOVE_SCRIPT=$(mktemp)
+trap 'rm -f "$INSTALL_SCRIPT" "$REMOVE_SCRIPT"' EXIT
+
+printf "#!/usr/bin/env bash\n%s | sed 's|^|install |'\n" "$LIST_INSTALL" > "$INSTALL_SCRIPT"
+printf "#!/usr/bin/env bash\n%s | sed 's|^|remove |'\n"  "$LIST_REMOVE"  > "$REMOVE_SCRIPT"
+chmod +x "$INSTALL_SCRIPT" "$REMOVE_SCRIPT"
 
 # ──[ Interactive Browser ]─────────────────────────────────────────────────────
 fzf_args=(
   --multi
-  --header "[$PKG_MGR] tab: multi-select  enter: install  ctrl-c: cancel"
-  --preview "$PREVIEW"
+  --prompt '[INSTALL] > '
+  --header "[$PKG_MGR] alt+r: remove mode  alt+i: install mode  tab: multi-select"
+  --preview "$PREVIEW_INSTALL"
   --preview-label " Package Info "
   --preview-label-pos 'bottom'
   --preview-window 'down:60%:wrap'
+  --color 'pointer:green,marker:green'
   --bind 'alt-p:toggle-preview'
   --bind 'alt-d:preview-half-page-down,alt-u:preview-half-page-up'
   --bind 'alt-k:preview-up,alt-j:preview-down'
-  --color 'pointer:green,marker:green'
+  --bind "alt-r:reload($REMOVE_SCRIPT)+change-prompt([REMOVE] > )+change-preview($PREVIEW_REMOVE)+change-header([$PKG_MGR] alt+i: install mode  tab: multi-select)+change-color(pointer:red,marker:red)"
+  --bind "alt-i:reload($INSTALL_SCRIPT)+change-prompt([INSTALL] > )+change-preview($PREVIEW_INSTALL)+change-header([$PKG_MGR] alt+r: remove mode  tab: multi-select)+change-color(pointer:green,marker:green)"
 )
 
-selections=$(eval "$LIST_CMD" | fzf "${fzf_args[@]}" || true)
+selections=$("$INSTALL_SCRIPT" | fzf "${fzf_args[@]}" || true)
 
 [[ -z "$selections" ]] && exit 0
 
-# ──[ Install ]─────────────────────────────────────────────────────────────────
+# ──[ Apply ]───────────────────────────────────────────────────────────────────
+install_pkgs=()
+remove_pkgs=()
+
+while IFS=' ' read -r action name; do
+  [[ -z "$name" ]] && continue
+  case "$action" in
+    install) install_pkgs+=("$name") ;;
+    remove)  remove_pkgs+=("$name") ;;
+  esac
+done <<< "$selections"
+
 cache_sudo
 
-mapfile -t pkgs <<< "$selections"
-printf "%s Installing %d package(s): %s\n" "$(BANNER)" "${#pkgs[@]}" "${pkgs[*]}"
-$INSTALL_CMD "${pkgs[@]}"
+if (( ${#install_pkgs[@]} > 0 )); then
+  printf "%s Installing: %s\n" "$(BANNER)" "${install_pkgs[*]}"
+  $INSTALL_CMD "${install_pkgs[@]}"
+fi
+
+if (( ${#remove_pkgs[@]} > 0 )); then
+  printf "%s Removing: %s\n" "$(BANNER)" "${remove_pkgs[*]}"
+  $REMOVE_CMD "${remove_pkgs[@]}"
+fi
+
 printf "%s Done\n" "$(COMPLETE)"
