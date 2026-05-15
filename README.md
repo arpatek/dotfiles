@@ -14,7 +14,7 @@ Personal dotfiles for Zsh, tmux, Vim/Neovim, Git, and SSH — Linux-first, manag
 | `install.sh` | Full bootstrap — packages, tools, pyenv, zinit, fonts, LazyVim, symlinks |
 | `uninstall.sh` | Full cleanup — removes all tools, symlinks, and bootstrapped environments |
 | `upu` | Universal Package Updater |
-| `ipkg` | Interactive package browser — fuzzy-find and install packages via fzf |
+| `ipkg` | Interactive package browser — fuzzy-find to install or remove packages |
 | `.zshrc` | Zsh config — Zinit, fzf, zoxide, pyenv, Go, plugins |
 | `.zprofile` | Login shell env — PATH, pyenv, Go (active for non-interactive SSH) |
 | `.zsh_aliases` | Aliases for navigation, git, SSH, networking, and system |
@@ -114,6 +114,19 @@ Options:
 | `pi` / `rhel` / `dev` | SSH into configured hosts |
 | `ports` | `lsof -i -P -n` |
 | `reload` | `exec zsh` |
+
+---
+
+## ipkg — Interactive Package Browser
+
+| Key | Action |
+|---|---|
+| `alt+r` | Switch to remove mode — installed packages, red markers |
+| `alt+i` | Switch to install mode — available packages, green markers |
+| `Tab` | Multi-select |
+| `alt+p` | Toggle preview panel |
+| `alt+j` / `alt+k` | Scroll preview line by line |
+| `alt+d` / `alt+u` | Scroll preview half-page |
 
 ---
 
