@@ -64,8 +64,10 @@ set visualbell
 " Enable mouse support in all modes
 set mouse=a
 
-" Use system clipboard
-set clipboard=unnamedplus
+" Use system clipboard if the build supports it (vim-minimal on RHEL does not)
+if has('clipboard')
+  set clipboard=unnamedplus
+endif
 
 " Keep undo history across sessions (requires Vim compiled with +persistent_undo)
 if has("persistent_undo")
