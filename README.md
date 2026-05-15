@@ -14,6 +14,7 @@ Personal dotfiles for Zsh, tmux, Vim/Neovim, Git, and SSH — Linux-first, manag
 | `install.sh` | Full bootstrap — packages, tools, pyenv, zinit, fonts, LazyVim, symlinks |
 | `uninstall.sh` | Full cleanup — removes all tools, symlinks, and bootstrapped environments |
 | `upu` | Universal Package Updater |
+| `ipkg` | Interactive package browser — fuzzy-find and install packages via fzf |
 | `.zshrc` | Zsh config — Zinit, fzf, zoxide, pyenv, Go, plugins |
 | `.zprofile` | Login shell env — PATH, pyenv, Go (active for non-interactive SSH) |
 | `.zsh_aliases` | Aliases for navigation, git, SSH, networking, and system |

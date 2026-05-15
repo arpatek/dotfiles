@@ -165,10 +165,11 @@ if command -v fc-cache >/dev/null 2>&1; then
 fi
 printf "\n"
 
-# ── upu ───────────────────────────────────────────────────────────────────────
-printf "%s Removing upu\n" "$(BANNER)"
+# ── upu / ipkg ────────────────────────────────────────────────────────────────
+printf "%s Removing upu and ipkg\n" "$(BANNER)"
 sleep 0.5
 remove_file /usr/local/bin/upu true
+remove_file /usr/local/bin/ipkg true
 printf "\n"
 
 # ── SSH Config ────────────────────────────────────────────────────────────────

@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+# =============================================================================
+# Script Name: ipkg
+# Description: Interactive package browser — fuzzy-find and install packages
+#              using fzf with a live preview of package details.
+# Author: Juan Garcia (arpatek)
+# Created: 2026-05-15
+# Version: 1.0
+# =============================================================================
+
+# ──[ Bash Version Check ]──────────────────────────────────────────────────────
+if ((BASH_VERSINFO[0] < 4)); then
+  printf "ipkg requires bash 4 or higher (detected: %s)\n" "$BASH_VERSION" >&2
+  exit 1
+fi
+
+set -eo pipefail
+
+# ──[ Paths ]───────────────────────────────────────────────────────────────────
+DOTFILES_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+
+# ──[ Shared Utilities ]────────────────────────────────────────────────────────
+source "$DOTFILES_DIR/lib.sh"
+
+# ──[ Dependency Check ]────────────────────────────────────────────────────────
+if ! command -v fzf >/dev/null 2>&1; then
+  printf "%s fzf is required but not installed\n" "$(FAILED)" >&2
+  exit 1
+fi
+
+# ──[ Package Manager Detection ]───────────────────────────────────────────────
+PKG_MGR=""
+for pm in nala apt dnf pacman yum zypper apk; do
+  if command -v "$pm" >/dev/null 2>&1; then
+    PKG_MGR="$pm"
+    break
+  fi
+done
+
+if [[ -z "$PKG_MGR" ]]; then
+  printf "%s No supported package manager found\n" "$(FAILED)" >&2
+  exit 1
+fi
+
+# ──[ Per-manager Commands ]────────────────────────────────────────────────────
+# PREVIEW and LIST_CMD are substituted now so fzf receives a static string
+# with no runtime variable lookups
+case "$PKG_MGR" in
+  pacman)
+    LIST_CMD='pacman -Slq 2>/dev/null'
+    PREVIEW='pacman -Sii {} 2>/dev/null'
+    INSTALL_CMD="sudo pacman -S --noconfirm"
+    ;;
+  nala)
+    LIST_CMD='apt-cache pkgnames 2>/dev/null | sort'
+    PREVIEW='apt-cache show {} 2>/dev/null | head -60'
+    INSTALL_CMD="sudo nala install -y"
+    ;;
+  apt)
+    LIST_CMD='apt-cache pkgnames 2>/dev/null | sort'
+    PREVIEW='apt-cache show {} 2>/dev/null | head -60'
+    INSTALL_CMD="sudo apt install -y"
+    ;;
+  dnf)
+    LIST_CMD='dnf repoquery --available --quiet 2>/dev/null | sort -u'
+    PREVIEW='dnf info {} 2>/dev/null'
+    INSTALL_CMD="sudo dnf install -y"
+    ;;
+  yum)
+    LIST_CMD='yum list available --quiet 2>/dev/null | awk "NR>2{print \$1}" | sort -u'
+    PREVIEW='yum info {} 2>/dev/null'
+    INSTALL_CMD="sudo yum install -y"
+    ;;
+  zypper)
+    LIST_CMD='zypper packages --not-installed-only 2>/dev/null | awk -F"|" "NR>2{gsub(/ /,\"\",\$3); print \$3}" | sort -u'
+    PREVIEW='zypper info {} 2>/dev/null'
+    INSTALL_CMD="sudo zypper install -y"
+    ;;
+  apk)
+    LIST_CMD='apk search --quiet 2>/dev/null | sort'
+    PREVIEW='apk info -a {} 2>/dev/null'
+    INSTALL_CMD="sudo apk add"
+    ;;
+esac
+
+# ──[ Interactive Browser ]─────────────────────────────────────────────────────
+fzf_args=(
+  --multi
+  --header "[$PKG_MGR] tab: multi-select  enter: install  ctrl-c: cancel"
+  --preview "$PREVIEW"
+  --preview-label " Package Info "
+  --preview-label-pos 'bottom'
+  --preview-window 'down:60%:wrap'
+  --bind 'alt-p:toggle-preview'
+  --bind 'alt-d:preview-half-page-down,alt-u:preview-half-page-up'
+  --bind 'alt-k:preview-up,alt-j:preview-down'
+  --color 'pointer:green,marker:green'
+)
+
+selections=$(eval "$LIST_CMD" | fzf "${fzf_args[@]}" || true)
+
+[[ -z "$selections" ]] && exit 0
+
+# ──[ Install ]─────────────────────────────────────────────────────────────────
+cache_sudo
+
+mapfile -t pkgs <<< "$selections"
+printf "%s Installing %d package(s): %s\n" "$(BANNER)" "${#pkgs[@]}" "${pkgs[*]}"
+$INSTALL_CMD "${pkgs[@]}"
+printf "%s Done\n" "$(COMPLETE)"

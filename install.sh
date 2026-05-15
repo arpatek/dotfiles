@@ -383,6 +383,12 @@ sudo ln -sf "$DOTFILES_DIR/upu" /usr/local/bin/upu
 printf "%s upu installed to /usr/local/bin/upu\n\n" "$(COMPLETE)"
 sleep 1
 
+printf "%s Installing ipkg\n" "$(BANNER)"
+sleep 0.5
+sudo ln -sf "$DOTFILES_DIR/ipkg" /usr/local/bin/ipkg
+printf "%s ipkg installed to /usr/local/bin/ipkg\n\n" "$(COMPLETE)"
+sleep 1
+
 # ──[ Default Shell ]───────────────────────────────────────────────────────────
 ZSH_BIN="$(command -v zsh 2>/dev/null)"
 if [[ -n "$ZSH_BIN" && "$SHELL" != "$ZSH_BIN" ]]; then
