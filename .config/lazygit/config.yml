@@ -1,0 +1,38 @@
+# ┌──────────────────────────────────────────────────────────────┐
+# │ arpatek - lazygit config                                     │
+# └──────────────────────────────────────────────────────────────┘
+
+gui:
+  nerdFontsVersion: "3"
+
+  # Catppuccin Mocha theme
+  theme:
+    activeBorderColor:
+      - '#cba6f7'   # mauve
+      - bold
+    inactiveBorderColor:
+      - '#585b70'   # surface2
+    searchingActiveBorderColor:
+      - '#f9e2af'   # yellow
+    optionsTextColor:
+      - '#89b4fa'   # blue
+    selectedLineBgColor:
+      - '#313244'   # surface0
+    selectedRangeBgColor:
+      - '#313244'   # surface0
+    cherryPickedCommitBgColor:
+      - '#45475a'   # surface1
+    cherryPickedCommitFgColor:
+      - '#cba6f7'   # mauve
+    unstagedChangesColor:
+      - '#f38ba8'   # red
+    defaultFgColor:
+      - '#cdd6f4'   # text
+
+git:
+  # Show a graph in the log panel (mixed = commits + merges)
+  log:
+    showGraph: always
+
+# Exit immediately if lazygit is opened outside a git repo
+notARepository: quit
