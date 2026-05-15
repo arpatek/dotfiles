@@ -65,7 +65,7 @@ case "$PKG_MGR" in
     ;;
   dnf | yum)
     LIST_INSTALL="$PKG_MGR repoquery --available --quiet 2>/dev/null | sort -u"
-    LIST_REMOVE="$PKG_MGR list installed --quiet 2>/dev/null | awk 'NR>1{print \$1}' | sort -u"
+    LIST_REMOVE="rpm -qa --qf '%{NAME}\n' 2>/dev/null | sort -u"
     PREVIEW_INSTALL="$PKG_MGR info {2} 2>/dev/null"
     PREVIEW_REMOVE="$PKG_MGR info {2} 2>/dev/null"
     INSTALL_CMD="sudo $PKG_MGR install -y"
@@ -114,8 +114,8 @@ fzf_args=(
   --bind 'alt-p:toggle-preview'
   --bind 'alt-d:preview-half-page-down,alt-u:preview-half-page-up'
   --bind 'alt-k:preview-up,alt-j:preview-down'
-  --bind "alt-r:reload($REMOVE_SCRIPT)+change-prompt([REMOVE] > )+change-preview($PREVIEW_REMOVE)+change-header([$PKG_MGR] alt+i: install mode  tab: multi-select)+change-color(pointer:red,marker:red)"
-  --bind "alt-i:reload($INSTALL_SCRIPT)+change-prompt([INSTALL] > )+change-preview($PREVIEW_INSTALL)+change-header([$PKG_MGR] alt+r: remove mode  tab: multi-select)+change-color(pointer:green,marker:green)"
+  --bind "alt-r:reload($REMOVE_SCRIPT)+change-prompt([REMOVE] > )+change-preview($PREVIEW_REMOVE)+change-header([$PKG_MGR] alt+i: install mode  tab: multi-select)"
+  --bind "alt-i:reload($INSTALL_SCRIPT)+change-prompt([INSTALL] > )+change-preview($PREVIEW_INSTALL)+change-header([$PKG_MGR] alt+r: remove mode  tab: multi-select)"
 )
 
 selections=$("$INSTALL_SCRIPT" | fzf "${fzf_args[@]}" || true)
