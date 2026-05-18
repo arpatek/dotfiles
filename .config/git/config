@@ -46,5 +46,4 @@
 
 [commit]
   gpgsign = false
-  template = ~/.git-commit-template
-
+  template = ~/.config/git/commit-template

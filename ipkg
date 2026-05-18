@@ -64,9 +64,9 @@ case "$PKG_MGR" in
     REMOVE_CMD="sudo $PKG_MGR remove -y"
     ;;
   dnf | yum)
-    # repoquery streams results as repos are queried — fzf opens immediately
-    # but the list fills in over ~30s on large Fedora repo sets
-    LIST_INSTALL="$PKG_MGR repoquery --available --quiet --qf '%{name}' 2>/dev/null | sort -u"
+    # DNF5 (Fedora 41+) changed --qf behaviour — use list + awk to strip arch
+    # suffix instead. --color=never prevents ANSI codes leaking into pkg names.
+    LIST_INSTALL="$PKG_MGR list --available --color=never 2>/dev/null | tail -n +2 | awk '{print \$1}' | sed 's/\\.[^.]*\$//' | sort -u"
     LIST_REMOVE="rpm -qa --qf '%{NAME}\n' 2>/dev/null | sort -u"
     PREVIEW_INSTALL="$PKG_MGR info {2} 2>/dev/null"
     PREVIEW_REMOVE="$PKG_MGR info {2} 2>/dev/null"
@@ -125,6 +125,7 @@ chmod +x "$INSTALL_SCRIPT" "$REMOVE_SCRIPT"
 # ──[ Interactive Browser ]─────────────────────────────────────────────────────
 fzf_args=(
   --height 100%
+  --layout=reverse
   --multi
   --prompt '[INSTALL] > '
   --header "[$PKG_MGR] alt+r: remove mode  alt+i: install mode  tab: multi-select"

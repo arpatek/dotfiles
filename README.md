@@ -11,23 +11,24 @@ Personal dotfiles for Zsh, tmux, Vim/Neovim, Git, and SSH — Linux-first, manag
 | File | Description |
 |---|---|
 | `lib.sh` | Shared utilities — colors, decoration functions, `cache_sudo` |
-| `install.sh` | Full bootstrap — packages, tools, pyenv, zinit, fonts, LazyVim, symlinks |
+| `install.sh` | Full bootstrap — packages, tools, pyenv, starship, fonts, LazyVim, symlinks |
 | `uninstall.sh` | Full cleanup — removes all tools, symlinks, and bootstrapped environments |
 | `lpu` | Linux Package Updater |
 | `ipkg` | Interactive package browser — fuzzy-find to install or remove packages |
-| `.zshrc` | Zsh config — Zinit, fzf, zoxide, pyenv, Go, plugins |
-| `.zprofile` | Login shell env — PATH, pyenv, Go (active for non-interactive SSH) |
-| `.zsh_aliases` | Aliases for navigation, git, SSH, networking, and system |
-| `.zsh/themes/arpatek.zsh-theme` | Custom two-line Zsh prompt with git status |
-| `.tmux.conf` | tmux — truecolor, vi copy mode, 50k scrollback, focus events |
-| `.gitconfig` | Git config — aliases, editor, fetch prune, autosquash, colorMoved |
-| `.git-commit-template` | Conventional commit template |
-| `.vimrc` | Minimal Vim config for CLI/DevOps workflows |
+| `.zshenv` | Sets `ZDOTDIR` so zsh finds all config under `~/.config/zsh/` |
+| `.config/zsh/.zshrc` | Zsh config — plugins, fzf, zoxide, pyenv, Go, starship |
+| `.config/zsh/.zprofile` | Login shell env — PATH, pyenv, Go (active for non-interactive SSH) |
+| `.config/zsh/.zsh_aliases` | Aliases for navigation, git, SSH, networking, and system |
+| `.config/starship.toml` | Starship prompt — two-line with git status, path, and venv |
+| `.config/git/config` | Git config — aliases, editor, fetch prune, autosquash, colorMoved |
+| `.config/git/commit-template` | Conventional commit template |
+| `.config/vim/vimrc` | Minimal Vim config for CLI/DevOps workflows |
+| `.config/tmux/tmux.conf` | tmux — truecolor, vi copy mode, 50k scrollback, focus events |
 | `.config/nvim/init.vim` | Neovim fallback for nvim < 0.9 or no network (LazyVim used otherwise) |
+| `.config/curlrc` | curl defaults — follow redirects, retry, fail-fast |
+| `.config/lazygit/config.yml` | lazygit catppuccin mocha theme |
 | `.ssh/config` | SSH — global ControlMaster defaults and connection templates |
 | `.editorconfig` | Universal indent/charset rules for all editors |
-| `.curlrc` | curl defaults — follow redirects, retry, fail-fast |
-| `.config/lazygit/config.yml` | lazygit catppuccin mocha theme |
 | `.gitignore` | Repo-level ignores — swap files, history, pyc, secrets |
 
 ---
@@ -44,9 +45,11 @@ cd ~/dotfiles
 
 The installer will:
 - Detect your distro and install missing packages
-- Install Go, lazygit, pyenv, zinit, and JetBrains Mono Nerd Font
+- Install Go, lazygit, fzf, zoxide, starship, and JetBrains Mono Nerd Font
+- Clone zsh plugins directly — no plugin manager needed
 - Clone the LazyVim starter (requires nvim ≥ 0.9; falls back to `init.vim`)
-- Symlink all dotfiles into place
+- Symlink all dotfiles into place under `~/.config/`
+- Archive and remove leftover bash config files from `$HOME`
 - Set zsh as your default shell via `chsh`
 - Launch zsh on completion
 
@@ -62,7 +65,20 @@ The installer will:
 ./uninstall.sh
 ```
 
-Removes all symlinks, tools, Go, pyenv, zinit, LazyVim, fonts, and reverts the default shell.
+Removes all symlinks, tools, Go, pyenv, starship, plugins, LazyVim, fonts, and reverts the default shell.
+
+---
+
+## Home Directory Layout
+
+All shell and tool config lives under `~/.config/` (XDG-compliant). The only files
+installed directly to `$HOME` are:
+
+| File | Why it must stay in `$HOME` |
+|---|---|
+| `~/.zshenv` | Sets `ZDOTDIR` — zsh reads this before any other file |
+| `~/.editorconfig` | EditorConfig walks up from the project root, falls back to `$HOME` |
+| `~/.ssh/` | SSH has no XDG support |
 
 ---
 
@@ -86,12 +102,14 @@ Options:
 
 | Feature | Detail |
 |---|---|
-| Plugin manager | Zinit with lazy loading and annexes |
+| No plugin manager | Plugins cloned to `~/.config/zsh/plugins/` by the installer |
 | Syntax highlighting | `fast-syntax-highlighting` — faster than zsh-syntax-highlighting |
 | Autosuggestions | History-first with completion fallback, 20-char buffer cap |
-| Completions | `zsh-completions` with 24-hour compinit dump cache |
+| History substring search | Type any part of a past command, Up/Down cycles all matches |
+| Completions | `zsh-completions` with 24-hour compinit dump cache in `~/.cache/zsh/` |
 | Fuzzy finder | fzf — `Ctrl+R` history, `Ctrl+T` file picker, `Alt+C` fuzzy cd |
 | Smart jump | zoxide — `z <query>` jumps to most-frecent directory, `zi` interactive |
+| Prompt | Starship — two-line, shows user@host, path, git branch+status, venv |
 | History | 50,000 entries, all-duplicates removed, timestamps, shared across sessions |
 | `AUTO_CD` | Type a directory name to navigate without `cd` |
 | `GLOB_DOTS` | Glob patterns include dotfiles without `.*` |
