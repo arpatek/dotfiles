@@ -19,7 +19,7 @@ Personal dotfiles for Zsh, tmux, Vim/Neovim, Git, and SSH — Linux-first, manag
 | `.config/zsh/.zshrc` | Zsh config — plugins, fzf, zoxide, pyenv, Go, starship |
 | `.config/zsh/.zprofile` | Login shell env — PATH, pyenv, Go (active for non-interactive SSH) |
 | `.config/zsh/.zsh_aliases` | Aliases for navigation, git, SSH, networking, and system |
-| `.config/starship.toml` | Starship prompt — two-line with git status, path, and venv |
+| `.config/starship.toml` | Starship prompt — catppuccin macchiato palette, two-line with git, path, OS icon |
 | `.config/git/config` | Git config — aliases, editor, fetch prune, autosquash, colorMoved |
 | `.config/git/commit-template` | Conventional commit template |
 | `.config/vim/vimrc` | Minimal Vim config for CLI/DevOps workflows |
@@ -65,7 +65,7 @@ The installer will:
 ./uninstall.sh
 ```
 
-Removes all symlinks, tools, Go, pyenv, starship, plugins, LazyVim, fonts, and reverts the default shell.
+Removes symlinks, tools, Go, pyenv, starship, plugins, LazyVim, and non-essential dnf packages. Restores bash config files, reverts the default shell to bash.
 
 ---
 
@@ -109,7 +109,8 @@ Options:
 | Completions | `zsh-completions` with 24-hour compinit dump cache in `~/.cache/zsh/` |
 | Fuzzy finder | fzf — `Ctrl+R` history, `Ctrl+T` file picker, `Alt+C` fuzzy cd |
 | Smart jump | zoxide — `z <query>` jumps to most-frecent directory, `zi` interactive |
-| Prompt | Starship — two-line, shows user@host, path, git branch+status, venv |
+| Prompt | Starship — catppuccin macchiato, two-line with OS icon, user@host, path, git |
+| Vi mode toggle | Double `Esc` enters vi command mode, double `Esc` again returns to emacs |
 | History | 50,000 entries, all-duplicates removed, timestamps, shared across sessions |
 | `AUTO_CD` | Type a directory name to navigate without `cd` |
 | `GLOB_DOTS` | Glob patterns include dotfiles without `.*` |
