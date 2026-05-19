@@ -1,6 +1,6 @@
 # ┌──────────────────────────────────────────────────────────────┐
 # │ arpatek - Zsh Configuration                                  │
-# │ A modern, minimal Zsh setup — no framework, no plugin mgr.  │
+# │ A modern, minimal Zsh setup — no framework, no plugin mgr.   │
 # └──────────────────────────────────────────────────────────────┘
 
 # ──[ Plugins ]─────────────────────────────────────────────────────────────────
