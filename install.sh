@@ -715,6 +715,9 @@ sleep 0.2
 link "$DOTFILES_DIR/.config/curlrc"                       ~/.config/curlrc
 sleep 0.2
 link "$DOTFILES_DIR/.config/lazygit/config.yml"           ~/.config/lazygit/config.yml
+sleep 0.2
+mkdir -p ~/.config/fastfetch
+link "$DOTFILES_DIR/.config/fastfetch/config.jsonc"       ~/.config/fastfetch/config.jsonc
 printf "\n"
 sleep 1
 
