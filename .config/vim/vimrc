@@ -1,8 +1,7 @@
 " ┌───────────────────────────────────────────────────────────┐
-" │ arpatek – .vimrc                                          │
+" │ arpatek – vimrc                                           │
 " │ Minimalist Vim config for DevOps, automation, and CLI     │
-" │ workflows. Designed for speed, clarity, and compatibility │
-" │ across provisioned Debian-based systems.                  │
+" │ workflows.                                                │
 " └───────────────────────────────────────────────────────────┘
 
 " Disable compatibility with vi (removes legacy quirks)
@@ -69,10 +68,11 @@ if has('clipboard')
   set clipboard=unnamedplus
 endif
 
-" Keep undo history across sessions (requires Vim compiled with +persistent_undo)
+" Keep undo history across sessions — store in XDG data dir to stay out of $HOME
 if has("persistent_undo")
+  let &undodir = expand('$HOME') . '/.local/share/vim/undodir'
+  if !isdirectory(&undodir) | call mkdir(&undodir, 'p', 0700) | endif
   set undofile
-  set undodir=~/.vim/undodir
 endif
 
 " Set background to dark for better theme contrast

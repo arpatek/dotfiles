@@ -1,122 +1,104 @@
 # ┌──────────────────────────────────────────────────────────────┐
 # │ arpatek - Zsh Configuration                                  │
-# │ A modern, minimal Zsh setup with plugins and a custom theme  │
+# │ A modern, minimal Zsh setup — no framework, no plugin mgr.  │
 # └──────────────────────────────────────────────────────────────┘
 
-# ──[ Plugin Manager ]──────────────────────────────────────────────────────────
-# Try standard Zinit install locations — new default, legacy fallback
-if [ -f ~/.local/share/zinit/zinit.git/zinit.zsh ]; then
-    source ~/.local/share/zinit/zinit.git/zinit.zsh
-elif [ -f ~/.zinit/bin/zinit.zsh ]; then
-    source ~/.zinit/bin/zinit.zsh
-fi
-
-# ──[ Zinit Annexes ]───────────────────────────────────────────────────────────
-# Must load before any zinit light/snippet calls — annexes extend zinit's ice
-# system, so anything that uses from"gh-r", atload, etc. depends on them
-zinit light-mode for \
-    zdharma-continuum/zinit-annex-as-monitor \
-    zdharma-continuum/zinit-annex-bin-gem-node \
-    zdharma-continuum/zinit-annex-patch-dl \
-    zdharma-continuum/zinit-annex-rust
+# ──[ Plugins ]─────────────────────────────────────────────────────────────────
+# Plugins are cloned to ~/.config/zsh/plugins/ by install.sh — no manager needed.
+# zsh-completions must be added to fpath before compinit runs
+PLUGINS_DIR="$HOME/.config/zsh/plugins"
+fpath=("${PLUGINS_DIR}/zsh-completions/src" $fpath)
+source "${PLUGINS_DIR}/zsh-autosuggestions/zsh-autosuggestions.zsh"
 
 # ──[ Completion System ]───────────────────────────────────────────────────────
-# zsh-completions must load before compinit to register its extra completions
-zinit light zsh-users/zsh-completions
+ZSH_CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
+[[ -d "$ZSH_CACHE" ]] || mkdir -p "$ZSH_CACHE"
 autoload -Uz compinit
 # Rebuild the completion dump only if it is older than 24 hours; otherwise
 # load from cache with -C (skips security check and full file scan — ~100ms faster)
-if [[ -n ~/.zcompdump(#qN.mh+24) ]]; then
-    compinit
+if [[ -n ${ZSH_CACHE}/.zcompdump(#qN.mh+24) ]]; then
+    compinit -d "${ZSH_CACHE}/.zcompdump"
 else
-    compinit -C
+    compinit -C -d "${ZSH_CACHE}/.zcompdump"
 fi
 zmodload zsh/complist
 
 zstyle ':completion:*' menu select
 zstyle ':completion:*' verbose yes
 zstyle ':completion:*:descriptions' format '%F{blue}-- %d --%f'
-
-# ──[ Prompt Prerequisites ]────────────────────────────────────────────────────
-# PROMPT_SUBST lets zsh expand $VARIABLES inside PROMPT on every render.
-# Without it, $PROMPT_PWD/$PROMPT_GIT show up as literal strings.
-setopt PROMPT_SUBST
-
-# Populate $fg[], $bg[], and $reset_color — used by the custom theme.
-# Previously OMZ's init script did this automatically; now we do it explicitly.
-autoload -U colors && colors
-
-# lib/git.zsh defines git_prompt_short_sha and git_prompt_status called by the
-# custom theme. These live in the OMZ library layer, not the plugin itself.
-zinit snippet OMZ::lib/git.zsh
-
-# ──[ Git Plugin (Oh-My-Zsh snippet) ]──────────────────────────────────────────
-# Git aliases (ga, gco, glg, etc.) — avoids cloning the full 300 MB OMZ repo
-zinit snippet OMZ::plugins/git/git.plugin.zsh
+zstyle ':completion:*' matcher-list 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}'
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+zstyle ':completion:*' rehash true
 
 # ──[ Autosuggestions ]─────────────────────────────────────────────────────────
-zinit light zsh-users/zsh-autosuggestions
 ZSH_AUTOSUGGEST_STRATEGY=(history completion)
 # Cap the length of commands autosuggestions will try to match — without this,
 # long pipeline history entries cause noticeable lag on every keystroke
 ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
 
-# ──[ Custom Theme ]────────────────────────────────────────────────────────────
-source ~/.zsh/themes/arpatek.zsh-theme
+# ──[ History Substring Search ]────────────────────────────────────────────────
+# Type any part of a previous command, then use Up/Down to cycle matches.
+# Complements autosuggestions: autosuggestions shows the top match inline,
+# this lets you browse all matches with the arrow keys.
+# Must load before fast-syntax-highlighting.
+source "${PLUGINS_DIR}/zsh-history-substring-search/zsh-history-substring-search.zsh"
+bindkey '^[[A' history-substring-search-up
+bindkey '^[[B' history-substring-search-down
+
+# ──[ Vi Mode Toggle ]──────────────────────────────────────────────────────────
+# Emacs mode by default. Double Esc enters vi command mode; double Esc again
+# returns to emacs. Single Esc inside vi insert still goes to vi command (normal
+# vi behaviour). Starship's vimcmd_symbol updates on each toggle.
+_toggle_vi_mode() {
+  if [[ "$KEYMAP" == vicmd ]] || [[ "$KEYMAP" == viins ]]; then
+    bindkey -e
+  else
+    bindkey -v
+    zle -K vicmd
+  fi
+  zle reset-prompt
+}
+zle -N _toggle_vi_mode
+bindkey          '\e\e' _toggle_vi_mode
+bindkey -M vicmd '\e\e' _toggle_vi_mode
+bindkey -M viins '\e\e' _toggle_vi_mode
+
+# 50ms — short enough to feel instant, long enough to catch the second Esc
+KEYTIMEOUT=5
 
 # ──[ Syntax Highlighting ]─────────────────────────────────────────────────────
 # Must load after all other plugins — it wraps zle widgets and will miss any
 # widgets registered after it loads.
-# fast-syntax-highlighting is a drop-in replacement that is measurably faster
-# on large pastes and adds more highlight categories (paths, aliases, builtins)
-zinit light zdharma-continuum/fast-syntax-highlighting
+source "${PLUGINS_DIR}/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh"
 
 # ──[ Fuzzy Finder (fzf) ]──────────────────────────────────────────────────────
 # Ctrl+R → fuzzy history search
 # Ctrl+T → fuzzy file picker (inserts path at cursor)
 # Alt+C  → fuzzy cd into a subdirectory
-zinit ice from"gh-r" as"program"
-zinit light junegunn/fzf
-zinit snippet 'https://raw.githubusercontent.com/junegunn/fzf/master/shell/key-bindings.zsh'
-zinit snippet 'https://raw.githubusercontent.com/junegunn/fzf/master/shell/completion.zsh'
+eval "$(fzf --zsh)"
 export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border'
 
 # ──[ Smart Directory Jump (zoxide) ]───────────────────────────────────────────
 # z <query>  → jump to most-frecent directory matching the query
 # zi         → interactive picker using fzf
-# atload runs eval after zinit adds zoxide to PATH, so the shell functions
-# (z, zi, __zoxide_hook) are available immediately on first shell open
-zinit ice from"gh-r" as"program" atload"eval \$(zoxide init zsh)"
-zinit light ajeetdsouza/zoxide
+eval "$(zoxide init zsh)"
 
 # ──[ User Aliases ]────────────────────────────────────────────────────────────
-[[ -f ~/.zsh_aliases ]] && source ~/.zsh_aliases
-
-# ──[ Colored Man Pages ]───────────────────────────────────────────────────────
-export LESS='-R'
-export MANPAGER='less -R'
-
-# LESS_TERMCAP_* maps terminal capabilities to ANSI escape sequences
-# mb = start blink      → bold red
-export LESS_TERMCAP_mb=$'\e[1;31m'
-# md = start bold       → bold cyan
-export LESS_TERMCAP_md=$'\e[1;36m'
-# me = end bold/blink   → reset
-export LESS_TERMCAP_me=$'\e[0m'
-# so = start standout   → yellow on blue (search highlights)
-export LESS_TERMCAP_so=$'\e[01;44;33m'
-# se = end standout     → reset
-export LESS_TERMCAP_se=$'\e[0m'
-# us = start underline  → bold green
-export LESS_TERMCAP_us=$'\e[1;32m'
-# ue = end underline    → reset
-export LESS_TERMCAP_ue=$'\e[0m'
+[[ -f "$HOME/.config/zsh/.zsh_aliases" ]] && source "$HOME/.config/zsh/.zsh_aliases"
 
 # ──[ Default Editor ]──────────────────────────────────────────────────────────
 export EDITOR='nvim'
+export VISUAL='nvim'
+# Required for GPG commit signing — without this, pinentry cannot find the tty
+export GPG_TTY=$(tty)
+
+# ──[ Manpages ]────────────────────────────────────────────────────────────────
+export LESS='-R'
+# bat renders man pages with full syntax highlighting — no LESS_TERMCAP_* needed
+export MANPAGER='bat -l man -p'
 
 # ──[ History ]─────────────────────────────────────────────────────────────────
-HISTFILE=~/.zsh_history
+HISTFILE="$HOME/.config/zsh/.zsh_history"
 HISTSIZE=50000
 SAVEHIST=50000
 setopt EXTENDED_HISTORY       # record : <timestamp>:<elapsed>;<cmd> per entry
@@ -127,7 +109,6 @@ setopt HIST_VERIFY            # expand !! in place before executing
 
 # ──[ Shell Behavior ]──────────────────────────────────────────────────────────
 setopt AUTO_CD    # type a directory name alone to cd into it
-# setopt CORRECT    # suggest corrections for mistyped commands
 setopt GLOB_DOTS  # include dotfiles in glob patterns without needing .*
 setopt NO_BEEP    # disable terminal bell on errors or no match
 
@@ -149,3 +130,6 @@ export PATH
 export PYENV_ROOT="$HOME/.pyenv"
 [[ -d "$PYENV_ROOT/bin" ]] && export PATH="$PYENV_ROOT/bin:$PATH"
 command -v pyenv >/dev/null && eval "$(pyenv init -)"
+
+# ──[ Prompt (Starship) ]───────────────────────────────────────────────────────
+eval "$(starship init zsh)"

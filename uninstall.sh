@@ -5,7 +5,7 @@
 #              and bootstrapped environments, leaving a clean system state.
 # Author: Juan Garcia (arpatek)
 # Created: 2026-05-05
-# Version: 3.0
+# Version: 4.0
 # =============================================================================
 
 # ──[ Bash Version Check ]──────────────────────────────────────────────────────
@@ -105,9 +105,42 @@ restore_backups() {
 
 # ──[ Uninstallation ]──────────────────────────────────────────────────────────
 # ORDER MATTERS: tools and data first, shell config and symlinks last.
-# Removing .zshrc early destroys PATH for the rest of the script.
+# Removing shell configs early destroys PATH for the rest of the script.
 printf "%s Starting Full Dotfiles Uninstall\n" "$(BANNER)"
 sleep 1
+
+# ── dnf packages ─────────────────────────────────────────────────────────────
+# Remove non-essential packages the installer bootstraps via the package manager.
+# Core dev tools (git, curl, wget, gcc, make, etc.) are intentionally kept.
+remove_dnf_packages() {
+  command -v dnf >/dev/null 2>&1 || return 0
+
+  local -a pkgs=(
+    zsh tmux neovim btop ncdu bat fzf zoxide
+    zlib-devel bzip2-devel readline-devel sqlite-devel openssl-devel
+    libffi-devel xz-devel tk-devel libuuid-devel
+  )
+
+  local found=false
+  for pkg in "${pkgs[@]}"; do
+    if rpm -q "$pkg" >/dev/null 2>&1; then
+      found=true
+      printf "%s Removing %s...\n" "$(PLUS)" "$pkg"
+      sudo dnf remove -y "$pkg" \
+        && printf "%s Removed %s\n" "$(COMPLETE)" "$pkg" \
+        || warn "Could not remove $pkg"
+    else
+      printf "%s Not installed, skipping: %s\n" "$(PLUS)" "$pkg"
+    fi
+  done
+
+  $found || printf "%s No dnf packages to remove\n" "$(COMPLETE)"
+}
+
+printf "%s Removing dnf packages\n" "$(BANNER)"
+sleep 0.5
+remove_dnf_packages
+printf "\n"
 
 # ── lazygit ───────────────────────────────────────────────────────────────────
 printf "%s Removing lazygit\n" "$(BANNER)"
@@ -135,6 +168,30 @@ printf "\n"
 printf "%s Removing bat symlink\n" "$(BANNER)"
 sleep 0.5
 remove_file "$HOME/.local/bin/bat"
+printf "\n"
+
+# ── fzf ───────────────────────────────────────────────────────────────────────
+printf "%s Removing fzf\n" "$(BANNER)"
+sleep 0.5
+remove_file /usr/local/bin/fzf true
+printf "\n"
+
+# ── zoxide ────────────────────────────────────────────────────────────────────
+printf "%s Removing zoxide\n" "$(BANNER)"
+sleep 0.5
+remove_file /usr/local/bin/zoxide true
+printf "\n"
+
+# ── starship ──────────────────────────────────────────────────────────────────
+printf "%s Removing starship\n" "$(BANNER)"
+sleep 0.5
+remove_file /usr/local/bin/starship true
+printf "\n"
+
+# ── zsh plugins ───────────────────────────────────────────────────────────────
+printf "%s Removing Zsh plugins\n" "$(BANNER)"
+sleep 0.5
+remove_dir "$HOME/.config/zsh/plugins" "~/.config/zsh/plugins"
 printf "\n"
 
 # ── Go ────────────────────────────────────────────────────────────────────────
@@ -171,20 +228,10 @@ sleep 0.5
 remove_dir "$HOME/.pyenv" "~/.pyenv"
 printf "\n"
 
-# ── zinit ─────────────────────────────────────────────────────────────────────
-printf "%s Removing zinit\n" "$(BANNER)"
-sleep 0.5
-remove_dir "$HOME/.local/share/zinit" "~/.local/share/zinit"
-printf "\n"
-
 # ── Fonts ─────────────────────────────────────────────────────────────────────
-printf "%s Removing JetBrains Mono Nerd Font\n" "$(BANNER)"
-sleep 0.5
-remove_dir "$HOME/.local/share/fonts/JetBrainsMono" "~/.local/share/fonts/JetBrainsMono"
-if command -v fc-cache >/dev/null 2>&1; then
-  fc-cache -f && printf "%s Font cache refreshed\n" "$(COMPLETE)" \
-    || warn "fc-cache failed"
-fi
+# Fonts are left in place — removing them while Ghostty is running triggers a
+# fontconfig SIGSEGV. Keeping the font is harmless and avoids the crash.
+printf "%s Keeping JetBrains Mono Nerd Font (safe to remove manually later)\n" "$(PLUS)"
 printf "\n"
 
 # ── lpu / ipkg ────────────────────────────────────────────────────────────────
@@ -215,22 +262,40 @@ fi
 # ── Dotfile symlinks — last, so PATH stays intact throughout ─────────────────
 printf "%s Removing Dotfile Symlinks\n" "$(BANNER)"
 sleep 0.5
-unlink_file ~/.zsh/themes/arpatek.zsh-theme
-unlink_file ~/.tmux.conf
-unlink_file ~/.gitconfig
-unlink_file ~/.vimrc
-unlink_file ~/.git-commit-template
+unlink_file ~/.vim/vimrc
+unlink_file ~/.config/tmux/tmux.conf
+unlink_file ~/.config/git/config
+unlink_file ~/.config/git/commit-template
+unlink_file ~/.config/starship.toml
 unlink_file ~/.editorconfig
-unlink_file ~/.curlrc
+unlink_file ~/.config/curlrc
 unlink_file ~/.config/lazygit/config.yml
-unlink_file ~/.zsh_aliases
-unlink_file ~/.zprofile
-# .zshrc removed absolutely last — removing it earlier kills PATH in the
-# current shell session and makes every subsequent command fail
-unlink_file ~/.zshrc
-remove_dir "$HOME/.zsh" "~/.zsh"
+unlink_file ~/.config/zsh/.zsh_aliases
+unlink_file ~/.config/zsh/.zprofile
+# .zshrc and .zshenv removed last — removing them earlier kills PATH
+unlink_file ~/.config/zsh/.zshrc
+unlink_file ~/.zshenv
+remove_dir "$HOME/.config/zsh" "~/.config/zsh"
 printf "\n"
 sleep 1
+
+# ── Bash Configs ─────────────────────────────────────────────────────────────
+# Always restore bash configs removed by cleanup_bash_configs during install
+printf "%s Restoring bash config files\n" "$(BANNER)"
+sleep 0.5
+local_backup=$(ls -t "$HOME/.dotfiles_backup" 2>/dev/null | head -1)
+if [[ -n "$local_backup" ]]; then
+  for f in .bashrc .bash_profile .bash_login .bash_logout .bash_aliases .bash_history; do
+    src="$HOME/.dotfiles_backup/$local_backup/$f"
+    if [[ -f "$src" ]]; then
+      cp "$src" "$HOME/$f" && printf "%s Restored ~/%s\n" "$(COMPLETE)" "$f" \
+        || warn "Could not restore $f"
+    fi
+  done
+else
+  printf "%s No backup found — bash configs could not be restored\n" "$(PLUS)"
+fi
+printf "\n"
 
 # ── Backups ───────────────────────────────────────────────────────────────────
 if confirm "Restore pre-install backups from ~/.dotfiles_backup?"; then
@@ -250,3 +315,5 @@ if (( ERRORS > 0 )); then
 else
   printf "%s Uninstall Complete — system restored to clean state\n" "$(COMPLETE)"
 fi
+
+exec bash

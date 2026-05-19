@@ -5,7 +5,7 @@
 #              backs up existing configs, and symlinks dotfiles into place.
 # Author: Juan Garcia (arpatek)
 # Created: 2026-05-05
-# Version: 2.0
+# Version: 3.0
 # =============================================================================
 
 # ──[ Bash Version Check ]──────────────────────────────────────────────────────
@@ -132,6 +132,13 @@ bootstrap_packages() {
   printf "%s Detected package manager: %s\n" "$(PLUS)" "$pm"
   sleep 0.5
 
+  # Force color output for dnf — sudo strips TERM so dnf defaults to no color
+  if [[ "$pm" == "dnf" || "$pm" == "yum" ]]; then
+    grep -q "^color=" /etc/dnf/dnf.conf 2>/dev/null \
+      || echo "color=always" | sudo tee -a /etc/dnf/dnf.conf >/dev/null
+    printf "%s dnf color output enabled\n" "$(COMPLETE)"
+  fi
+
   # ── Core tools ────────────────────────────────────────────────────────────
   # Each entry: [package-key]="binary-to-check"
   # The binary check prevents re-installing already-present tools.
@@ -225,16 +232,127 @@ bootstrap_pyenv() {
   printf "%s pyenv installed\n" "$(COMPLETE)"
 }
 
-bootstrap_zinit() {
-  if [[ -f "$HOME/.local/share/zinit/zinit.git/zinit.zsh" ]]; then
-    printf "%s zinit already installed\n" "$(COMPLETE)"
+bootstrap_starship() {
+  if command -v starship >/dev/null 2>&1; then
+    printf "%s starship already installed\n" "$(COMPLETE)"
     return
   fi
-  printf "%s Installing zinit...\n" "$(PLUS)"
-  # NO_INPUT=1 suppresses the post-install prompt about annexes — they are
-  # already declared in .zshrc so there is nothing extra to set up
-  NO_INPUT=1 bash -c "$(curl -fsSL https://raw.githubusercontent.com/zdharma-continuum/zinit/HEAD/scripts/install.sh)"
-  printf "%s zinit installed\n" "$(COMPLETE)"
+  printf "%s Installing starship...\n" "$(PLUS)"
+  # --yes skips the interactive confirmation prompt
+  curl -sS https://starship.rs/install.sh | sh -s -- --yes
+  printf "%s starship installed\n" "$(COMPLETE)"
+}
+
+bootstrap_zsh_plugins() {
+  local plugins_dir="$HOME/.config/zsh/plugins"
+  mkdir -p "$plugins_dir"
+
+  declare -A PLUGINS=(
+    [zsh-autosuggestions]="https://github.com/zsh-users/zsh-autosuggestions"
+    [zsh-completions]="https://github.com/zsh-users/zsh-completions"
+    [zsh-history-substring-search]="https://github.com/zsh-users/zsh-history-substring-search"
+    [fast-syntax-highlighting]="https://github.com/zdharma-continuum/fast-syntax-highlighting"
+  )
+
+  local plugin
+  for plugin in "${!PLUGINS[@]}"; do
+    if [[ -d "${plugins_dir}/${plugin}" ]]; then
+      printf "%s %s already installed\n" "$(COMPLETE)" "$plugin"
+    else
+      printf "%s Installing %s...\n" "$(PLUS)" "$plugin"
+      git clone --depth 1 "${PLUGINS[$plugin]}" "${plugins_dir}/${plugin}"
+      printf "%s %s installed\n" "$(COMPLETE)" "$plugin"
+    fi
+  done
+}
+
+bootstrap_fzf() {
+  # fzf --zsh was added in 0.48 — verify any existing install is new enough
+  if command -v fzf >/dev/null 2>&1 && fzf --zsh >/dev/null 2>&1; then
+    printf "%s fzf already installed\n" "$(COMPLETE)"
+    return
+  fi
+
+  local arch
+  case "$(uname -m)" in
+    x86_64)  arch="amd64" ;;
+    aarch64) arch="arm64" ;;
+    *) printf "%s Unsupported architecture for fzf: %s\n" "$(FAILED)" "$(uname -m)" >&2; return 1 ;;
+  esac
+
+  printf "%s Installing fzf...\n" "$(PLUS)"
+  local fzf_tag tmp_dir
+  fzf_tag=$(curl -fsSL "https://api.github.com/repos/junegunn/fzf/releases/latest" \
+    | grep '"tag_name"' | grep -o 'v[0-9][^"]*' | tr -d '\r') || true
+
+  if [[ -z "$fzf_tag" ]]; then
+    printf "%s Could not determine latest fzf version — skipping\n" "$(PLUS)"
+    return
+  fi
+
+  tmp_dir="$(mktemp -d)"
+  trap 'rm -rf "$tmp_dir"' RETURN
+
+  curl -fsSL \
+    "https://github.com/junegunn/fzf/releases/download/${fzf_tag}/fzf-${fzf_tag#v}-linux_${arch}.tar.gz" \
+    -o "$tmp_dir/fzf.tar.gz"
+  tar -xf "$tmp_dir/fzf.tar.gz" -C "$tmp_dir"
+  sudo install "$tmp_dir/fzf" -D -t /usr/local/bin/
+  printf "%s fzf %s installed\n" "$(COMPLETE)" "${fzf_tag#v}"
+}
+
+bootstrap_zoxide() {
+  if command -v zoxide >/dev/null 2>&1; then
+    printf "%s zoxide already installed\n" "$(COMPLETE)"
+    return
+  fi
+
+  local pm=""
+  for candidate in nala apt dnf pacman yum zypper apk; do
+    if command -v "$candidate" >/dev/null 2>&1; then
+      pm="$candidate"
+      break
+    fi
+  done
+
+  # Try package manager first — zoxide is in Fedora, Arch, and Ubuntu 21.10+
+  case "$pm" in
+    dnf | yum | pacman | nala | apt)
+      if sudo "${pm/nala/apt}" install -y zoxide 2>/dev/null \
+         && command -v zoxide >/dev/null 2>&1; then
+        printf "%s zoxide installed\n" "$(COMPLETE)"
+        return
+      fi
+      ;;
+  esac
+
+  # Fall back to GitHub releases for RHEL and other distros without zoxide in repos
+  local arch
+  case "$(uname -m)" in
+    x86_64)  arch="x86_64" ;;
+    aarch64) arch="aarch64" ;;
+    *) printf "%s Unsupported architecture for zoxide: %s\n" "$(FAILED)" "$(uname -m)" >&2; return 1 ;;
+  esac
+
+  printf "%s Installing zoxide from GitHub releases...\n" "$(PLUS)"
+  local zoxide_tag tmp_dir
+  zoxide_tag=$(curl -fsSL "https://api.github.com/repos/ajeetdsouza/zoxide/releases/latest" \
+    | grep '"tag_name"' | grep -o 'v[0-9][^"]*' | tr -d '\r') || true
+
+  if [[ -z "$zoxide_tag" ]]; then
+    printf "%s Could not determine latest zoxide version — skipping\n" "$(PLUS)"
+    return
+  fi
+
+  tmp_dir="$(mktemp -d)"
+  trap 'rm -rf "$tmp_dir"' RETURN
+
+  curl -fsSL \
+    "https://github.com/ajeetdsouza/zoxide/releases/download/${zoxide_tag}/zoxide-${zoxide_tag#v}-${arch}-unknown-linux-musl.tar.gz" \
+    -o "$tmp_dir/zoxide.tar.gz"
+  tar -xf "$tmp_dir/zoxide.tar.gz" -C "$tmp_dir"
+  sudo install "$tmp_dir/zoxide" -D -t /usr/local/bin/
+  printf "%s zoxide %s installed\n" "$(COMPLETE)" "${zoxide_tag#v}"
 }
 
 bootstrap_fonts() {
@@ -503,6 +621,40 @@ bootstrap_eza() {
   printf "%s eza %s installed\n" "$(COMPLETE)" "$eza_tag"
 }
 
+# ──[ Bash Config Cleanup ]─────────────────────────────────────────────────────
+# Back up and remove leftover bash config files from $HOME. Since we switch
+# the default shell to zsh, these are no longer loaded and only add clutter.
+cleanup_bash_configs() {
+  local -a bash_configs=(
+    "$HOME/.bashrc"
+    "$HOME/.bash_profile"
+    "$HOME/.bash_login"
+    "$HOME/.bash_logout"
+    "$HOME/.bash_aliases"
+    "$HOME/.bash_history"
+  )
+
+  local found=false
+  local f
+  for f in "${bash_configs[@]}"; do
+    [[ -f "$f" && ! -L "$f" ]] && found=true && break
+  done
+
+  if ! $found; then
+    printf "%s No bash config files found — skipping cleanup\n" "$(COMPLETE)"
+    return
+  fi
+
+  printf "%s Archiving bash config files...\n" "$(PLUS)"
+  for f in "${bash_configs[@]}"; do
+    if [[ -f "$f" && ! -L "$f" ]]; then
+      backup "$f"
+      rm "$f"
+      printf "%s Archived and removed %s\n" "$(COMPLETE)" "$f"
+    fi
+  done
+}
+
 # ──[ Installation ]────────────────────────────────────────────────────────────
 printf "%s Starting Dotfiles Installation\n" "$(BANNER)"
 sleep 1
@@ -517,8 +669,11 @@ if ! $SKIP_PACKAGES; then
   bootstrap_bat
   bootstrap_yazi
   bootstrap_eza
+  bootstrap_fzf
+  bootstrap_zoxide
+  bootstrap_zsh_plugins
+  bootstrap_starship
   bootstrap_pyenv
-  bootstrap_zinit
   bootstrap_fonts
   bootstrap_lazyvim
   printf "\n"
@@ -526,35 +681,40 @@ fi
 
 printf "%s Creating Directories\n" "$(BANNER)"
 sleep 0.5
-mkdir -p ~/.zsh/themes
+mkdir -p ~/.config/zsh
+mkdir -p ~/.config/git
+mkdir -p ~/.config/tmux
 mkdir -p ~/.config/lazygit
+mkdir -p ~/.vim
 mkdir -p ~/.ssh/
 printf "%s Directories ready\n\n" "$(COMPLETE)"
 sleep 1
 
 printf "%s Symlinking Dotfiles\n" "$(BANNER)"
 sleep 0.5
-link "$DOTFILES_DIR/.zshrc"                              ~/.zshrc
+link "$DOTFILES_DIR/.zshenv"                              ~/.zshenv
 sleep 0.2
-link "$DOTFILES_DIR/.zsh_aliases"                        ~/.zsh_aliases
+link "$DOTFILES_DIR/.config/zsh/.zshrc"                   ~/.config/zsh/.zshrc
 sleep 0.2
-link "$DOTFILES_DIR/.zsh/themes/arpatek.zsh-theme"       ~/.zsh/themes/arpatek.zsh-theme
+link "$DOTFILES_DIR/.config/zsh/.zprofile"                ~/.config/zsh/.zprofile
 sleep 0.2
-link "$DOTFILES_DIR/.tmux.conf"                          ~/.tmux.conf
+link "$DOTFILES_DIR/.config/zsh/.zsh_aliases"             ~/.config/zsh/.zsh_aliases
 sleep 0.2
-link "$DOTFILES_DIR/.gitconfig"                          ~/.gitconfig
+link "$DOTFILES_DIR/.config/git/config"                   ~/.config/git/config
 sleep 0.2
-link "$DOTFILES_DIR/.vimrc"                              ~/.vimrc
+link "$DOTFILES_DIR/.config/git/commit-template"          ~/.config/git/commit-template
 sleep 0.2
-link "$DOTFILES_DIR/.git-commit-template"                ~/.git-commit-template
+link "$DOTFILES_DIR/.config/vim/vimrc"                    ~/.vim/vimrc
 sleep 0.2
-link "$DOTFILES_DIR/.zprofile"                           ~/.zprofile
+link "$DOTFILES_DIR/.config/tmux/tmux.conf"               ~/.config/tmux/tmux.conf
 sleep 0.2
-link "$DOTFILES_DIR/.editorconfig"                       ~/.editorconfig
+link "$DOTFILES_DIR/.config/starship.toml"                ~/.config/starship.toml
 sleep 0.2
-link "$DOTFILES_DIR/.curlrc"                             ~/.curlrc
+link "$DOTFILES_DIR/.editorconfig"                        ~/.editorconfig
 sleep 0.2
-link "$DOTFILES_DIR/.config/lazygit/config.yml"          ~/.config/lazygit/config.yml
+link "$DOTFILES_DIR/.config/curlrc"                       ~/.config/curlrc
+sleep 0.2
+link "$DOTFILES_DIR/.config/lazygit/config.yml"           ~/.config/lazygit/config.yml
 printf "\n"
 sleep 1
 
@@ -576,6 +736,12 @@ printf "%s Installing ipkg\n" "$(BANNER)"
 sleep 0.5
 sudo ln -sf "$DOTFILES_DIR/ipkg" /usr/local/bin/ipkg
 printf "%s ipkg installed to /usr/local/bin/ipkg\n\n" "$(COMPLETE)"
+sleep 1
+
+printf "%s Cleaning Up Shell Config Files\n" "$(BANNER)"
+sleep 0.5
+cleanup_bash_configs
+printf "\n"
 sleep 1
 
 # ──[ Default Shell ]───────────────────────────────────────────────────────────
