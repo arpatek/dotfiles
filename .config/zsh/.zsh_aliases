@@ -4,7 +4,7 @@
 
 
 # ──[ Basic Quality-of-Life Aliases ]──────────────────────────────────────────
-alias ls='eza -A --icons --git'
+alias ls='eza -A --icons --git'                 # eza drop-in: hidden files, icons, git status
 alias l='eza -F --icons'                        # Column view with classification symbols
 alias ll='eza -lagh --icons --git'              # Long listing, human-readable, icons, git status
 alias lll='eza -lagShi --icons --git'           # Sort by size, human-readable, icons, git status
