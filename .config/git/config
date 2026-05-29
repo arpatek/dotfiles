@@ -44,6 +44,9 @@
 [diff]
   colorMoved = default
 
+[credential]
+  helper = store --file ~/.config/git/credentials
+
 [commit]
   gpgsign = false
   template = ~/.config/git/commit-template

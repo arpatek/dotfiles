@@ -127,7 +127,7 @@ export PATH
 # Set PYENV_ROOT and prepend its bin so the pyenv shim intercepts python/pip
 # calls. The eval block injects the shim directory and shell function — both
 # are needed; PATH alone is not enough.
-export PYENV_ROOT="$HOME/.pyenv"
+export PYENV_ROOT="$HOME/.local/share/pyenv"
 [[ -d "$PYENV_ROOT/bin" ]] && export PATH="$PYENV_ROOT/bin:$PATH"
 command -v pyenv >/dev/null && eval "$(pyenv init -)"
 

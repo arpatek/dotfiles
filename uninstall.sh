@@ -81,7 +81,7 @@ confirm() {
 
 # ──[ Restore Backups ]─────────────────────────────────────────────────────────
 restore_backups() {
-  local backup_base="$HOME/.dotfiles_backup"
+  local backup_base="$HOME/.local/share/dotfiles_backup"
   if [[ ! -d "$backup_base" ]]; then
     printf "%s No backup directory found\n" "$(PLUS)"
     return
@@ -225,7 +225,7 @@ printf "\n"
 # ── pyenv ─────────────────────────────────────────────────────────────────────
 printf "%s Removing pyenv\n" "$(BANNER)"
 sleep 0.5
-remove_dir "$HOME/.pyenv" "~/.pyenv"
+remove_dir "$HOME/.local/share/pyenv" "~/.local/share/pyenv"
 printf "\n"
 
 # ── Fonts ─────────────────────────────────────────────────────────────────────
@@ -283,10 +283,10 @@ sleep 1
 # Always restore bash configs removed by cleanup_bash_configs during install
 printf "%s Restoring bash config files\n" "$(BANNER)"
 sleep 0.5
-local_backup=$(ls -t "$HOME/.dotfiles_backup" 2>/dev/null | head -1)
+local_backup=$(ls -t "$HOME/.local/share/dotfiles_backup" 2>/dev/null | head -1)
 if [[ -n "$local_backup" ]]; then
   for f in .bashrc .bash_profile .bash_login .bash_logout .bash_aliases .bash_history; do
-    src="$HOME/.dotfiles_backup/$local_backup/$f"
+    src="$HOME/.local/share/dotfiles_backup/$local_backup/$f"
     if [[ -f "$src" ]]; then
       cp "$src" "$HOME/$f" && printf "%s Restored ~/%s\n" "$(COMPLETE)" "$f" \
         || warn "Could not restore $f"
@@ -298,14 +298,14 @@ fi
 printf "\n"
 
 # ── Backups ───────────────────────────────────────────────────────────────────
-if confirm "Restore pre-install backups from ~/.dotfiles_backup?"; then
+if confirm "Restore pre-install backups from ~/.local/share/dotfiles_backup?"; then
   printf "\n"
   restore_backups
   printf "\n"
 fi
 
-if confirm "Delete ~/.dotfiles_backup?"; then
-  remove_dir "$HOME/.dotfiles_backup" "~/.dotfiles_backup"
+if confirm "Delete ~/.local/share/dotfiles_backup?"; then
+  remove_dir "$HOME/.local/share/dotfiles_backup" "~/.local/share/dotfiles_backup"
   printf "\n"
 fi
 

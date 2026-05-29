@@ -18,7 +18,7 @@ set -eo pipefail
 
 # ──[ Paths ]───────────────────────────────────────────────────────────────────
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BACKUP_DIR="$HOME/.dotfiles_backup/$(date +%Y%m%d_%H%M%S)"
+BACKUP_DIR="$HOME/.local/share/dotfiles_backup/$(date +%Y%m%d_%H%M%S)"
 
 # ──[ Shared Utilities ]────────────────────────────────────────────────────────
 source "$DOTFILES_DIR/lib.sh"
@@ -223,7 +223,7 @@ bootstrap_packages() {
 }
 
 bootstrap_pyenv() {
-  if command -v pyenv >/dev/null 2>&1 || [[ -d "$HOME/.pyenv" ]]; then
+  if command -v pyenv >/dev/null 2>&1 || [[ -d "$HOME/.local/share/pyenv" ]]; then
     printf "%s pyenv already installed\n" "$(COMPLETE)"
     return
   fi
@@ -685,6 +685,10 @@ mkdir -p ~/.config/zsh
 mkdir -p ~/.config/git
 mkdir -p ~/.config/tmux
 mkdir -p ~/.config/lazygit
+mkdir -p ~/.config/kube
+mkdir -p ~/.config/npm
+mkdir -p ~/.cache/kube
+mkdir -p ~/.cache/npm
 mkdir -p ~/.vim
 mkdir -p ~/.ssh/
 printf "%s Directories ready\n\n" "$(COMPLETE)"
