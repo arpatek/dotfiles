@@ -23,7 +23,7 @@ Personal dotfiles for Zsh, tmux, Vim/Neovim, Git, and SSH — Linux-first, manag
 | `.config/git/config` | Git config — aliases, editor, fetch prune, autosquash, colorMoved |
 | `.config/git/commit-template` | Conventional commit template |
 | `.config/vim/vimrc` | Minimal Vim config for CLI/DevOps workflows |
-| `.config/tmux/tmux.conf` | tmux — truecolor, vi copy mode, 50k scrollback, focus events |
+| `.config/tmux/tmux.conf` | tmux — truecolor, vi copy mode, 50k scrollback, focus events, tokyo-night theme |
 | `.config/nvim/init.vim` | Neovim fallback for nvim < 0.9 or no network (LazyVim used otherwise) |
 | `.config/curlrc` | curl defaults — follow redirects, retry, fail-fast |
 | `.config/lazygit/config.yml` | lazygit catppuccin mocha theme |
@@ -122,10 +122,10 @@ Options:
 
 | Alias | Command |
 |---|---|
-| `la` | `eza -A --icons --git` |
+| `ls` | `eza -A --icons --git` |
 | `ll` | `eza -lagh --icons --git` |
 | `lll` | `eza -lagShi --icons --git` |
-| `ltree` | `eza -T --level=5 --icons --git` |
+| `tree` | `eza -T --icons --git` |
 | `grep` | `grep --color=auto` |
 | `ip` | `ip --color=auto` |
 | `mkdir` | `mkdir -pv` |
@@ -147,6 +147,18 @@ Options:
 | `alt+p` | Toggle preview panel |
 | `alt+j` / `alt+k` | Scroll preview line by line |
 | `alt+d` / `alt+u` | Scroll preview half-page |
+
+---
+
+## tmux Theme
+
+Uses [tokyo-night-tmux](https://github.com/janoamaral/tokyo-night-tmux). Clone it manually — it is not managed by the installer:
+
+```bash
+git clone https://github.com/janoamaral/tokyo-night-tmux ~/.config/tmux/plugins/tokyo-night-tmux
+```
+
+Enabled widgets: git status, battery, network speed, now playing, current path, hostname.
 
 ---
 
