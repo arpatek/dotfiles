@@ -8,7 +8,7 @@ alias ls='eza -A --icons --git'
 alias l='eza -F --icons'                        # Column view with classification symbols
 alias ll='eza -lagh --icons --git'              # Long listing, human-readable, icons, git status
 alias lll='eza -lagShi --icons --git'           # Sort by size, human-readable, icons, git status
-alias ltree='eza -T --level=5 --icons --git'    # Recursive tree view, icons, git info
+alias tree='eza -T --icons --git'               # Recursive tree view, icons, git info
 
 # ──[ Navigation ]─────────────────────────────────────────────────────────────
 alias ..='cd ..'
