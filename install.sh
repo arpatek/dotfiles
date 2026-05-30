@@ -228,7 +228,17 @@ bootstrap_pyenv() {
     return
   fi
   printf "%s Installing pyenv...\n" "$(PLUS)"
-  curl -fsSL https://pyenv.run | bash
+  local pyenv_out
+  # The installer warns about load path when rc files aren't at the default
+  # locations — our XDG zsh config already handles pyenv init, so suppress it.
+  pyenv_out=$(curl -fsSL https://pyenv.run | bash 2>&1) || {
+    printf "%s\n" "$pyenv_out"
+    printf "%s pyenv install failed\n" "$(FAILED)" >&2
+    return 1
+  }
+  printf "%s\n" "$pyenv_out" \
+    | sed '/^WARNING: seems you still have not added/,/^eval ".*pyenv virtualenv-init/d' \
+    || true
   printf "%s pyenv installed\n" "$(COMPLETE)"
 }
 
