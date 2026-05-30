@@ -355,6 +355,56 @@ bootstrap_zoxide() {
   printf "%s zoxide %s installed\n" "$(COMPLETE)" "${zoxide_tag#v}"
 }
 
+bootstrap_fastfetch() {
+  if command -v fastfetch >/dev/null 2>&1; then
+    printf "%s fastfetch already installed\n" "$(COMPLETE)"
+    return
+  fi
+
+  local pm=""
+  for candidate in nala apt dnf pacman yum zypper apk; do
+    if command -v "$candidate" >/dev/null 2>&1; then
+      pm="$candidate"
+      break
+    fi
+  done
+
+  # Try package manager first — fastfetch is in Fedora, Arch, and Ubuntu 24.04+
+  case "$pm" in
+    dnf | yum)  sudo "$pm" install -y fastfetch 2>/dev/null && command -v fastfetch >/dev/null 2>&1 && { printf "%s fastfetch installed\n" "$(COMPLETE)"; return; } ;;
+    pacman)     sudo pacman -S --noconfirm fastfetch 2>/dev/null && command -v fastfetch >/dev/null 2>&1 && { printf "%s fastfetch installed\n" "$(COMPLETE)"; return; } ;;
+    nala | apt) sudo "$pm" install -y fastfetch 2>/dev/null && command -v fastfetch >/dev/null 2>&1 && { printf "%s fastfetch installed\n" "$(COMPLETE)"; return; } ;;
+  esac
+
+  # Fall back to GitHub releases for distros without fastfetch in repos
+  local arch
+  case "$(uname -m)" in
+    x86_64)  arch="amd64" ;;
+    aarch64) arch="aarch64" ;;
+    *) printf "%s Unsupported architecture for fastfetch: %s\n" "$(FAILED)" "$(uname -m)" >&2; return 1 ;;
+  esac
+
+  printf "%s Installing fastfetch...\n" "$(PLUS)"
+  local ff_tag tmp_dir
+  ff_tag=$(curl -fsSL "https://api.github.com/repos/fastfetch-cli/fastfetch/releases/latest" \
+    | grep '"tag_name"' | grep -o 'v[0-9][^"]*' | tr -d '\r') || true
+
+  if [[ -z "$ff_tag" ]]; then
+    printf "%s Could not determine latest fastfetch version — skipping\n" "$(PLUS)"
+    return
+  fi
+
+  tmp_dir="$(mktemp -d)"
+  trap 'rm -rf "$tmp_dir"' RETURN
+
+  curl -fsSL \
+    "https://github.com/fastfetch-cli/fastfetch/releases/download/${ff_tag}/fastfetch-linux-${arch}.tar.gz" \
+    -o "$tmp_dir/fastfetch.tar.gz"
+  tar -xf "$tmp_dir/fastfetch.tar.gz" -C "$tmp_dir"
+  sudo install "$tmp_dir/usr/bin/fastfetch" -D -t /usr/local/bin/
+  printf "%s fastfetch %s installed\n" "$(COMPLETE)" "${ff_tag#v}"
+}
+
 bootstrap_fonts() {
   # Linux: fontconfig must be present for font discovery
   if ! command -v fc-cache >/dev/null 2>&1; then
@@ -673,6 +723,7 @@ if ! $SKIP_PACKAGES; then
   bootstrap_zoxide
   bootstrap_zsh_plugins
   bootstrap_starship
+  bootstrap_fastfetch
   bootstrap_pyenv
   bootstrap_fonts
   bootstrap_lazyvim
