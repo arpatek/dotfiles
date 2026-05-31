@@ -76,7 +76,7 @@ source "${PLUGINS_DIR}/fast-syntax-highlighting/fast-syntax-highlighting.plugin.
 # Ctrl+T → fuzzy file picker (inserts path at cursor)
 # Alt+C  → fuzzy cd into a subdirectory
 eval "$(fzf --zsh)"
-export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border'
+export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border=rounded'
 
 # ──[ Smart Directory Jump (zoxide) ]───────────────────────────────────────────
 # z <query>  → jump to most-frecent directory matching the query
