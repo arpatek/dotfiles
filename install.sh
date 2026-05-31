@@ -788,9 +788,8 @@ sleep 1
 
 printf "%s Installing SSH Config\n" "$(BANNER)"
 sleep 0.5
-backup ~/.ssh/config
-cp "$DOTFILES_DIR/.ssh/config" ~/.ssh/config
-chmod 600 ~/.ssh/config
+chmod 600 "$DOTFILES_DIR/.ssh/config"
+link "$DOTFILES_DIR/.ssh/config" ~/.ssh/config
 printf "%s SSH config installed\n\n" "$(COMPLETE)"
 sleep 1
 
