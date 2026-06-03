@@ -72,6 +72,10 @@ backup() {
 link() {
   local src="$1"
   local dst="$2"
+  if [[ -L "$dst" && "$(readlink "$dst")" == "$src" ]]; then
+    printf "%s Already linked %s\n" "$(COMPLETE)" "$dst"
+    return
+  fi
   backup "$dst"
   ln -sf "$src" "$dst"
   printf "%s Linked %s\n" "$(COMPLETE)" "$dst"
