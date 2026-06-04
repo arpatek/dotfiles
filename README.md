@@ -177,14 +177,22 @@ Enabled widgets: git status, battery, network speed, now playing, current path, 
 
 ## SSH Keys
 
-The SSH config references key files not included in this repo. Generate them with:
+The SSH config references key files not included in this repo. Generate them with [portal-22](https://codeberg.org/arpatek/portal-22):
 
 ```bash
-ssh-keygen -t ed25519 -f ~/.ssh/git.codeberg.key   -C "Codeberg | $(hostname)"      -N ""
-ssh-keygen -t ed25519 -f ~/.ssh/git.github.key     -C "GitHub | $(hostname)"        -N ""
-ssh-keygen -t ed25519 -f ~/.ssh/git.gitlab.key     -C "GitLab | $(hostname)"        -N ""
-ssh-keygen -t ed25519 -f ~/.ssh/netrunner-rpi.key  -C "Netrunner RPi | $(hostname)" -N ""
-ssh-keygen -t ed25519 -f ~/.ssh/dev-ubuntu-0.key   -C "Ubuntu Dev | $(hostname)"    -N ""
+portal-22 -g                        # global key — silverhand.key
+portal-22 -t git -p codeberg        # git.codeberg.key
+portal-22 -t git -p github          # git.github.key
+portal-22 -t git -p gitlab          # git.gitlab.key
+portal-22 -t git -p gitea           # git.gitea.key
+portal-22 -t admin -H netrunner     # admin.netrunner.key
+portal-22 -t admin -H blackwall     # admin.blackwall.key
+portal-22 -t admin -H mikoshi       # admin.mikoshi.key
+portal-22 -t admin -H soulkiller    # admin.soulkiller.key
+portal-22 -t admin -H netwatch      # admin.netwatch.key
+portal-22 -t admin -H erebus        # admin.erebus.key
+portal-22 -t admin -H sandevistan   # admin.sandevistan.key
+portal-22 -t admin -H kerenzikov    # admin.kerenzikov.key
 ```
 
 Add the `.pub` files to their respective services and `authorized_keys` files.
