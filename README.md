@@ -185,14 +185,14 @@ portal-22 -t git -p codeberg        # git.codeberg.key
 portal-22 -t git -p github          # git.github.key
 portal-22 -t git -p gitlab          # git.gitlab.key
 portal-22 -t git -p gitea           # git.gitea.key
-portal-22 -t admin -H netrunner     # admin.netrunner.key
-portal-22 -t admin -H blackwall     # admin.blackwall.key
-portal-22 -t admin -H mikoshi       # admin.mikoshi.key
-portal-22 -t admin -H soulkiller    # admin.soulkiller.key
-portal-22 -t admin -H netwatch      # admin.netwatch.key
-portal-22 -t admin -H erebus        # admin.erebus.key
-portal-22 -t admin -H sandevistan   # admin.sandevistan.key
-portal-22 -t admin -H kerenzikov    # admin.kerenzikov.key
+portal-22 -H netrunner              # netrunner.key
+portal-22 -H blackwall              # blackwall.key
+portal-22 -H mikoshi                # mikoshi.key
+portal-22 -H soulkiller             # soulkiller.key
+portal-22 -H netwatch               # netwatch.key
+portal-22 -H erebus                 # erebus.key
+portal-22 -H sandevistan            # sandevistan.key
+portal-22 -H kerenzikov             # kerenzikov.key
 ```
 
 Add the `.pub` files to their respective services and `authorized_keys` files.
