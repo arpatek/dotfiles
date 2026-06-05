@@ -26,7 +26,7 @@ show_always = true
 [hostname]
 ssh_only = false
 format = "[$hostname]($style)"
-style = "bold teal"
+style = "bold green"
 trim_at = ""
 
 [git_branch]
