@@ -779,6 +779,8 @@ link "$DOTFILES_DIR/.config/tmux/tmux.conf"               ~/.config/tmux/tmux.co
 sleep 0.2
 link "$DOTFILES_DIR/.config/starship.toml"                ~/.config/starship.toml
 sleep 0.2
+link "$DOTFILES_DIR/.config/starship-sysadmin.toml"       ~/.config/starship-sysadmin.toml
+sleep 0.2
 link "$DOTFILES_DIR/.editorconfig"                        ~/.editorconfig
 sleep 0.2
 link "$DOTFILES_DIR/.config/curlrc"                       ~/.config/curlrc
