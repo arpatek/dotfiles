@@ -180,7 +180,7 @@ Enabled widgets: git status, battery, network speed, now playing, current path, 
 The SSH config references key files not included in this repo. Generate them with [portal-22](https://codeberg.org/arpatek/portal-22):
 
 ```bash
-portal-22 -g                        # global key — silverhand.key
+portal-22 -g                        # global key — {hostname}.key
 portal-22 -t git -p codeberg        # git.codeberg.key
 portal-22 -t git -p github          # git.github.key
 portal-22 -t git -p gitlab          # git.gitlab.key
