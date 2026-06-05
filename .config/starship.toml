@@ -24,7 +24,7 @@ show_always = true
 ssh_only = false
 format = "[$hostname]($style)"
 style = "bold host"
-trim_at = ""
+trim_at = "."
 
 [git_branch]
 style = "bold branch"
