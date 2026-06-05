@@ -1,64 +1,46 @@
 "$schema" = 'https://starship.rs/config-schema.json'
 
-palette = "obsidian_green"
+palette = "arpatek"
 
 add_newline = false
 
 format = '''
-[┌─\[](overlay1)$username[@](subtext1)$hostname[\]\[](overlay1)$directory[\]](overlay1) $git_branch$git_state$git_status
-[└─▪](overlay1)$character'''
+[┌─\[](structure)$username[@](muted)$hostname[\]\[](structure)$directory[\]](structure) $git_branch$git_state$git_status
+[└─▪](structure)$character'''
 
 # Starship modules
 [character]
-success_symbol = "[❯](peach)"
-error_symbol = "[❯](red)"
-vimcmd_symbol = "[❮](subtext1)"
+success_symbol = "[❯](success)"
+error_symbol = "[❯](alert)"
+vimcmd_symbol = "[❮](muted)"
 
 [username]
-style_user = "bold blue"
-style_root = "bold red"
+style_user = "bold link"
+style_root = "bold alert"
 format = "[$user]($style)"
 show_always = true
 
 [hostname]
 ssh_only = false
 format = "[$hostname]($style)"
-style = "bold green"
+style = "bold host"
 trim_at = ""
 
 [git_branch]
-style = "bold mauve"
+style = "bold branch"
 
 [directory]
 format = "[$path]($style)"
 truncation_length = 4
-style = "bold lavender"
+style = "bold path"
 
-# Palette — Obsidian Green
-[palettes.obsidian_green]
-green    = "#2FA97A"    # Green 400  — hostname
-lavender = "#5FD0A0"   # Green 300  — directory
-mauve    = "#9BE5C1"   # Green 200  — git branch
-blue     = "#4A7FB5"   # Info+      — username (dev)
-red      = "#8F3A3A"   # Error      — username root, error symbol
-peach    = "#B38B2A"   # Warning    — success symbol ❯
-overlay1 = "#8A8A8A"   # Neutral 300 — brackets, structure
-subtext1 = "#8A8A8A"   # Neutral 300 — separators, vimcmd
-text     = "#EAEAEA"   # Neutral 100 — primary text
-subtext0 = "#8A8A8A"
-overlay0 = "#3A3A3A"
-overlay2 = "#8A8A8A"
-surface0 = "#1F1F1F"
-surface1 = "#2A2A2A"
-surface2 = "#3A3A3A"
-base     = "#081C15"
-mantle   = "#0A241C"
-crust    = "#0D2F24"
-teal     = "#179299"
-sky      = "#04a5e5"
-sapphire = "#209fb5"
-pink     = "#ea76cb"
-flamingo = "#dd7878"
-rosewater = "#dc8a78"
-maroon   = "#e64553"
-yellow   = "#B38B2A"
+# Palette — arpatek
+[palettes.arpatek]
+structure = "#4C566A"   # brackets, └─▪
+muted     = "#4C566A"   # @ separator, ❮ vimcmd
+link      = "#9db9b2"   # username (dev)
+alert     = "#E67E80"   # username (sysadmin), ❯ error
+host      = "#DBBC7F"   # hostname
+path      = "#85C0B1"   # directory
+branch    = "#A89BD4"   # git branch
+success   = "#79be9a"   # ❯ success
