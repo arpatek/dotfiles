@@ -14,7 +14,7 @@ error_symbol = "[❯](red)"
 vimcmd_symbol = "[❮](subtext1)"
 
 [username]
-style_user = "bold blue"
+style_user = "bold red"
 style_root = "bold red"
 format = "[$user]($style)"
 show_always = true
@@ -22,7 +22,7 @@ show_always = true
 [hostname]
 ssh_only = false
 format = "[$hostname]($style)"
-style = "bold red"
+style = "bold teal"
 trim_at = ""
 
 [git_branch]
