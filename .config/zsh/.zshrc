@@ -132,4 +132,5 @@ export PYENV_ROOT="$HOME/.local/share/pyenv"
 command -v pyenv >/dev/null && eval "$(pyenv init -)"
 
 # ──[ Prompt (Starship) ]───────────────────────────────────────────────────────
+[[ "$USER" == "sysadmin" ]] && export STARSHIP_CONFIG="$HOME/.config/starship-sysadmin.toml"
 eval "$(starship init zsh)"
