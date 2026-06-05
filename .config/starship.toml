@@ -38,7 +38,7 @@ style = "bold path"
 [palettes.arpatek]
 structure = "#4C566A"   # brackets, └─▪
 muted     = "#4C566A"   # @ separator, ❮ vimcmd
-link      = "#9db9b2"   # username (dev)
+link      = "#81A1C1"   # username (dev)
 alert     = "#E67E80"   # username (sysadmin), ❯ error
 host      = "#DBBC7F"   # hostname
 path      = "#85C0B1"   # directory
