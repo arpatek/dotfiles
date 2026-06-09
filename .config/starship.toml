@@ -5,7 +5,7 @@ palette = "arpatek"
 add_newline = false
 
 format = '''
-[┌─\[](structure)$username[@](muted)$hostname[\]\[](structure)$directory[\]](structure) $git_branch$git_state$git_status
+[┌─\[](structure)$username[@](muted)$hostname[\]\[](structure)$directory[\]](structure) $git_branch$git_state$git_status$python$kubernetes$terraform$docker_context$aws
 [└─▪](structure)$character'''
 
 # Starship modules
@@ -33,6 +33,34 @@ style = "bold branch"
 format = "[$path]($style)"
 truncation_length = 4
 style = "bold path"
+
+[python]
+symbol = " "
+format = '[$symbol(\($virtualenv\))](path) '
+detect_extensions = []
+detect_files = []
+detect_folders = []
+
+[kubernetes]
+disabled = false
+symbol = "󱃾 "
+format = '[$symbol$context](alert)[( \[$namespace\])](alert) '
+detect_files = ['kustomization.yaml', 'Chart.yaml', '.helmignore', 'helmfile.yaml']
+detect_extensions = []
+detect_folders = []
+
+[terraform]
+symbol = " "
+format = '[$symbol$workspace](branch) '
+
+[docker_context]
+symbol = " "
+format = '[$symbol$context](path) '
+only_with_files = false
+
+[aws]
+symbol = " "
+format = '[$symbol$profile([$region])](host) '
 
 # Palette — arpatek
 [palettes.arpatek]
