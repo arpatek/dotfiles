@@ -756,6 +756,7 @@ mkdir -p ~/.cache/kube
 mkdir -p ~/.cache/npm
 mkdir -p ~/.vim
 mkdir -p ~/.ssh/
+mkdir -p ~/.claude
 printf "%s Directories ready\n\n" "$(COMPLETE)"
 sleep 1
 
@@ -789,6 +790,8 @@ link "$DOTFILES_DIR/.config/lazygit/config.yml"           ~/.config/lazygit/conf
 sleep 0.2
 mkdir -p ~/.config/fastfetch
 link "$DOTFILES_DIR/.config/fastfetch/config.jsonc"       ~/.config/fastfetch/config.jsonc
+sleep 0.2
+link "$DOTFILES_DIR/.claude/statusline-command.sh"         ~/.claude/statusline-command.sh
 printf "\n"
 sleep 1
 
