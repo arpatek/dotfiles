@@ -69,7 +69,7 @@ if [ -n "$used_pct" ]; then
   elif [ "$pct_int" -ge 50 ]; then bar_color="$YELLOW"
   else                              bar_color="$GREEN"
   fi
-  ctx_bar=$(bar "$pct_int" 20)
+  ctx_bar=$(bar "$pct_int" 10)
   ctx_part="$(printf "ctx ${bar_color}▕%s▏${R} ${bar_color}%s%%${R}" "$ctx_bar" "$pct_int")"
 fi
 
