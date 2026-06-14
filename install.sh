@@ -5,7 +5,7 @@
 #              backs up existing configs, and symlinks dotfiles into place.
 # Author: Juan Garcia (arpatek)
 # Created: 2026-05-05
-# Version: 3.0
+# Version: 3.1
 # =============================================================================
 
 # ──[ Bash Version Check ]──────────────────────────────────────────────────────
@@ -28,12 +28,14 @@ trap 'printf "\n%s Installation failed. Aborting.\n" "$(FAILED)"' ERR
 
 # ──[ Argument Parsing ]────────────────────────────────────────────────────────
 SKIP_PACKAGES=false
+UPDATE=false
 
 usage() {
   printf "Usage: install.sh [OPTIONS]\n"
   printf "Options:\n"
   printf "  -h, --help            Show this help message\n"
   printf "  --skip-packages       Skip package bootstrap (symlinks only)\n"
+  printf "  --update              Re-fetch all bootstrapped tools from upstream\n"
 }
 
 while [[ $# -gt 0 ]]; do
@@ -43,6 +45,7 @@ while [[ $# -gt 0 ]]; do
     exit 0
     ;;
   --skip-packages) SKIP_PACKAGES=true ;;
+  --update)        UPDATE=true ;;
   *)
     printf "Unknown option: %s\n" "$1" >&2
     usage >&2
@@ -227,10 +230,18 @@ bootstrap_packages() {
 }
 
 bootstrap_pyenv() {
-  if command -v pyenv >/dev/null 2>&1 || [[ -d "$HOME/.local/share/pyenv" ]]; then
+  if $UPDATE && command -v pyenv >/dev/null 2>&1; then
+    printf "%s Updating pyenv...\n" "$(PLUS)"
+    pyenv update
+    printf "%s pyenv updated\n" "$(COMPLETE)"
+    return
+  fi
+
+  if ! $UPDATE && (command -v pyenv >/dev/null 2>&1 || [[ -d "$HOME/.local/share/pyenv" ]]); then
     printf "%s pyenv already installed\n" "$(COMPLETE)"
     return
   fi
+
   printf "%s Installing pyenv...\n" "$(PLUS)"
   local pyenv_out
   # The installer warns about load path when rc files aren't at the default
@@ -247,10 +258,11 @@ bootstrap_pyenv() {
 }
 
 bootstrap_starship() {
-  if command -v starship >/dev/null 2>&1; then
+  if ! $UPDATE && command -v starship >/dev/null 2>&1; then
     printf "%s starship already installed\n" "$(COMPLETE)"
     return
   fi
+
   printf "%s Installing starship...\n" "$(PLUS)"
   # --yes skips the interactive confirmation prompt
   curl -sS https://starship.rs/install.sh | sh -s -- --yes
@@ -271,7 +283,13 @@ bootstrap_zsh_plugins() {
   local plugin
   for plugin in "${!PLUGINS[@]}"; do
     if [[ -d "${plugins_dir}/${plugin}" ]]; then
-      printf "%s %s already installed\n" "$(COMPLETE)" "$plugin"
+      if $UPDATE; then
+        printf "%s Updating %s...\n" "$(PLUS)" "$plugin"
+        git -C "${plugins_dir}/${plugin}" pull --ff-only
+        printf "%s %s updated\n" "$(COMPLETE)" "$plugin"
+      else
+        printf "%s %s already installed\n" "$(COMPLETE)" "$plugin"
+      fi
     else
       printf "%s Installing %s...\n" "$(PLUS)" "$plugin"
       git clone --depth 1 "${PLUGINS[$plugin]}" "${plugins_dir}/${plugin}"
@@ -282,7 +300,7 @@ bootstrap_zsh_plugins() {
 
 bootstrap_fzf() {
   # fzf --zsh was added in 0.48 — verify any existing install is new enough
-  if command -v fzf >/dev/null 2>&1 && fzf --zsh >/dev/null 2>&1; then
+  if ! $UPDATE && command -v fzf >/dev/null 2>&1 && fzf --zsh >/dev/null 2>&1; then
     printf "%s fzf already installed\n" "$(COMPLETE)"
     return
   fi
@@ -316,7 +334,7 @@ bootstrap_fzf() {
 }
 
 bootstrap_zoxide() {
-  if command -v zoxide >/dev/null 2>&1; then
+  if ! $UPDATE && command -v zoxide >/dev/null 2>&1; then
     printf "%s zoxide already installed\n" "$(COMPLETE)"
     return
   fi
@@ -370,7 +388,7 @@ bootstrap_zoxide() {
 }
 
 bootstrap_fastfetch() {
-  if command -v fastfetch >/dev/null 2>&1; then
+  if ! $UPDATE && command -v fastfetch >/dev/null 2>&1; then
     printf "%s fastfetch already installed\n" "$(COMPLETE)"
     return
   fi
@@ -426,7 +444,7 @@ bootstrap_fonts() {
     return
   fi
 
-  if fc-list | grep -qi "JetBrainsMono"; then
+  if ! $UPDATE && fc-list | grep -qi "JetBrainsMono"; then
     printf "%s JetBrains Mono Nerd Font already installed\n" "$(COMPLETE)"
     return
   fi
@@ -447,7 +465,7 @@ bootstrap_fonts() {
 }
 
 bootstrap_go() {
-  if command -v go >/dev/null 2>&1; then
+  if ! $UPDATE && command -v go >/dev/null 2>&1; then
     printf "%s Go already installed: %s\n" "$(COMPLETE)" "$(go version)"
     return
   fi
@@ -482,7 +500,7 @@ bootstrap_go() {
 }
 
 bootstrap_lazygit() {
-  if command -v lazygit >/dev/null 2>&1; then
+  if ! $UPDATE && command -v lazygit >/dev/null 2>&1; then
     printf "%s lazygit already installed\n" "$(COMPLETE)"
     return
   fi
@@ -516,6 +534,50 @@ bootstrap_lazygit() {
   printf "%s lazygit %s installed\n" "$(COMPLETE)" "$lg_ver"
 }
 
+bootstrap_nvim() {
+  local arch nvim_arch
+  case "$(uname -m)" in
+    x86_64)  arch="x86_64"; nvim_arch="x86_64" ;;
+    aarch64) arch="arm64";  nvim_arch="arm64"  ;;
+    *) printf "%s Unsupported architecture for nvim: %s\n" "$(FAILED)" "$(uname -m)" >&2; return 1 ;;
+  esac
+
+  if ! $UPDATE && command -v nvim >/dev/null 2>&1; then
+    local nvim_ver nvim_minor nvim_patch
+    nvim_ver=$(nvim --version 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+    nvim_minor=$(printf "%s" "$nvim_ver" | cut -d. -f2)
+    nvim_patch=$(printf "%s" "$nvim_ver" | cut -d. -f3)
+    if (( nvim_minor > 11 || ( nvim_minor == 11 && nvim_patch >= 2 ) )); then
+      printf "%s nvim %s already meets requirement (>= 0.11.2)\n" "$(COMPLETE)" "$nvim_ver"
+      return
+    fi
+    printf "%s nvim %s < 0.11.2 — upgrading from GitHub releases\n" "$(PLUS)" "$nvim_ver"
+  else
+    printf "%s Installing nvim from GitHub releases...\n" "$(PLUS)"
+  fi
+
+  local nvim_tag tmp_dir
+  nvim_tag=$(curl -fsSL "https://api.github.com/repos/neovim/neovim/releases/latest" \
+    | grep '"tag_name"' | grep -o 'v[0-9][^"]*' | tr -d '\r') || true
+
+  if [[ -z "$nvim_tag" ]]; then
+    printf "%s Could not determine latest nvim version — skipping\n" "$(PLUS)"
+    return
+  fi
+
+  tmp_dir="$(mktemp -d)"
+  trap 'rm -rf "$tmp_dir"' RETURN
+
+  curl -fsSL \
+    "https://github.com/neovim/neovim/releases/download/${nvim_tag}/nvim-linux-${nvim_arch}.tar.gz" \
+    -o "$tmp_dir/nvim.tar.gz"
+  tar -xf "$tmp_dir/nvim.tar.gz" -C "$tmp_dir"
+  sudo rm -rf /opt/nvim
+  sudo mv "$tmp_dir/nvim-linux-${nvim_arch}" /opt/nvim
+  sudo ln -sf /opt/nvim/bin/nvim /usr/local/bin/nvim
+  printf "%s nvim %s installed to /opt/nvim\n" "$(COMPLETE)" "${nvim_tag#v}"
+}
+
 bootstrap_lazyvim() {
   # init.vim is the zero-dependency fallback for nvim on any system where
   # LazyVim cannot be used (old nvim, no network, containers, etc.)
@@ -527,13 +589,14 @@ bootstrap_lazyvim() {
     return
   fi
 
-  local nvim_ver nvim_minor
-  nvim_ver=$(nvim --version 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+' | head -1)
-  nvim_minor=${nvim_ver##*.}
+  local nvim_ver nvim_minor nvim_patch
+  nvim_ver=$(nvim --version 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+  nvim_minor=$(printf "%s" "$nvim_ver" | cut -d. -f2)
+  nvim_patch=$(printf "%s" "$nvim_ver" | cut -d. -f3)
 
-  # Fall back to init.vim for nvim < 0.9 or when no network is available
-  if (( ${nvim_ver%%.*} == 0 && nvim_minor < 9 )); then
-    printf "%s nvim %s < 0.9 — linking init.vim fallback\n" "$(PLUS)" "$nvim_ver"
+  # LazyVim requires nvim >= 0.11.2
+  if (( nvim_minor < 11 || ( nvim_minor == 11 && nvim_patch < 2 ) )); then
+    printf "%s nvim %s < 0.11.2 — linking init.vim fallback\n" "$(PLUS)" "$nvim_ver"
     mkdir -p "$nvim_config_dir"
     link "$init_vim_src" "$nvim_config_dir/init.vim"
     return
@@ -556,14 +619,14 @@ bootstrap_lazyvim() {
 }
 
 bootstrap_bat() {
-  if command -v bat >/dev/null 2>&1; then
+  if ! $UPDATE && command -v bat >/dev/null 2>&1; then
     printf "%s bat already installed\n" "$(COMPLETE)"
     return
   fi
 
   # Debian/Ubuntu install bat as batcat to avoid a conflict with an unrelated
   # system package — if it's already present just wire up the symlink.
-  if command -v batcat >/dev/null 2>&1; then
+  if ! $UPDATE && command -v batcat >/dev/null 2>&1; then
     mkdir -p "$HOME/.local/bin"
     ln -sf "$(command -v batcat)" "$HOME/.local/bin/bat"
     printf "%s bat symlinked from batcat\n" "$(COMPLETE)"
@@ -602,7 +665,7 @@ bootstrap_bat() {
 }
 
 bootstrap_yazi() {
-  if command -v yazi >/dev/null 2>&1; then
+  if ! $UPDATE && command -v yazi >/dev/null 2>&1; then
     printf "%s yazi already installed\n" "$(COMPLETE)"
     return
   fi
@@ -637,7 +700,7 @@ bootstrap_yazi() {
 }
 
 bootstrap_eza() {
-  if command -v eza >/dev/null 2>&1; then
+  if ! $UPDATE && command -v eza >/dev/null 2>&1; then
     printf "%s eza already installed\n" "$(COMPLETE)"
     return
   fi
@@ -740,6 +803,7 @@ if ! $SKIP_PACKAGES; then
   bootstrap_fastfetch
   bootstrap_pyenv
   bootstrap_fonts
+  bootstrap_nvim
   bootstrap_lazyvim
   printf "\n"
 fi
