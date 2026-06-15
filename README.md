@@ -24,7 +24,7 @@ Personal dotfiles for Zsh, tmux, Vim/Neovim, Git, and SSH — Linux-first, manag
 | `.config/git/commit-template` | Conventional commit template |
 | `.config/vim/vimrc` | Minimal Vim config for CLI/DevOps workflows |
 | `.config/tmux/tmux.conf` | tmux — truecolor, vi copy mode, 50k scrollback, focus events, tokyo-night theme |
-| `.config/nvim/init.vim` | Neovim fallback for nvim < 0.9 or no network (LazyVim used otherwise) |
+| `.config/nvim/init.vim` | Neovim fallback for nvim < 0.11.2 or no network (LazyVim used otherwise) |
 | `.config/curlrc` | curl defaults — follow redirects, retry, fail-fast |
 | `.config/lazygit/config.yml` | lazygit catppuccin mocha theme |
 | `.ssh/config` | SSH — global ControlMaster defaults and connection templates |
@@ -47,7 +47,7 @@ The installer will:
 - Detect your distro and install missing packages
 - Install Go, lazygit, fzf, zoxide, starship, and JetBrains Mono Nerd Font
 - Clone zsh plugins directly — no plugin manager needed
-- Clone the LazyVim starter (requires nvim ≥ 0.9; falls back to `init.vim`)
+- Clone the LazyVim starter (requires nvim ≥ 0.11.2; falls back to `init.vim`)
 - Symlink all dotfiles into place under `~/.config/`
 - Archive and remove leftover bash config files from `$HOME`
 - Set zsh as your default shell via `chsh`
@@ -66,6 +66,22 @@ The installer will:
 ```
 
 Removes symlinks, tools, Go, pyenv, starship, plugins, LazyVim, and non-essential dnf packages. Restores bash config files, reverts the default shell to bash.
+
+---
+
+## Known Gotchas
+
+**LazyVim not loading after install**
+
+If nvim was previously installed via apt, the apt binary at `/usr/bin/nvim` shadows the one installed by this script at `/usr/local/bin/nvim`. The version check in the installer reads the wrong binary, falls back to `init.vim`, and LazyVim is never cloned.
+
+Remove the apt package first:
+
+```bash
+sudo apt remove neovim
+```
+
+Then re-run the installer. The `/usr/local/bin/nvim` symlink will take over and LazyVim will install correctly.
 
 ---
 
