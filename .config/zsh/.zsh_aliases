@@ -1,21 +1,21 @@
 # ┌──────────────────────────────────────────────────────────────┐
 # │ arpatek - Zsh Aliases                                        │
+# │ Shared aliases. OS-specific ones live in os.d/.              │
 # └──────────────────────────────────────────────────────────────┘
 
+# ──[ Listing (eza) ]───────────────────────────────────────────────────────────
+alias ls='eza -A --icons --git'                 # hidden files, icons, git status
+alias l='eza -F --icons'                         # column view with type symbols
+alias ll='eza -lagh --icons --git'               # long, human-readable, git status
+alias lll='eza -lagShi --icons --git'            # long, sorted by size
+alias tree='eza -T --icons --git'                # recursive tree
 
-# ──[ Basic Quality-of-Life Aliases ]──────────────────────────────────────────
-alias ls='eza -A --icons --git'                 # eza drop-in: hidden files, icons, git status
-alias l='eza -F --icons'                        # Column view with classification symbols
-alias ll='eza -lagh --icons --git'              # Long listing, human-readable, icons, git status
-alias lll='eza -lagShi --icons --git'           # Sort by size, human-readable, icons, git status
-alias tree='eza -T --icons --git'               # Recursive tree view, icons, git info
-
-# ──[ Navigation ]─────────────────────────────────────────────────────────────
+# ──[ Navigation ]──────────────────────────────────────────────────────────────
 alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
 
-# ──[ Git Shortcuts ]──────────────────────────────────────────────────────────
+# ──[ Git ]─────────────────────────────────────────────────────────────────────
 alias gs='git status'
 alias ga='git add'
 alias gc='git commit -m'
@@ -24,32 +24,27 @@ alias gl='git pull'
 alias gd='git diff'
 alias gco='git checkout'
 
-# ──[ Shell Config Access ]────────────────────────────────────────────────────
+# ──[ Shell Config ]────────────────────────────────────────────────────────────
 alias zshconfig='nvim ~/.config/zsh/.zshrc'
 alias aliases='nvim ~/.config/zsh/.zsh_aliases'
 
-# ──[ Core Overrides ]─────────────────────────────────────────────────────────
-alias cat='bat --plain --pager=never'  # drop-in cat replacement — no decorations, no pager
-alias bcat='bat'                   # full bat with line numbers, syntax highlighting, and pager
-alias grep='grep --color=auto'
-alias diff='diff --color=auto'
-alias ip='ip --color=auto'
-alias mkdir='mkdir -pv'           # always create parents, print each dir made
+# ──[ Core Overrides ]──────────────────────────────────────────────────────────
+alias cat='bat --plain --pager=never'  # drop-in cat — no decorations, no pager
+alias bcat='bat'                         # full bat — numbers, highlighting, pager
+alias mkdir='mkdir -pv'                  # always create parents, print each made
 
-# ──[ Networking & Tools ]─────────────────────────────────────────────────────
+# ──[ Networking ]──────────────────────────────────────────────────────────────
 alias ports='lsof -i -P -n'
 alias pingg='ping 8.8.8.8'
 
-# ──[ System & Updates ]───────────────────────────────────────────────────────
+# ──[ System ]──────────────────────────────────────────────────────────────────
 alias reboot='sudo reboot'
-alias shutdown='sudo shutdown now'
 alias reload='exec zsh'
 
-# ──[ SSH Shortcuts ]──────────────────────────────────────────────────────────
+# ──[ SSH ]─────────────────────────────────────────────────────────────────────
 # Ghostty sets TERM=xterm-ghostty which remote machines may not have in their
 # terminfo database. Wrapping ssh downgrades TERM for the session only.
 ssh() { TERM=xterm-256color command ssh "$@"; }
-
 alias pi='ssh netrunner'
 alias rhel='ssh rhel-0'
 alias dev='ssh ubuntu-0'

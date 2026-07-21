@@ -1,34 +1,26 @@
 # ┌──────────────────────────────────────────────────────────────┐
 # │ arpatek - Zsh Profile                                        │
-# │ Loaded for login shells, including non-interactive SSH runs  │
-# │ (e.g. ssh host 'python script.py'). Keep this minimal —      │
-# │ only env vars that must exist before .zshrc or in headless   │
-# │ contexts where .zshrc is never sourced.                      │
+# │ Login shells. Builds PATH after macOS path_helper runs.      │
 # └──────────────────────────────────────────────────────────────┘
 
-# ──[ PATH ]───────────────────────────────────────────────────────────────────
-[ -d "$HOME/bin" ]        && export PATH="$HOME/bin:$PATH"
-[ -d "$HOME/.local/bin" ] && export PATH="$HOME/.local/bin:$PATH"
+# ──[ Homebrew (macOS) ]────────────────────────────────────────────────────────
+# Must run before the PATH block. Apple Silicon uses /opt/homebrew; Intel /usr/local.
+if [[ "$OSTYPE" == darwin* ]]; then
+  if [[ -x /opt/homebrew/bin/brew ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+  elif [[ -x /usr/local/bin/brew ]]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+  fi
+fi
 
-# ──[ Rust (Cargo / Rustup) ]──────────────────────────────────────────────────
-export CARGO_HOME="$HOME/.local/share/cargo"
-export RUSTUP_HOME="$HOME/.local/share/rustup"
-[ -d "$CARGO_HOME/bin" ] && export PATH="$CARGO_HOME/bin:$PATH"
-
-# ──[ Go ]─────────────────────────────────────────────────────────────────────
-[ -d "/usr/local/go/bin" ] && export PATH="/usr/local/go/bin:$PATH"
-[ -d "$HOME/go/bin" ]      && export PATH="$HOME/go/bin:$PATH"
-
-# ──[ Python (pyenv) ]─────────────────────────────────────────────────────────
-# Exported here so pyenv-managed python/pip is available even in non-interactive
-# login shells (cron jobs, remote commands over SSH, etc.)
-export PYENV_ROOT="$HOME/.local/share/pyenv"
-[[ -d "$PYENV_ROOT/bin" ]] && export PATH="$PYENV_ROOT/bin:$PATH"
-
-# ──[ Kubernetes ]─────────────────────────────────────────────────────────────
-export KUBECONFIG="$HOME/.config/kube/config"
-export KUBECACHEDIR="$HOME/.cache/kube"
-
-# ──[ npm ]────────────────────────────────────────────────────────────────────
-export NPM_CONFIG_USERCONFIG="$HOME/.config/npm/npmrc"
-export NPM_CONFIG_CACHE="$HOME/.cache/npm"
+# ──[ PATH ]────────────────────────────────────────────────────────────────────
+# Prepend low-to-high priority; typeset -U (.zshenv) keeps entries deduped. Each
+# is dir-guarded, so tools absent on a given host are skipped cleanly.
+[ -d "/usr/local/bin" ]    && path=("/usr/local/bin" $path)
+[ -d "$HOME/bin" ]         && path=("$HOME/bin" $path)
+[ -d "$HOME/.local/bin" ]  && path=("$HOME/.local/bin" $path)
+[ -d "$CARGO_HOME/bin" ]   && path=("$CARGO_HOME/bin" $path)
+[ -d "/usr/local/go/bin" ] && path=("/usr/local/go/bin" $path)
+[ -d "$HOME/go/bin" ]      && path=("$HOME/go/bin" $path)
+[ -d "$PYENV_ROOT/bin" ]   && path=("$PYENV_ROOT/bin" $path)
+export PATH

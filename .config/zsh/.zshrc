@@ -1,11 +1,17 @@
 # ┌──────────────────────────────────────────────────────────────┐
 # │ arpatek - Zsh Configuration                                  │
-# │ A modern, minimal Zsh setup — no framework, no plugin mgr.   │
+# │ Modern, minimal Zsh — no framework, no plugin manager.       │
 # └──────────────────────────────────────────────────────────────┘
+
+# ──[ Shared Env Bridge ]───────────────────────────────────────────────────────
+# Linux terminal emulators spawn non-login shells, which skip .zprofile. Pull it
+# in so PATH and tool roots exist here too. On macOS (login shells) this no-ops;
+# typeset -U keeps PATH duplicate-free either way.
+[[ -o login ]] || source "$ZDOTDIR/.zprofile"
 
 # ──[ Plugins ]─────────────────────────────────────────────────────────────────
 # Plugins are cloned to ~/.config/zsh/plugins/ by install.sh — no manager needed.
-# zsh-completions must be added to fpath before compinit runs
+# zsh-completions must be added to fpath before compinit runs.
 PLUGINS_DIR="$HOME/.config/zsh/plugins"
 fpath=("${PLUGINS_DIR}/zsh-completions/src" $fpath)
 source "${PLUGINS_DIR}/zsh-autosuggestions/zsh-autosuggestions.zsh"
@@ -14,8 +20,8 @@ source "${PLUGINS_DIR}/zsh-autosuggestions/zsh-autosuggestions.zsh"
 ZSH_CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
 [[ -d "$ZSH_CACHE" ]] || mkdir -p "$ZSH_CACHE"
 autoload -Uz compinit
-# Rebuild the completion dump only if it is older than 24 hours; otherwise
-# load from cache with -C (skips security check and full file scan — ~100ms faster)
+# Rebuild the completion dump only if older than 24h; otherwise load from cache
+# with -C (skips the security check and full scan — ~100ms faster).
 if [[ -n ${ZSH_CACHE}/.zcompdump(#qN.mh+24) ]]; then
     compinit -d "${ZSH_CACHE}/.zcompdump"
 else
@@ -32,15 +38,13 @@ zstyle ':completion:*' rehash true
 
 # ──[ Autosuggestions ]─────────────────────────────────────────────────────────
 ZSH_AUTOSUGGEST_STRATEGY=(history completion)
-# Cap the length of commands autosuggestions will try to match — without this,
-# long pipeline history entries cause noticeable lag on every keystroke
+# Cap how long a command autosuggestions will try to match — without this, long
+# pipeline history entries cause noticeable lag on every keystroke.
 ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
 
 # ──[ History Substring Search ]────────────────────────────────────────────────
-# Type any part of a previous command, then use Up/Down to cycle matches.
-# Complements autosuggestions: autosuggestions shows the top match inline,
-# this lets you browse all matches with the arrow keys.
-# Must load before fast-syntax-highlighting.
+# Type any part of a previous command, then Up/Down to cycle matches. Complements
+# the inline autosuggestion. Must load before fast-syntax-highlighting.
 source "${PLUGINS_DIR}/zsh-history-substring-search/zsh-history-substring-search.zsh"
 bindkey '^[[A' history-substring-search-up
 bindkey '^[[B' history-substring-search-down
@@ -63,7 +67,7 @@ bindkey          '\e\e' _toggle_vi_mode
 bindkey -M vicmd '\e\e' _toggle_vi_mode
 bindkey -M viins '\e\e' _toggle_vi_mode
 
-# 50ms — short enough to feel instant, long enough to catch the second Esc
+# 50ms — short enough to feel instant, long enough to catch the second Esc.
 KEYTIMEOUT=5
 
 # ──[ Syntax Highlighting ]─────────────────────────────────────────────────────
@@ -72,39 +76,33 @@ KEYTIMEOUT=5
 source "${PLUGINS_DIR}/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh"
 
 # ──[ Fuzzy Finder (fzf) ]──────────────────────────────────────────────────────
-# Ctrl+R → fuzzy history search
-# Ctrl+T → fuzzy file picker (inserts path at cursor)
-# Alt+C  → fuzzy cd into a subdirectory
+# Ctrl+R history · Ctrl+T files · Alt+C cd. Border style is set per-OS in os.d/.
 eval "$(fzf --zsh)"
-export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border=rounded'
 
 # ──[ Smart Directory Jump (zoxide) ]───────────────────────────────────────────
-# z <query>  → jump to most-frecent directory matching the query
-# zi         → interactive picker using fzf
+# z <query> jumps to the most-frecent match; zi is an fzf picker.
 eval "$(zoxide init zsh)"
 
 # ──[ User Aliases ]────────────────────────────────────────────────────────────
-[[ -f "$HOME/.config/zsh/.zsh_aliases" ]] && source "$HOME/.config/zsh/.zsh_aliases"
+[[ -f "$ZDOTDIR/.zsh_aliases" ]] && source "$ZDOTDIR/.zsh_aliases"
 
-# ──[ Default Editor ]──────────────────────────────────────────────────────────
-export EDITOR='nvim'
-export VISUAL='nvim'
-# Required for GPG commit signing — without this, pinentry cannot find the tty
+# ──[ GPG ]─────────────────────────────────────────────────────────────────────
+# GPG commit signing needs the tty for pinentry. Interactive-only.
 export GPG_TTY=$(tty)
 
 # ──[ Manpages ]────────────────────────────────────────────────────────────────
 export LESS='-R'
-# bat renders man pages with full syntax highlighting — no LESS_TERMCAP_* needed
+# bat renders man pages with syntax highlighting — no LESS_TERMCAP_* needed.
 export MANPAGER='bat -l man -p'
 
 # ──[ History ]─────────────────────────────────────────────────────────────────
-HISTFILE="$HOME/.config/zsh/.zsh_history"
+HISTFILE="$ZDOTDIR/.zsh_history"
 HISTSIZE=50000
 SAVEHIST=50000
 setopt EXTENDED_HISTORY       # record : <timestamp>:<elapsed>;<cmd> per entry
-setopt HIST_IGNORE_ALL_DUPS   # remove older copy anywhere in history before recording
-setopt HIST_IGNORE_SPACE      # skip recording commands prefixed with a space
-setopt SHARE_HISTORY          # share history across all open sessions in real time
+setopt HIST_IGNORE_ALL_DUPS   # drop older duplicate anywhere before recording
+setopt HIST_IGNORE_SPACE      # skip commands prefixed with a space
+setopt SHARE_HISTORY          # share history across sessions in real time
 setopt HIST_VERIFY            # expand !! in place before executing
 
 # ──[ Shell Behavior ]──────────────────────────────────────────────────────────
@@ -112,25 +110,14 @@ setopt AUTO_CD    # type a directory name alone to cd into it
 setopt GLOB_DOTS  # include dotfiles in glob patterns without needing .*
 setopt NO_BEEP    # disable terminal bell on errors or no match
 
-# ──[ PATH Export ]─────────────────────────────────────────────────────────────
-[ -d "$HOME/bin" ]        && PATH="$HOME/bin:$PATH"
-[ -d "$HOME/.local/bin" ] && PATH="$HOME/.local/bin:$PATH"
-[ -d "/usr/local/bin" ]   && PATH="/usr/local/bin:$PATH"
-
-export PATH
-
-# ──[ Go ]──────────────────────────────────────────────────────────────────────
-[ -d "/usr/local/go/bin" ] && export PATH="/usr/local/go/bin:$PATH"
-[ -d "$HOME/go/bin" ]      && export PATH="$HOME/go/bin:$PATH"
-
 # ──[ Python (pyenv) ]──────────────────────────────────────────────────────────
-# Set PYENV_ROOT and prepend its bin so the pyenv shim intercepts python/pip
-# calls. The eval block injects the shim directory and shell function — both
-# are needed; PATH alone is not enough.
-export PYENV_ROOT="$HOME/.local/share/pyenv"
-[[ -d "$PYENV_ROOT/bin" ]] && export PATH="$PYENV_ROOT/bin:$PATH"
+# Interactive shell function + completions. PYENV_ROOT/bin is on PATH via .zprofile.
 command -v pyenv >/dev/null && eval "$(pyenv init -)"
 
-# ──[ Prompt (Starship) ]───────────────────────────────────────────────────────
-[[ "$USER" == "sysadmin" ]] && export STARSHIP_CONFIG="$HOME/.config/starship-sysadmin.toml"
-eval "$(starship init zsh)"
+# ──[ Platform Module ]─────────────────────────────────────────────────────────
+# OS-specific interactive bits — keybinds, fzf border, OS aliases, and the prompt.
+# Starship init must run last, so each module ends with it.
+case "$OSTYPE" in
+  darwin*) source "$ZDOTDIR/os.d/darwin.zsh" ;;
+  linux*)  source "$ZDOTDIR/os.d/linux.zsh"  ;;
+esac
