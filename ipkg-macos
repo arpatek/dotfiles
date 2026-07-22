@@ -24,10 +24,10 @@ _resolve_path() {
   python3 -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$1" \
     2>/dev/null || readlink -f "$1" 2>/dev/null || printf '%s\n' "$1"
 }
-MAC_SETUP_DIR="$(cd "$(dirname "$(_resolve_path "${BASH_SOURCE[0]}")")" && pwd)"
+DOTFILES_DIR="$(cd "$(dirname "$(_resolve_path "${BASH_SOURCE[0]}")")" && pwd)"
 
 # ──[ Shared Utilities ]────────────────────────────────────────────────────────
-source "$MAC_SETUP_DIR/lib.sh"
+source "$DOTFILES_DIR/lib.sh"
 
 # ──[ Dependency Check ]────────────────────────────────────────────────────────
 if ! command -v fzf >/dev/null 2>&1; then
