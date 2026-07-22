@@ -1,41 +1,78 @@
 # dotfiles
 
-Personal dotfiles for Zsh, tmux, Vim/Neovim, Git, and SSH — Linux-first, managed via symlinks with a fully automated bootstrap installer.
+Personal dotfiles for Zsh, tmux, Vim/Neovim, Git, and SSH — **cross-platform
+(Linux + macOS)**, managed via symlinks with a fully automated, OS-aware bootstrap
+installer.
 
-> macOS setup lives in a separate repo: [mac-setup](https://codeberg.org/arpatek/mac-setup)
+One repo, one source of truth. The OS is detected at **install time** (which packages
+and tools to bootstrap) and again at **shell runtime** (which interactive tweaks to
+load), so the same checkout drives a RHEL server, an Asahi laptop, and a Mac.
+
+---
+
+## Architecture
+
+The OS-specific surface is small and quarantined into modules; everything else is shared.
+
+| Layer | Detects OS via | Shared | Per-OS module |
+|---|---|---|---|
+| Install (`bash`) | `uname -s` in `install.sh` | packages-agnostic flow, symlinks, zsh plugins, LazyVim | `os/linux.sh`, `os/darwin.sh` |
+| Shell runtime (`zsh`) | `$OSTYPE` in `.zshrc` | plugins, completion, history, keybinds | `.config/zsh/os.d/{linux,darwin}.zsh` |
+
+**`os/<os>.sh`** (install) defines `os_bootstrap`, `os_link`, `os_post`, `os_uninstall`,
+`os_uninstall_shell`. `install.sh` / `uninstall.sh` are thin dispatchers that source the
+matching module and call these hooks.
+
+**`os.d/<os>.zsh`** (runtime) holds the ~10-line interactive delta — keybinds, fzf border,
+OS-only aliases, and the Starship prompt (which must load last).
+
+### Zsh load model
+
+```
+.zshenv    every shell     ZDOTDIR, `typeset -U path`, pure env vars (tool roots, EDITOR)
+.zprofile  login shells    Homebrew (macOS) + PATH — runs AFTER macOS path_helper so order wins
+.zshrc     interactive     plugins, completion, fzf/zoxide, pyenv, then the $OSTYPE module
+os.d/*     sourced by .zshrc   per-OS keybinds/aliases/prompt
+```
+
+Two portability details make one config correct on both platforms:
+
+- **`typeset -U path`** (in `.zshenv`) keeps PATH duplicate-free, so building it is idempotent.
+- **Non-login bridge** — Linux terminal emulators spawn *non-login* shells that skip
+  `.zprofile`; `.zshrc` runs `[[ -o login ]] || source "$ZDOTDIR/.zprofile"` to pull it in.
+  On macOS (login shells) this no-ops, and PATH is built in `.zprofile` so Apple's
+  `path_helper` can't reorder it ahead of our entries.
 
 ---
 
 ## Contents
 
-| File | Description |
+| Path | Description |
 |---|---|
+| `install.sh` / `uninstall.sh` | OS-aware bootstrap / teardown dispatchers |
+| `os/linux.sh` | Linux package + tool bootstrap, symlinks, teardown |
+| `os/darwin.sh` | macOS Homebrew/Brewfile bootstrap, symlinks, teardown |
 | `lib.sh` | Shared utilities — colors, decoration functions, `cache_sudo` |
-| `install.sh` | Full bootstrap — packages, tools, pyenv, starship, fonts, LazyVim, symlinks |
-| `uninstall.sh` | Full cleanup — removes all tools, symlinks, and bootstrapped environments |
-| `lpu` | Linux Package Updater |
-| `ipkg` | Interactive package browser — fuzzy-find to install or remove packages |
-| `.zshenv` | Sets `ZDOTDIR` so zsh finds all config under `~/.config/zsh/` |
-| `.config/zsh/.zshrc` | Zsh config — plugins, fzf, zoxide, pyenv, Go, starship |
-| `.config/zsh/.zprofile` | Login shell env — PATH, pyenv, Go (active for non-interactive SSH) |
-| `.config/zsh/.zsh_aliases` | Aliases for navigation, git, SSH, networking, and system |
-| `.config/starship.toml` | Starship prompt — catppuccin macchiato palette, two-line with git, path, OS icon |
-| `.config/git/config` | Git config — aliases, editor, fetch prune, autosquash, colorMoved |
-| `.config/git/commit-template` | Conventional commit template |
-| `.config/vim/vimrc` | Minimal Vim config for CLI/DevOps workflows |
-| `.config/tmux/tmux.conf` | tmux — truecolor, vi copy mode, 50k scrollback, focus events, tokyo-night theme |
-| `.config/nvim/init.vim` | Neovim fallback for nvim < 0.11.2 or no network (LazyVim used otherwise) |
-| `.config/curlrc` | curl defaults — follow redirects, retry, fail-fast |
-| `.config/lazygit/config.yml` | lazygit catppuccin mocha theme |
-| `.ssh/config` | SSH — global ControlMaster defaults and connection templates |
-| `.editorconfig` | Universal indent/charset rules for all editors |
-| `.gitignore` | Repo-level ignores — swap files, history, pyc, secrets |
+| `Brewfile` | macOS package manifest (`brew bundle`) |
+| `lpu` / `mpu` | Linux / Mac Package Updater |
+| `ipkg-linux` / `ipkg-macos` | Interactive package browser (linked as `ipkg` per OS) |
+| `.zshenv` | `ZDOTDIR`, `typeset -U path`, tool-root env vars |
+| `.config/zsh/.zprofile` | Login-shell PATH (built after macOS path_helper) |
+| `.config/zsh/.zshrc` | Interactive config — plugins, fzf, zoxide, pyenv, `$OSTYPE` module |
+| `.config/zsh/os.d/{linux,darwin}.zsh` | Per-OS interactive delta — keybinds, fzf, aliases, prompt |
+| `.config/zsh/.zsh_aliases` | Shared aliases (OS-specific ones live in `os.d/`) |
+| `.config/starship.toml` | Starship prompt — catppuccin macchiato, two-line |
+| `.config/git/{config,commit-template}` | Git config + conventional commit template |
+| `.config/tmux/tmux.conf` | tmux — truecolor, vi copy mode, 50k scrollback, tokyo-night |
+| `.config/vim/vimrc`, `.config/nvim/init.vim` | Vim config + Neovim fallback for nvim < 0.11.2 |
+| `.config/lazygit/config.yml`, `.config/curlrc` | lazygit theme, curl defaults |
+| `.aerospace.toml`, `.config/iterm2/`, `.config/zed/` | macOS-only — linked by `os/darwin.sh` |
+| `.config/starship-sysadmin.toml` | Linux-only alt prompt for the `sysadmin` user |
+| `.ssh/config`, `.editorconfig`, `.gitignore` | SSH templates, editor rules, repo ignores |
 
 ---
 
 ## Installation
-
-Clone and run the installer. It handles everything automatically.
 
 ```bash
 git clone git@codeberg.org:arpatek/dotfiles.git ~/dotfiles
@@ -43,74 +80,78 @@ cd ~/dotfiles
 ./install.sh
 ```
 
-The installer will:
-- Detect your distro and install missing packages
-- Install Go, lazygit, fzf, zoxide, starship, and JetBrains Mono Nerd Font
-- Clone zsh plugins directly — no plugin manager needed
-- Clone the LazyVim starter (requires nvim ≥ 0.11.2; falls back to `init.vim`)
-- Symlink all dotfiles into place under `~/.config/`
-- Archive and remove leftover bash config files from `$HOME`
-- Set zsh as your default shell via `chsh`
-- Launch zsh on completion
+The installer detects the OS and:
 
-**To skip package installation** (re-link only):
+- **Linux** — detects the distro package manager, installs missing packages, then Go,
+  lazygit, fzf, zoxide, starship, eza, bat, yazi, and JetBrains Mono Nerd Font from
+  upstream; sets zsh as the default shell via `chsh`; archives leftover bash configs.
+- **macOS** — installs Xcode CLT and Homebrew, then everything in the `Brewfile`.
+- **Both** — clone zsh plugins (no plugin manager), clone the LazyVim starter (nvim ≥ 0.11.2,
+  else `init.vim`), symlink all shared config, link the OS-specific config, and launch zsh.
 
 ```bash
-./install.sh --skip-packages
+./install.sh --skip-packages   # re-link only, no package bootstrap
+./install.sh --update          # re-fetch upstream-installed tools (Linux)
+./uninstall.sh                 # full teardown, restores a clean state
 ```
 
-**To uninstall:**
-
-```bash
-./uninstall.sh
-```
-
-Removes symlinks, tools, Go, pyenv, starship, plugins, LazyVim, and non-essential dnf packages. Restores bash config files, reverts the default shell to bash.
+`uninstall.sh` removes symlinks, tools, plugins, pyenv, and LazyVim on both platforms;
+on Linux it also removes bootstrapped packages, reverts the default shell to bash, and
+restores archived bash configs; on macOS it uninstalls Brewfile packages (with a prompt).
 
 ---
 
 ## Known Gotchas
 
-**LazyVim not loading after install**
+**LazyVim not loading after install (Linux)** — if nvim was previously installed via apt,
+`/usr/bin/nvim` shadows the script's `/usr/local/bin/nvim`; the version check reads the wrong
+binary and falls back to `init.vim`. Remove the apt package (`sudo apt remove neovim`) and
+re-run.
 
-If nvim was previously installed via apt, the apt binary at `/usr/bin/nvim` shadows the one installed by this script at `/usr/local/bin/nvim`. The version check in the installer reads the wrong binary, falls back to `init.vim`, and LazyVim is never cloned.
-
-Remove the apt package first:
-
-```bash
-sudo apt remove neovim
-```
-
-Then re-run the installer. The `/usr/local/bin/nvim` symlink will take over and LazyVim will install correctly.
+**macOS PATH order** — `/etc/zprofile` runs `path_helper` at login and reorders PATH. Our PATH
+is built in `~/.zprofile` (which runs *after* it), so our entries stay in front. Do not move
+PATH construction into `.zshenv`, or path_helper will shove `/usr/bin` ahead of it.
 
 ---
 
 ## Home Directory Layout
 
-All shell and tool config lives under `~/.config/` (XDG-compliant). The only files
-installed directly to `$HOME` are:
+All shell and tool config lives under `~/.config/` (XDG). Files that must sit in `$HOME`:
 
-| File | Why it must stay in `$HOME` |
+| File | Why |
 |---|---|
 | `~/.zshenv` | Sets `ZDOTDIR` — zsh reads this before any other file |
-| `~/.editorconfig` | EditorConfig walks up from the project root, falls back to `$HOME` |
+| `~/.editorconfig` | EditorConfig falls back to `$HOME` |
+| `~/.aerospace.toml` | AeroSpace (macOS) has no XDG support |
 | `~/.ssh/` | SSH has no XDG support |
 
 ---
 
-## lpu — Linux Package Updater
+## Package Updaters — `lpu` / `mpu`
 
-Detects the system package manager and runs a full update/upgrade cycle with cleanup.
+`lpu` (Linux) detects the system package manager and runs a full update/upgrade/cleanup
+cycle. `mpu` (macOS) does the same for Homebrew. Both linked into `PATH` by the OS module.
 
 ```
 Usage: lpu [OPTIONS]
-Options:
   -h, --help      Show this help message
   -V, --version   Show version
   -n, --dry-run   Print commands without executing them
 ```
 
-**Supported package managers:** `nala` · `apt` · `dnf` · `yum` · `pacman` · `zypper` · `apk` · `xbps` · `emerge` · `pkg`
+**`lpu` package managers:** `nala` · `apt` · `dnf` · `yum` · `pacman` · `zypper` · `apk` · `xbps` · `emerge` · `pkg`
+
+---
+
+## `ipkg` — Interactive Package Browser
+
+A fuzzy-find TUI to install/remove packages, linked as `ipkg` on both platforms from the
+OS-specific implementation:
+
+- **`ipkg-linux`** — multi-manager (`pacman`/`apt`/`dnf`/`zypper`/`apk`/`xbps`/`pkg`);
+  `alt+i` install mode, `alt+r` remove mode, `Tab` multi-select.
+- **`ipkg-macos`** — Homebrew formulae + casks; `alt+f`/`alt+c` install formula/cask,
+  `alt+r`/`alt+x` remove formula/cask.
 
 ---
 
@@ -119,96 +160,63 @@ Options:
 | Feature | Detail |
 |---|---|
 | No plugin manager | Plugins cloned to `~/.config/zsh/plugins/` by the installer |
-| Syntax highlighting | `fast-syntax-highlighting` — faster than zsh-syntax-highlighting |
+| Syntax highlighting | `fast-syntax-highlighting` |
 | Autosuggestions | History-first with completion fallback, 20-char buffer cap |
-| History substring search | Type any part of a past command, Up/Down cycles all matches |
-| Completions | `zsh-completions` with 24-hour compinit dump cache in `~/.cache/zsh/` |
-| Fuzzy finder | fzf — `Ctrl+R` history, `Ctrl+T` file picker, `Alt+C` fuzzy cd |
-| Smart jump | zoxide — `z <query>` jumps to most-frecent directory, `zi` interactive |
-| Prompt | Starship — catppuccin macchiato, two-line with OS icon, user@host, path, git |
-| Vi mode toggle | Double `Esc` enters vi command mode, double `Esc` again returns to emacs |
-| History | 50,000 entries, all-duplicates removed, timestamps, shared across sessions |
-| `AUTO_CD` | Type a directory name to navigate without `cd` |
-| `GLOB_DOTS` | Glob patterns include dotfiles without `.*` |
-| `NO_BEEP` | Disables terminal bell |
+| History substring search | Type any part of a past command, Up/Down cycles matches |
+| Completions | `zsh-completions`, 24-hour compinit dump cache in `~/.cache/zsh/` |
+| Fuzzy finder | fzf — `Ctrl+R` history, `Ctrl+T` files, `Alt+C` fuzzy cd |
+| Smart jump | zoxide — `z <query>`, `zi` interactive |
+| Prompt | Starship — catppuccin macchiato, two-line, OS icon, git |
+| Vi mode toggle | Double `Esc` enters vi command mode, double `Esc` returns to emacs |
+| History | 50,000 entries, dup-removed, timestamped, shared across sessions |
 
 ---
 
 ## Zsh Aliases
 
+Shared aliases live in `.config/zsh/.zsh_aliases`; OS-specific ones (e.g. `grep` vs `ggrep`,
+`shutdown` flags, macOS `flushdns`/`pubkey`) live in `os.d/<os>.zsh`.
+
 | Alias | Command |
 |---|---|
-| `ls` | `eza -A --icons --git` |
-| `ll` | `eza -lagh --icons --git` |
-| `lll` | `eza -lagShi --icons --git` |
-| `tree` | `eza -T --icons --git` |
-| `grep` | `grep --color=auto` |
-| `ip` | `ip --color=auto` |
+| `ls` / `ll` / `lll` / `tree` | `eza` variants with icons + git |
 | `mkdir` | `mkdir -pv` |
 | `gs` / `ga` / `gc` / `gp` / `gl` | Git shortcuts |
-| `ssh` | Wraps ssh with `TERM=xterm-256color` to fix Ghostty terminfo errors on remotes |
+| `ssh` | Wraps ssh with `TERM=xterm-256color` (fixes Ghostty terminfo on remotes) |
 | `pi` / `rhel` / `dev` | SSH into configured hosts |
-| `ports` | `lsof -i -P -n` |
-| `reload` | `exec zsh` |
+| `ports` / `reload` | `lsof -i -P -n` / `exec zsh` |
 
 ---
 
-## ipkg — Interactive Package Browser
+## tmux
 
-| Key | Action |
-|---|---|
-| `alt+r` | Switch to remove mode — installed packages, red markers |
-| `alt+i` | Switch to install mode — available packages, green markers |
-| `Tab` | Multi-select |
-| `alt+p` | Toggle preview panel |
-| `alt+j` / `alt+k` | Scroll preview line by line |
-| `alt+d` / `alt+u` | Scroll preview half-page |
-
----
-
-## tmux Theme
-
-Uses [tokyo-night-tmux](https://github.com/janoamaral/tokyo-night-tmux). Clone it manually — it is not managed by the installer:
+Theme: [tokyo-night-tmux](https://github.com/janoamaral/tokyo-night-tmux) — clone manually,
+not managed by the installer:
 
 ```bash
 git clone https://github.com/janoamaral/tokyo-night-tmux ~/.config/tmux/plugins/tokyo-night-tmux
 ```
 
-Enabled widgets: git status, battery, network speed, now playing, current path, hostname.
-
----
-
-## tmux Key Bindings
-
 | Binding | Action |
 |---|---|
 | `C-a` | Prefix (replaces `C-b`) |
-| `Prefix + \|` | Split vertically |
-| `Prefix + -` | Split horizontally |
+| `Prefix + \|` / `Prefix + -` | Split vertical / horizontal |
 | `Prefix + r` | Reload config |
-| `v` (copy mode) | Begin selection |
-| `y` (copy mode) | Copy to system clipboard |
+| `v` / `y` (copy mode) | Begin selection / yank to clipboard |
+
+Clipboard yank is cross-platform: `pbcopy` (macOS) → `xclip` → `xsel` (Linux/X11).
 
 ---
 
 ## SSH Keys
 
-The SSH config references key files not included in this repo. Generate them with [portal-22](https://codeberg.org/arpatek/portal-22):
+The SSH config references key files not in this repo. Generate them with
+[portal-22](https://codeberg.org/arpatek/portal-22):
 
 ```bash
 portal-22 -g                        # global key — {hostname}.key
 portal-22 -t git -p codeberg        # git.codeberg.key
-portal-22 -t git -p github          # git.github.key
-portal-22 -t git -p gitlab          # git.gitlab.key
-portal-22 -t git -p gitea           # git.gitea.key
-portal-22 -H netrunner              # netrunner.key
-portal-22 -H blackwall              # blackwall.key
-portal-22 -H mikoshi                # mikoshi.key
-portal-22 -H soulkiller             # soulkiller.key
-portal-22 -H netwatch               # netwatch.key
-portal-22 -H erebus                 # erebus.key
-portal-22 -H sandevistan            # sandevistan.key
-portal-22 -H kerenzikov             # kerenzikov.key
+portal-22 -H netrunner              # per-host key
 ```
 
 Add the `.pub` files to their respective services and `authorized_keys` files.

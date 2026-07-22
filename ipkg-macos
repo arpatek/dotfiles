@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+# =============================================================================
+# Script Name: ipkg
+# Description: Interactive Homebrew browser — fuzzy-find to install or remove
+#              formulae and casks. Install: alt+f/alt+c. Remove: alt+r/alt+x.
+# Author: Juan Garcia (arpatek)
+# Created: 2026-05-15
+# Version: 2.0
+# =============================================================================
+
+# ──[ Bash Version Check ]──────────────────────────────────────────────────────
+if ((BASH_VERSINFO[0] < 4)); then
+  printf "ipkg requires bash 4 or higher (detected: %s)\n" "$BASH_VERSION" >&2
+  exit 1
+fi
+
+set -eo pipefail
+
+# ──[ Error Trap ]──────────────────────────────────────────────────────────────
+trap 'printf "\n%s Something went wrong.\n" "$(FAILED)"' ERR
+
+# ──[ Paths ]───────────────────────────────────────────────────────────────────
+_resolve_path() {
+  python3 -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$1" \
+    2>/dev/null || readlink -f "$1" 2>/dev/null || printf '%s\n' "$1"
+}
+MAC_SETUP_DIR="$(cd "$(dirname "$(_resolve_path "${BASH_SOURCE[0]}")")" && pwd)"
+
+# ──[ Shared Utilities ]────────────────────────────────────────────────────────
+source "$MAC_SETUP_DIR/lib.sh"
+
+# ──[ Dependency Check ]────────────────────────────────────────────────────────
+if ! command -v fzf >/dev/null 2>&1; then
+  printf "%s fzf is required: brew install fzf\n" "$(FAILED)" >&2
+  exit 1
+fi
+
+if ! command -v brew >/dev/null 2>&1; then
+  printf "%s Homebrew not found\n" "$(FAILED)" >&2
+  exit 1
+fi
+
+# ──[ Interactive Browser ]─────────────────────────────────────────────────────
+# Entries are prefixed with their mode so the apply step knows what to run:
+#   install-formula git   → brew install git
+#   install-cask firefox  → brew install --cask firefox
+#   remove-formula git    → brew uninstall --formula git
+#   remove-cask firefox   → brew uninstall --cask firefox
+#
+# Key map:
+#   alt+f → install formulae (default, green)
+#   alt+c → install casks    (green)
+#   alt+r → remove installed formulae  (red)
+#   alt+x → remove installed casks     (red)
+#   alt+p → toggle preview
+#   alt+j/k → scroll preview line
+#   alt+d/u → scroll preview half-page
+
+fzf_args=(
+  --height 100%
+  --layout=reverse
+  --multi
+  --prompt '[INSTALL] formula > '
+  --header "alt+c: install-cask | alt+r: remove-formula | alt+x: remove-cask | tab: select"
+  --preview 'brew info {2} 2>/dev/null'
+  --preview-label " Brew Info "
+  --preview-label-pos 'bottom'
+  --preview-window 'down:60%:wrap'
+  --color 'pointer:green,marker:green'
+  --bind 'alt-p:toggle-preview'
+  --bind 'alt-d:preview-half-page-down,alt-u:preview-half-page-up'
+  --bind 'alt-k:preview-up,alt-j:preview-down'
+  --bind "alt-f:reload(brew formulae | sed 's|^|install-formula |')+change-prompt([INSTALL] formula > )+change-header(alt+c: install-cask | alt+r: remove-formula | alt+x: remove-cask | tab: select)"
+  --bind "alt-c:reload(brew casks | sed 's|^|install-cask |')+change-prompt([INSTALL] cask > )+change-header(alt+f: install-formula | alt+r: remove-formula | alt+x: remove-cask | tab: select)"
+  --bind "alt-r:reload(brew list --formula 2>/dev/null | sed 's|^|remove-formula |')+change-prompt([REMOVE] formula > )+change-header(alt+f: install-formula | alt+c: install-cask | alt+x: remove-cask | tab: select)"
+  --bind "alt-x:reload(brew list --cask 2>/dev/null | sed 's|^|remove-cask |')+change-prompt([REMOVE] cask > )+change-header(alt+f: install-formula | alt+c: install-cask | alt+r: remove-formula | tab: select)"
+)
+
+selections=$(brew formulae | sed 's|^|install-formula |' | fzf "${fzf_args[@]}" || true)
+
+[[ -z "$selections" ]] && exit 0
+
+# ──[ Apply ]───────────────────────────────────────────────────────────────────
+printf "%s Applying selections...\n" "$(BANNER)"
+
+while IFS=' ' read -r mode name; do
+  [[ -z "$name" ]] && continue
+  printf "%s %s (%s)\n" "$(PLUS)" "$name" "$mode"
+  case "$mode" in
+    install-formula) brew install "$name" ;;
+    install-cask)    brew install --cask "$name" ;;
+    remove-formula)  brew uninstall --formula "$name" ;;
+    remove-cask)     brew uninstall --cask "$name" ;;
+  esac
+done <<< "$selections"
+
+printf "%s Done\n" "$(COMPLETE)"
