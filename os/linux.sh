@@ -676,9 +676,12 @@ os_post() {
   printf "%s Cleaning Up Shell Config Files\n" "$(BANNER)"
   cleanup_bash_configs
 
-  local zsh_bin
+  local zsh_bin login_shell
   zsh_bin="$(command -v zsh 2>/dev/null)"
-  if [[ -n "$zsh_bin" && "$SHELL" != "$zsh_bin" ]]; then
+  # Read the real login shell from passwd, not $SHELL — $SHELL reflects the
+  # session's startup shell and goes stale after a chsh in the same session.
+  login_shell="$(getent passwd "$USER" | cut -d: -f7)"
+  if [[ -n "$zsh_bin" && "$login_shell" != "$zsh_bin" ]]; then
     printf "%s Setting zsh as default shell\n" "$(BANNER)"
     # /etc/shells must list zsh for chsh to accept it
     if ! grep -qx "$zsh_bin" /etc/shells; then
@@ -758,9 +761,11 @@ os_uninstall() {
 
 os_uninstall_shell() {
   printf "%s Reverting default shell to bash\n" "$(BANNER)"
-  local bash_bin
+  local bash_bin login_shell
   bash_bin="$(command -v bash 2>/dev/null || true)"
-  if [[ -n "$bash_bin" && "$SHELL" != "$bash_bin" ]]; then
+  # Read the real login shell from passwd, not $SHELL (stale after chsh in-session).
+  login_shell="$(getent passwd "$USER" | cut -d: -f7)"
+  if [[ -n "$bash_bin" && "$login_shell" != "$bash_bin" ]]; then
     sudo chsh -s "$bash_bin" "$USER" \
       && printf "%s Default shell reverted to %s\n" "$(COMPLETE)" "$bash_bin" \
       || warn "chsh failed — revert manually: sudo chsh -s $bash_bin $USER"
