@@ -50,8 +50,7 @@ brew "deno"
 brew "pyenv"
 
 # ──[ Containers ]──────────────────────────────────────────────────────────────
-brew "docker"
-brew "docker-completion"
+brew "docker"          # ships its own completions — do not also install docker-completion
 
 # ──[ Media ]───────────────────────────────────────────────────────────────────
 brew "ffmpeg"

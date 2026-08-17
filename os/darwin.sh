@@ -42,8 +42,12 @@ bootstrap_homebrew() {
 # ──[ Brewfile ]────────────────────────────────────────────────────────────────
 bootstrap_packages() {
   printf "%s Installing packages from Brewfile...\n" "$(PLUS)"
-  brew bundle --file="$DOTFILES_DIR/Brewfile"
-  printf "%s Brewfile packages installed\n" "$(COMPLETE)"
+  if ! brew bundle --file="$DOTFILES_DIR/Brewfile"; then
+    printf "%s Some Brewfile packages failed to install — continuing\n" "$(FAILED)"
+    printf "%s Run 'brew bundle check --file=%s' to see what's missing\n" "$(PLUS)" "$DOTFILES_DIR/Brewfile"
+  else
+    printf "%s Brewfile packages installed\n" "$(COMPLETE)"
+  fi
 }
 
 # ──[ OS Entry Points ]─────────────────────────────────────────────────────────
