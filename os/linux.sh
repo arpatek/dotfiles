@@ -670,6 +670,13 @@ os_link() {
   printf "%s ipkg installed to /usr/local/bin/ipkg\n" "$(COMPLETE)"
 
   link "$DOTFILES_DIR/.config/starship-sysadmin.toml" "$HOME/.config/starship-sysadmin.toml"
+
+  # VSCodium is not part of the Linux bootstrap — these VMs are headless. Link
+  # the config anyway so a desktop install picks it up without extra steps.
+  # Path is XDG here, unlike macOS's ~/Library/Application Support.
+  local vscodium_user="$HOME/.config/VSCodium/User"
+  mkdir -p "$vscodium_user"
+  link "$DOTFILES_DIR/.config/vscodium/settings.json" "$vscodium_user/settings.json"
 }
 
 os_post() {
@@ -691,6 +698,21 @@ os_post() {
     printf "%s Default shell set to %s\n" "$(COMPLETE)" "$zsh_bin"
   else
     printf "%s zsh is already the default shell\n" "$(COMPLETE)"
+  fi
+
+  # Only runs where VSCodium is actually installed — headless VMs skip this.
+  local ext_list="$DOTFILES_DIR/.config/vscodium/extensions.txt"
+  if command -v codium >/dev/null 2>&1 && [[ -f "$ext_list" ]]; then
+    printf "%s VSCodium Extensions\n" "$(BANNER)"
+    local ext
+    while read -r ext; do
+      [[ -z "$ext" || "$ext" == \#* ]] && continue
+      if codium --install-extension "$ext" --force >/dev/null 2>&1; then
+        printf "%s %s\n" "$(COMPLETE)" "$ext"
+      else
+        printf "%s %s — not on Open VSX?\n" "$(FAILED)" "$ext"
+      fi
+    done <"$ext_list"
   fi
 }
 
@@ -753,6 +775,7 @@ os_uninstall() {
   remove_file /usr/local/bin/lpu  true
   remove_file /usr/local/bin/ipkg true
   unlink_file "$HOME/.config/starship-sysadmin.toml"
+  unlink_file "$HOME/.config/VSCodium/User/settings.json"
   printf "\n"
 
   # Fonts stay — removing them while Ghostty runs triggers a fontconfig SIGSEGV.

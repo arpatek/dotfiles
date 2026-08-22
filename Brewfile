@@ -75,7 +75,7 @@ cask "zen"
 cask "helium-browser"
 
 # ──[ Editors & IDEs ]──────────────────────────────────────────────────────────
-cask "visual-studio-code"
+cask "vscodium"          # VS Code without Microsoft telemetry/branding
 cask "zed"
 cask "betterdisplay"
 

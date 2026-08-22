@@ -70,6 +70,12 @@ os_link() {
   link "$DOTFILES_DIR/.config/zed/settings.json" "$HOME/.config/zed/settings.json"
   link "$DOTFILES_DIR/.aerospace.toml"           "$HOME/.aerospace.toml"
 
+  # VSCodium keeps user config outside XDG on macOS; Linux would be
+  # ~/.config/VSCodium/User if this is ever needed there.
+  local vscodium_user="$HOME/Library/Application Support/VSCodium/User"
+  mkdir -p "$vscodium_user"
+  link "$DOTFILES_DIR/.config/vscodium/settings.json" "$vscodium_user/settings.json"
+
   printf "%s Installing mpu\n" "$(BANNER)"
   ln -sf "$DOTFILES_DIR/mpu" "$brew_prefix/bin/mpu"
   printf "%s mpu installed to %s/bin/mpu\n" "$(COMPLETE)" "$brew_prefix"
@@ -97,6 +103,22 @@ os_post() {
   # it. Setting it here means a fresh machine picks it up on first login.
   defaults write NSGlobalDomain _HIHideMenuBar -bool true
   printf "%s Menu bar auto-hide set (takes effect at next login)\n" "$(COMPLETE)"
+
+  # Extensions are restored from a list rather than by copying
+  # ~/.vscode-oss/extensions, so each one re-resolves to a current version.
+  local ext_list="$DOTFILES_DIR/.config/vscodium/extensions.txt"
+  if command -v codium >/dev/null 2>&1 && [[ -f "$ext_list" ]]; then
+    printf "%s VSCodium Extensions\n" "$(BANNER)"
+    local ext
+    while read -r ext; do
+      [[ -z "$ext" || "$ext" == \#* ]] && continue
+      if codium --install-extension "$ext" --force >/dev/null 2>&1; then
+        printf "%s %s\n" "$(COMPLETE)" "$ext"
+      else
+        printf "%s %s — not on Open VSX?\n" "$(FAILED)" "$ext"
+      fi
+    done <"$ext_list"
+  fi
 }
 
 # ──[ Uninstall ]───────────────────────────────────────────────────────────────
@@ -144,6 +166,7 @@ os_uninstall() {
   fi
 
   unlink_file "$HOME/.config/zed/settings.json"
+  unlink_file "$HOME/Library/Application Support/VSCodium/User/settings.json"
   unlink_file "$HOME/.aerospace.toml"
   remove_file "$HOME/.config/iterm2/arpatek.itermcolors"
 }

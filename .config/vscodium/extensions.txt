@@ -1,0 +1,40 @@
+# ┌──────────────────────────────────────────────────────────────┐
+# │ arpatek - VSCodium Extensions                                │
+# └──────────────────────────────────────────────────────────────┘
+# Restored by os/darwin.sh. Blank lines and # comments are ignored.
+# Re-export the installed set with:
+#   codium --list-extensions
+#
+# Every entry must exist on Open VSX — VSCodium cannot install from the
+# Microsoft Marketplace, so Pylance, Remote-SSH and Dev Containers are
+# unavailable regardless of what is listed here.
+
+# ──[ Editor Behaviour ]───────────────────────────────────────────────────────
+# Without this, the tracked .editorconfig has no effect in VSCodium.
+editorconfig.editorconfig
+pkief.material-icon-theme
+
+# ──[ Python ]─────────────────────────────────────────────────────────────────
+# Ruff covers lint + format. Pyrefly is the type checker standing in for
+# Pylance, which is proprietary and absent from Open VSX.
+charliermarsh.ruff
+meta.pyrefly
+ms-python.python
+ms-python.debugpy
+ms-python.vscode-python-envs
+
+# ──[ Shell ]──────────────────────────────────────────────────────────────────
+# shellcheck lints, shell-format (shfmt) formats.
+timonwong.shellcheck
+foxundermoon.shell-format
+
+# ──[ Infrastructure ]─────────────────────────────────────────────────────────
+hashicorp.terraform
+redhat.ansible
+redhat.vscode-yaml
+puppet.puppet-vscode
+
+# ──[ Docs ]───────────────────────────────────────────────────────────────────
+# markdown-mermaid renders diagrams in preview without a MermaidChart account.
+davidanson.vscode-markdownlint
+bierner.markdown-mermaid

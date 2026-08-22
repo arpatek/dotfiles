@@ -1,0 +1,59 @@
+// ┌──────────────────────────────────────────────────────────────┐
+// │ arpatek - VSCodium Settings                                  │
+// └──────────────────────────────────────────────────────────────┘
+// Indentation, line endings and trailing whitespace are NOT set here —
+// .editorconfig owns those, applied by the editorconfig extension.
+{
+  // ──[ Workbench ]────────────────────────────────────────────────────────────
+  "workbench.startupEditor": "none",
+  "workbench.iconTheme": "material-icon-theme",
+
+  // ──[ Editor ]───────────────────────────────────────────────────────────────
+  // Rulers match the section-divider widths in the arpatek style guide:
+  // 80 for Bash and config files, 88 for Python.
+  "editor.rulers": [80, 88],
+  "editor.formatOnSave": true,
+
+  // ──[ Terminal ]─────────────────────────────────────────────────────────────
+  // Same face as Ghostty so the integrated terminal is visually continuous.
+  "terminal.integrated.fontFamily": "JetBrainsMono Nerd Font Mono",
+  "terminal.integrated.fontSize": 13,
+
+  // ──[ Python ]───────────────────────────────────────────────────────────────
+  // Ruff does both lint and format; black-formatter is deliberately absent so
+  // two formatters aren't competing over the same buffer.
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.codeActionsOnSave": {
+      "source.organizeImports.ruff": "explicit"
+    }
+  },
+
+  // ──[ Shell ]────────────────────────────────────────────────────────────────
+  // shfmt: 2-space indent to match .editorconfig, and indent case bodies.
+  "[shellscript]": {
+    "editor.defaultFormatter": "foxundermoon.shell-format"
+  },
+  "shellformat.flag": "-i 2 -ci",
+
+  // ──[ Infrastructure ]───────────────────────────────────────────────────────
+  // Red Hat extensions (ansible, yaml) report usage by default.
+  "redhat.telemetry.enabled": false,
+
+  // ──[ Files ]────────────────────────────────────────────────────────────────
+  "files.associations": {
+    "Puppetfile": "ruby",
+    ".zsh_aliases": "shellscript",
+    ".zprofile": "shellscript"
+  },
+  "search.exclude": {
+    "**/.terraform": true,
+    "**/__pycache__": true,
+    "**/.venv": true,
+    "**/node_modules": true
+  },
+
+  // ──[ Telemetry ]────────────────────────────────────────────────────────────
+  // VSCodium ships this off; set explicitly so a settings reset can't re-enable it.
+  "telemetry.telemetryLevel": "off"
+}
