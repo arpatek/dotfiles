@@ -131,6 +131,10 @@ printf "%s Removing Zsh plugins\n" "$(BANNER)"
 remove_dir "$HOME/.config/zsh/plugins"
 printf "\n"
 
+printf "%s Removing tmux plugins\n" "$(BANNER)"
+remove_dir "$HOME/.config/tmux/plugins"
+printf "\n"
+
 printf "%s Removing LazyVim / Neovim config\n" "$(BANNER)"
 unlink_file "$HOME/.config/nvim/init.vim"
 remove_dir "$HOME/.config/nvim"

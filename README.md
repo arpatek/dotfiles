@@ -88,7 +88,7 @@ The installer detects the OS and:
   lazygit, fzf, zoxide, starship, eza, bat, yazi, and JetBrains Mono Nerd Font from
   upstream; sets zsh as the default shell via `chsh`; archives leftover bash configs.
 - **macOS** — installs Xcode CLT and Homebrew, then everything in the `Brewfile`.
-- **Both** — clone zsh plugins (no plugin manager), clone the LazyVim starter (nvim ≥ 0.11.2,
+- **Both** — clone zsh and tmux plugins (no plugin manager), clone the LazyVim starter (nvim ≥ 0.11.2,
   else `init.vim`), symlink all shared config, link the OS-specific config, and launch zsh.
 
 ```bash

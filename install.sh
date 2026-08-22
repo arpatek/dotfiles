@@ -139,6 +139,35 @@ bootstrap_zsh_plugins() {
   done
 }
 
+# ──[ Shared: tmux Plugins ]────────────────────────────────────────────────────
+# tmux.conf ends with `run ~/.config/tmux/plugins/tokyo-night-tmux/...`. Without
+# the clone that line silently fails and the status bar falls back to default.
+bootstrap_tmux_plugins() {
+  local plugins_dir="$HOME/.config/tmux/plugins"
+  mkdir -p "$plugins_dir"
+
+  declare -A TMUX_PLUGINS=(
+    [tokyo-night-tmux]="https://github.com/janoamaral/tokyo-night-tmux"
+  )
+
+  local plugin
+  for plugin in "${!TMUX_PLUGINS[@]}"; do
+    if [[ -d "${plugins_dir}/${plugin}" ]]; then
+      if $UPDATE; then
+        printf "%s Updating %s...\n" "$(PLUS)" "$plugin"
+        git -C "${plugins_dir}/${plugin}" pull --ff-only
+        printf "%s %s updated\n" "$(COMPLETE)" "$plugin"
+      else
+        printf "%s %s already installed\n" "$(COMPLETE)" "$plugin"
+      fi
+    else
+      printf "%s Installing %s...\n" "$(PLUS)" "$plugin"
+      git clone --depth 1 "${TMUX_PLUGINS[$plugin]}" "${plugins_dir}/${plugin}"
+      printf "%s %s installed\n" "$(COMPLETE)" "$plugin"
+    fi
+  done
+}
+
 # ──[ Shared: LazyVim ]─────────────────────────────────────────────────────────
 setup_lazyvim() {
   # init.vim is the zero-dependency fallback for nvim on any system where
@@ -189,6 +218,7 @@ if ! $SKIP_PACKAGES; then
   sleep 0.5
   os_bootstrap
   bootstrap_zsh_plugins
+  bootstrap_tmux_plugins
   printf "\n"
 fi
 
