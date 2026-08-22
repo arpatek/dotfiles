@@ -68,7 +68,7 @@ Two portability details make one config correct on both platforms:
 | `.config/lazygit/config.yml`, `.config/curlrc` | lazygit theme, curl defaults |
 | `.config/ghostty/config` | Ghostty — arpatek palette, JetBrainsMono NFM; shared by macOS and Linux |
 | `.config/vscodium/{settings.json,extensions.txt}` | VSCodium settings + extension manifest, restored by `os/darwin.sh` |
-| `.aerospace.toml`, `.config/iterm2/`, `.config/zed/` | macOS-only — linked by `os/darwin.sh` |
+| `.aerospace.toml`, `.config/zed/` | macOS-only — linked by `os/darwin.sh` |
 | `.config/starship-sysadmin.toml` | Linux-only alt prompt for the `sysadmin` user |
 | `.ssh/config`, `.editorconfig`, `.gitignore` | SSH templates, editor rules, repo ignores |
 

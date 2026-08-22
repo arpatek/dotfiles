@@ -61,11 +61,6 @@ os_link() {
   local brew_prefix
   brew_prefix="$(brew --prefix)"
 
-  printf "%s iTerm2\n" "$(BANNER)"
-  mkdir -p "$HOME/.config/iterm2"
-  cp "$DOTFILES_DIR/.config/iterm2/arpatek.itermcolors" "$HOME/.config/iterm2/arpatek.itermcolors"
-  printf "%s Copied arpatek.itermcolors\n" "$(COMPLETE)"
-
   mkdir -p "$HOME/.config/zed"
   link "$DOTFILES_DIR/.config/zed/settings.json" "$HOME/.config/zed/settings.json"
   link "$DOTFILES_DIR/.aerospace.toml"           "$HOME/.aerospace.toml"
@@ -168,7 +163,6 @@ os_uninstall() {
   unlink_file "$HOME/.config/zed/settings.json"
   unlink_file "$HOME/Library/Application Support/VSCodium/User/settings.json"
   unlink_file "$HOME/.aerospace.toml"
-  remove_file "$HOME/.config/iterm2/arpatek.itermcolors"
 }
 
 os_uninstall_shell() {

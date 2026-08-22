@@ -66,8 +66,7 @@ brew "wireguard-tools"   # wg and wg-quick CLI — pulls in wireguard-go as depe
 cask "font-jetbrains-mono-nerd-font"
 
 # ──[ Terminals ]───────────────────────────────────────────────────────────────
-cask "ghostty"           # primary — config at .config/ghostty/config, shared with Linux
-cask "iterm2"            # kept during the Ghostty transition; drop once settled
+cask "ghostty"           # config at .config/ghostty/config, shared with Linux
 
 # ──[ Browsers ]────────────────────────────────────────────────────────────────
 cask "firefox"

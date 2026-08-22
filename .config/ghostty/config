@@ -11,8 +11,9 @@ font-family = "JetBrainsMono Nerd Font Mono"
 font-size = 15
 
 # ──[ Colors ]──────────────────────────────────────────────────────────────────
-# Ported from .config/iterm2/arpatek.itermcolors so the switch is visually
-# lossless. This file is now the canonical source for the palette.
+# The arpatek palette, ported verbatim from the old iTerm2 profile so the
+# switch was visually lossless. This file is now its canonical source — the
+# original arpatek.itermcolors was removed with iTerm2 and lives in git history.
 background = #000000
 foreground = #f1feff
 
