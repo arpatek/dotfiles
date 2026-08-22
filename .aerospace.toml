@@ -90,8 +90,11 @@ on-mode-changed = []
     alt-shift-semicolon = 'mode service'
 
     # App launchers
+    # Zen is Firefox-based and reads a held Option key at launch as a request
+    # for Troubleshoot Mode — which alt-b always is. MOZ_DISABLE_SAFE_MODE_KEY
+    # turns that check off; `open` passes the variable through to the app.
     alt-enter   = 'exec-and-forget open -a Ghostty'
-    alt-b       = 'exec-and-forget open -a Zen'
+    alt-b       = 'exec-and-forget env MOZ_DISABLE_SAFE_MODE_KEY=1 open -a Zen'
     alt-shift-c = 'exec-and-forget open -a VSCodium'
 
 # ──[ Service Mode ]────────────────────────────────────────────────────────────
