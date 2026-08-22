@@ -77,6 +77,27 @@ if ! command -v brew >/dev/null 2>&1; then
   exit 1
 fi
 
+# The global cleanup below covers everything; skip the per-package pass so the
+# reclaim happens once instead of interleaving with every upgrade. Scoped here
+# so ad-hoc `brew install` outside mpu keeps its automatic cleanup.
+export HOMEBREW_NO_INSTALL_CLEANUP=1
+
+# ──[ Sudo Keep-Alive ]─────────────────────────────────────────────────────────
+# Some casks shell out to installers that require sudo; cache credentials up
+# front so the run doesn't stall on a password prompt partway through.
+printf "%s Requesting sudo access\n" "$(PLUS)"
+sudo -v
+(
+  set +e
+  while true; do
+    sudo -n true 2>/dev/null
+    sleep 60
+    kill -0 "$$" 2>/dev/null || exit
+  done
+) &
+SUDO_KEEPALIVE_PID=$!
+trap 'kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true' EXIT
+
 # ──[ Update ]──────────────────────────────────────────────────────────────────
 printf "%s Initializing Update Sequence" "$(BANNER)"
 for _ in {1..3}; do
@@ -91,11 +112,11 @@ run brew update
 sleep 0.5
 
 printf "%s Upgrading Formulae\n" "$(PLUS)"
-run brew upgrade
+run brew upgrade --yes
 sleep 0.5
 
 printf "%s Upgrading Casks\n" "$(PLUS)"
-run brew upgrade --cask --greedy
+run brew upgrade --cask --greedy --yes
 sleep 0.5
 
 printf "%s Cleaning Up\n" "$(PLUS)"

@@ -11,6 +11,12 @@ bindkey -M viins '^[[B' history-substring-search-down
 # ──[ Fuzzy Finder (fzf) ]──────────────────────────────────────────────────────
 export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border'
 
+# ──[ Homebrew ]────────────────────────────────────────────────────────────────
+export HOMEBREW_INSTALL_BADGE='💾'
+export HOMEBREW_COLOR=1
+export HOMEBREW_NO_ANALYTICS=1
+export HOMEBREW_NO_ENV_HINTS=1
+
 # ──[ Aliases ]─────────────────────────────────────────────────────────────────
 alias grep='ggrep --color=auto'   # GNU grep — supports -P Perl regex unlike BSD grep
 alias diff='diff --color'
