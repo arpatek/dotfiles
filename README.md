@@ -66,6 +66,7 @@ Two portability details make one config correct on both platforms:
 | `.config/tmux/tmux.conf` | tmux — truecolor, vi copy mode, 50k scrollback, tokyo-night |
 | `.config/vim/vimrc`, `.config/nvim/init.vim` | Vim config + Neovim fallback for nvim < 0.11.2 |
 | `.config/lazygit/config.yml`, `.config/curlrc` | lazygit theme, curl defaults |
+| `.config/ghostty/config` | Ghostty — arpatek palette, JetBrainsMono NFM; shared by macOS and Linux |
 | `.aerospace.toml`, `.config/iterm2/`, `.config/zed/` | macOS-only — linked by `os/darwin.sh` |
 | `.config/starship-sysadmin.toml` | Linux-only alt prompt for the `sysadmin` user |
 | `.ssh/config`, `.editorconfig`, `.gitignore` | SSH templates, editor rules, repo ignores |

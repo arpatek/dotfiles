@@ -81,7 +81,22 @@ os_link() {
 
 os_post() {
   # macOS terminals are already login shells running zsh — no chsh or bash cleanup.
-  :
+
+  # AeroSpace tiles with zero gaps, so a single window fills everything the Dock
+  # and menu bar do not occupy. Auto-hiding both makes every tiled window
+  # effectively fullscreen and removes the need for Ghostty's fullscreen, whose
+  # non-native mode leaves a dead strip at the top and crops the bottom row.
+  printf "%s Desktop Defaults\n" "$(BANNER)"
+  defaults write com.apple.dock autohide -bool true
+  defaults write com.apple.dock autohide-delay -float 0
+  defaults write com.apple.dock autohide-time-modifier -float 0.15
+  killall Dock >/dev/null 2>&1 || true
+  printf "%s Dock set to auto-hide\n" "$(COMPLETE)"
+
+  # _HIHideMenuBar is only read at login — killall SystemUIServer does not apply
+  # it. Setting it here means a fresh machine picks it up on first login.
+  defaults write NSGlobalDomain _HIHideMenuBar -bool true
+  printf "%s Menu bar auto-hide set (takes effect at next login)\n" "$(COMPLETE)"
 }
 
 # ──[ Uninstall ]───────────────────────────────────────────────────────────────

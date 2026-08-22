@@ -1,0 +1,92 @@
+# ┌──────────────────────────┐
+# │ arpatek - Ghostty Config │
+# └──────────────────────────┘
+# Cross-platform: macOS and Linux read this same file from ~/.config/ghostty.
+# macos-* keys are ignored on Linux, so one config serves both.
+
+# ──[ Font ]────────────────────────────────────────────────────────────────────
+# JetBrainsMono NFM was the iTerm2 face; "Mono" variant keeps Nerd Font glyphs
+# cell-width so powerline segments in starship align.
+font-family = "JetBrainsMono Nerd Font Mono"
+font-size = 15
+
+# ──[ Colors ]──────────────────────────────────────────────────────────────────
+# Ported from .config/iterm2/arpatek.itermcolors so the switch is visually
+# lossless. This file is now the canonical source for the palette.
+background = #000000
+foreground = #f1feff
+
+cursor-color = #a27cff
+cursor-text = #666666
+
+selection-background = #f1feff
+selection-foreground = #545454
+
+# Background is pure black, so a light touch of transparency reads as depth
+# without washing out foreground text. Blur keeps whatever is behind unreadable.
+background-opacity = 0.92
+background-blur = 20
+
+# normal
+palette = 0=#000000
+palette = 1=#ec6073
+palette = 2=#cae797
+palette = 3=#f7cd7a
+palette = 4=#8aa9f9
+palette = 5=#bf94e5
+palette = 6=#9cdbfb
+palette = 7=#ffffff
+# bright — iTerm2 profile used identical values for 9-14; preserved verbatim
+palette = 8=#545454
+palette = 9=#ec6073
+palette = 10=#cae797
+palette = 11=#f7cd7a
+palette = 12=#8aa9f9
+palette = 13=#bf94e5
+palette = 14=#9cdbfb
+palette = 15=#ffffff
+
+# ──[ Cursor ]──────────────────────────────────────────────────────────────────
+cursor-style = block
+cursor-style-blink = true
+
+# ──[ Window ]──────────────────────────────────────────────────────────────────
+# 80x25 matches the iTerm2 profile this replaced.
+window-width = 80
+window-height = 25
+
+# Ghostty defaults to 2px, which crowds the glyphs against the frame.
+window-padding-x = 8
+window-padding-y = 6
+
+# ──[ macOS ]───────────────────────────────────────────────────────────────────
+# Left Option only. iTerm2 had "Option Key Sends = Normal", which made every
+# alt- binding in fzf/ipkg insert a glyph instead (alt+c → ç). Binding only the
+# left key keeps right-Option free for accented characters.
+macos-option-as-alt = left
+
+macos-icon = microchip
+
+# AeroSpace tiles the window and draws its own borders; the titlebar is wasted
+# vertical space. Buttons go with it — closing is super+shift+w or the WM.
+macos-titlebar-style = hidden
+
+# super+t is unbound to keep native tabs out of AeroSpace's way; dropping a file
+# on the Dock icon is the other path that creates one, so send it to a window.
+macos-dock-drop-behavior = new-window
+
+# Tried non-native (`true`) to keep fullscreen on the AeroSpace workspace, but
+# it leaves a dead strip where the menu bar was and crops the bottom row. With
+# the Dock and menu bar auto-hidden, a zero-gap tiled window already fills the
+# display, so fullscreen is redundant — see os/darwin.sh.
+macos-non-native-fullscreen = false
+
+# Packages are managed by brew; mpu upgrades casks with --greedy. Letting
+# Sparkle self-update too would fight that.
+auto-update = off
+
+# ──[ Keybinds ]────────────────────────────────────────────────────────────────
+# macOS native tabs are exposed as separate AXWindows, so AeroSpace tiles each
+# tab and leaves half the screen empty. tmux and Ghostty splits (super+d) are
+# both single-window, so unbind the one shortcut that creates the problem.
+keybind = super+t=unbind

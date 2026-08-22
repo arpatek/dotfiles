@@ -194,7 +194,7 @@ fi
 
 printf "%s Creating Directories\n" "$(BANNER)"
 sleep 0.5
-mkdir -p "$HOME"/.config/{zsh,git,tmux,lazygit,fastfetch,kube,npm}
+mkdir -p "$HOME"/.config/{zsh,git,tmux,lazygit,fastfetch,ghostty,kube,npm}
 mkdir -p "$HOME"/.cache/{kube,npm}
 mkdir -p "$HOME/.vim" "$HOME/.ssh" "$HOME/.claude"
 printf "%s Directories ready\n\n" "$(COMPLETE)"
@@ -215,6 +215,7 @@ link "$DOTFILES_DIR/.editorconfig"                   "$HOME/.editorconfig"
 link "$DOTFILES_DIR/.config/curlrc"                  "$HOME/.config/curlrc"
 link "$DOTFILES_DIR/.config/lazygit/config.yml"      "$HOME/.config/lazygit/config.yml"
 link "$DOTFILES_DIR/.config/fastfetch/config.jsonc"  "$HOME/.config/fastfetch/config.jsonc"
+link "$DOTFILES_DIR/.config/ghostty/config"          "$HOME/.config/ghostty/config"
 link "$DOTFILES_DIR/.claude/statusline-command.sh"   "$HOME/.claude/statusline-command.sh"
 printf "\n"
 
