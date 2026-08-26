@@ -75,7 +75,7 @@ bootstrap_packages() {
     printf "%s dnf color output enabled\n" "$(COMPLETE)"
   fi
 
-  # ── Core tools ────────────────────────────────────────────────────────────
+  # ── Core tools ──────────────────────────────────────────────────────────────
   # Each entry: [package-key]="binary-to-check"
   # The binary check prevents re-installing already-present tools.
   declare -A TOOLS=(
@@ -89,7 +89,7 @@ bootstrap_packages() {
     [make]="make"
   )
 
-  # ── Python build dependencies (pyenv compiles CPython from source) ─────────
+  # ── Python build dependencies (pyenv compiles CPython from source) ──────────
   # These are not checked by binary — they're libraries, not commands.
   # Grouped separately so they can be installed as a batch without binary checks.
   declare -A PYTHON_DEPS_DNF=(
@@ -108,7 +108,7 @@ bootstrap_packages() {
     [0]="base-devel" [1]="openssl" [2]="zlib" [3]="xz" [4]="tk"
   )
 
-  # ── Collect missing core tools ─────────────────────────────────────────────
+  # ── Collect missing core tools ──────────────────────────────────────────────
   local missing=()
   for tool in "${!TOOLS[@]}"; do
     if ! command -v "${TOOLS[$tool]}" >/dev/null 2>&1; then
@@ -119,7 +119,7 @@ bootstrap_packages() {
     fi
   done
 
-  # ── Install missing core tools ─────────────────────────────────────────────
+  # ── Install missing core tools ──────────────────────────────────────────────
   if (( ${#missing[@]} > 0 )); then
     printf "\n%s Installing %d missing package(s)...\n" "$(BANNER)" "${#missing[@]}"
     sleep 0.5
@@ -140,7 +140,7 @@ bootstrap_packages() {
     printf "%s All core packages already present\n" "$(COMPLETE)"
   fi
 
-  # ── Install Python build dependencies ────────────────────────────────────
+  # ── Install Python build dependencies ───────────────────────────────────────
   printf "\n%s Installing Python build dependencies\n" "$(BANNER)"
   sleep 0.5
   case "$pm" in

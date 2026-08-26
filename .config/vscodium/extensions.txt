@@ -9,12 +9,12 @@
 # Microsoft Marketplace, so Pylance, Remote-SSH and Dev Containers are
 # unavailable regardless of what is listed here.
 
-# ──[ Editor Behaviour ]───────────────────────────────────────────────────────
+# ──[ Editor Behaviour ]────────────────────────────────────────────────────────
 # Without this, the tracked .editorconfig has no effect in VSCodium.
 editorconfig.editorconfig
 pkief.material-icon-theme
 
-# ──[ Python ]─────────────────────────────────────────────────────────────────
+# ──[ Python ]──────────────────────────────────────────────────────────────────
 # Ruff covers lint + format. Pyrefly is the type checker standing in for
 # Pylance, which is proprietary and absent from Open VSX.
 charliermarsh.ruff
@@ -23,18 +23,18 @@ ms-python.python
 ms-python.debugpy
 ms-python.vscode-python-envs
 
-# ──[ Shell ]──────────────────────────────────────────────────────────────────
+# ──[ Shell ]───────────────────────────────────────────────────────────────────
 # shellcheck lints, shell-format (shfmt) formats.
 timonwong.shellcheck
 foxundermoon.shell-format
 
-# ──[ Infrastructure ]─────────────────────────────────────────────────────────
+# ──[ Infrastructure ]──────────────────────────────────────────────────────────
 hashicorp.terraform
 redhat.ansible
 redhat.vscode-yaml
 puppet.puppet-vscode
 
-# ──[ Docs ]───────────────────────────────────────────────────────────────────
+# ──[ Docs ]────────────────────────────────────────────────────────────────────
 # markdown-mermaid renders diagrams in preview without a MermaidChart account.
 davidanson.vscode-markdownlint
 bierner.markdown-mermaid

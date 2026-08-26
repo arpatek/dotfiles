@@ -9,7 +9,7 @@
 
 input=$(cat)
 
-# ──[ Parse JSON ]─────────────────────────────────────────────────────────────
+# ──[ Parse JSON ]──────────────────────────────────────────────────────────────
 model=$(printf '%s' "$input"      | jq -r '.model.display_name // empty')
 used_pct=$(printf '%s' "$input"   | jq -r '.context_window.used_percentage // empty')
 total_in=$(printf '%s' "$input"   | jq -r '.context_window.total_input_tokens // empty')
@@ -26,7 +26,7 @@ five_hour=$(printf '%s' "$input"  | jq -r '.rate_limits.five_hour.used_percentag
 five_reset=$(printf '%s' "$input" | jq -r '.rate_limits.five_hour.resets_at // empty')
 seven_day=$(printf '%s' "$input"  | jq -r '.rate_limits.seven_day.used_percentage // empty')
 
-# ──[ ANSI colors ]────────────────────────────────────────────────────────────
+# ──[ ANSI colors ]─────────────────────────────────────────────────────────────
 R='\033[0m'
 DIM='\033[2m'
 BOLD='\033[1m'
@@ -61,7 +61,7 @@ ktok() {
   }'
 }
 
-# ──[ Context bar ]────────────────────────────────────────────────────────────
+# ──[ Context bar ]─────────────────────────────────────────────────────────────
 ctx_part=""
 if [ -n "$used_pct" ]; then
   pct_int=$(printf '%.0f' "$used_pct")
@@ -73,7 +73,7 @@ if [ -n "$used_pct" ]; then
   ctx_part="$(printf "ctx ${bar_color}▕%s▏${R} ${bar_color}%s%%${R}" "$ctx_bar" "$pct_int")"
 fi
 
-# ──[ Turn token counts ]──────────────────────────────────────────────────────
+# ──[ Turn token counts ]───────────────────────────────────────────────────────
 tok_part=""
 if [ -n "$in_tok" ] && [ -n "$out_tok" ]; then
   _i=$(ktok "$in_tok")
@@ -98,7 +98,7 @@ if [ -n "$total_in" ] && [ -n "$total_out" ]; then
   session_tok_part="$(printf "${DIM}Σ ↓%s ↑%s${R}" "$_ti" "$_to")"
 fi
 
-# ──[ Session cost ]───────────────────────────────────────────────────────────
+# ──[ Session cost ]────────────────────────────────────────────────────────────
 cost_part=""
 if [ -n "$session_cost" ]; then
   cost_part=$(awk -v c="$session_cost" 'BEGIN { printf "'"${YELLOW}"'$%.4f'"${R}"'", c }')
@@ -140,7 +140,7 @@ if [ -n "$seven_day" ]; then
   rl_part="${rl_part}${sep}$(printf "${rl_col}7d ▕%s▏ %s%%${R}" "$sd_bar" "$sd_int")"
 fi
 
-# ──[ Git ]────────────────────────────────────────────────────────────────────
+# ──[ Git ]─────────────────────────────────────────────────────────────────────
 git_part=""
 if git rev-parse --git-dir > /dev/null 2>&1; then
   branch=$(git branch --show-current 2>/dev/null)
@@ -152,7 +152,7 @@ if git rev-parse --git-dir > /dev/null 2>&1; then
   [ "$modified" -gt 0 ] && git_part="$git_part $(printf "${YELLOW}~%s${R}" "$modified")"
 fi
 
-# ──[ Effort ]─────────────────────────────────────────────────────────────────
+# ──[ Effort ]──────────────────────────────────────────────────────────────────
 effort_part=""
 if [ -n "$effort" ]; then
   case "$effort" in
@@ -165,7 +165,7 @@ if [ -n "$effort" ]; then
   effort_part="$(printf "%s %s" "$dot" "$effort")"
 fi
 
-# ──[ Assemble ]───────────────────────────────────────────────────────────────
+# ──[ Assemble ]────────────────────────────────────────────────────────────────
 parts=()
 
 [ -n "$model" ]        && parts+=("$(printf "${CYAN}%s${R}" "$model")")
@@ -178,7 +178,7 @@ parts=()
 [ -n "$cost_part" ]    && parts+=("$cost_part")
 [ -n "$git_part" ]     && parts+=("$git_part")
 
-# ──[ Render ]─────────────────────────────────────────────────────────────────
+# ──[ Render ]──────────────────────────────────────────────────────────────────
 if [ "${#parts[@]}" -gt 0 ]; then
   out="${parts[0]}"
   for part in "${parts[@]:1}"; do
