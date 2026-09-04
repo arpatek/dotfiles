@@ -23,7 +23,10 @@ bootstrap_epel() {
     return
   fi
 
-  if dnf repolist enabled 2>/dev/null | grep -qi "epel"; then
+  # rpm -q and a glob both hit local state. `dnf repolist` refreshes metadata,
+  # which cost tens of seconds on every warm run to answer a yes/no question.
+  if rpm -q epel-release >/dev/null 2>&1 \
+     || compgen -G "/etc/yum.repos.d/epel*.repo" >/dev/null 2>&1; then
     printf "%s EPEL already enabled\n" "$(COMPLETE)"
     return
   fi
@@ -53,6 +56,20 @@ bootstrap_epel() {
 # ──[ Package Install Helper ]──────────────────────────────────────────────────
 # One entry point for every package manager so the batch and per-package paths
 # cannot drift apart. $pm is set by bootstrap_packages before this is called.
+# Queries the LOCAL package database only — no metadata refresh, no network.
+# This is the whole point: `dnf install` on an already-satisfied set still pays
+# a full metadata load, which dominated warm runs on RHEL.
+pkg_installed() {
+  case "$pm" in
+    nala | apt)     dpkg -s "$1" >/dev/null 2>&1 ;;
+    dnf | yum)      rpm -q "$1" >/dev/null 2>&1 ;;
+    zypper)         rpm -q "$1" >/dev/null 2>&1 ;;
+    pacman)         pacman -Q "$1" >/dev/null 2>&1 ;;
+    apk)            apk info -e "$1" >/dev/null 2>&1 ;;
+    *)              return 1 ;;
+  esac
+}
+
 pm_install() {
   case "$pm" in
     nala)      $SUDO nala install -y "$@" ;;
@@ -157,20 +174,30 @@ bootstrap_packages() {
   fi
 
   # ── Install Python build dependencies ───────────────────────────────────────
-  printf "\n%s Installing Python build dependencies\n" "$(BANNER)"
-  sleep 0.5
+  local -a py_deps=()
   case "$pm" in
-    nala | apt)
-      $SUDO apt install -y "${PYTHON_DEPS_APT[@]}"
-      ;;
-    dnf | yum)
-      $SUDO "$pm" install -y "${PYTHON_DEPS_DNF[@]}"
-      ;;
-    pacman)
-      $SUDO pacman -S --noconfirm "${PYTHON_DEPS_PACMAN[@]}"
-      ;;
+    nala | apt) py_deps=("${PYTHON_DEPS_APT[@]}") ;;
+    dnf | yum)  py_deps=("${PYTHON_DEPS_DNF[@]}") ;;
+    pacman)     py_deps=("${PYTHON_DEPS_PACMAN[@]}") ;;
   esac
-  printf "%s Python build dependencies installed\n" "$(COMPLETE)"
+
+  if (( ${#py_deps[@]} > 0 )); then
+    printf "\n%s Python Build Dependencies\n" "$(BANNER)"
+    local -a py_missing=()
+    local dep
+    for dep in "${py_deps[@]}"; do
+      pkg_installed "$dep" || py_missing+=("$dep")
+    done
+
+    if (( ${#py_missing[@]} == 0 )); then
+      printf "%s All %d already present\n" "$(COMPLETE)" "${#py_deps[@]}"
+    else
+      printf "%s Installing %d missing...\n" "$(PLUS)" "${#py_missing[@]}"
+      pm_install "${py_missing[@]}" \
+        || printf "%s Some Python dependencies were unavailable\n" "$(PLUS)"
+      printf "%s Python build dependencies installed\n" "$(COMPLETE)"
+    fi
+  fi
   printf "\n"
 }
 
