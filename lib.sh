@@ -45,6 +45,16 @@ if ((EUID != 0)); then
   fi
 fi
 
+# ──[ Headless Detection ]──────────────────────────────────────────────────────
+# A headless box resolves none of the desktop fastfetch modules (GPU, DE, theme,
+# fonts), which collapses the text column and strands the padded logo below it.
+# macOS is never headless — it has no DISPLAY unless XQuartz is running.
+is_headless() {
+  [[ "$(uname -s)" == "Darwin" ]] && return 1
+  [[ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]] && return 1
+  return 0
+}
+
 # ──[ Sudo Session Caching ]────────────────────────────────────────────────────
 cache_sudo() {
   # Nothing to cache as root, and doas has no credential-refresh equivalent.

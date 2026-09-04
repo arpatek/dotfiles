@@ -642,6 +642,27 @@ cleanup_bash_configs() {
   done
 }
 
+# ──[ Login Shell ]─────────────────────────────────────────────────────────────
+# chsh comes from the shadow package and does not exist on a stock busybox
+# system. Fall back to rewriting the passwd entry so the login shell is set
+# either way rather than making shadow a hard requirement.
+set_login_shell() {
+  local shell_bin="$1"
+  local user="$2"
+
+  # chsh refuses a shell that /etc/shells does not list.
+  if ! grep -qxF "$shell_bin" /etc/shells 2>/dev/null; then
+    printf "%s\n" "$shell_bin" | $SUDO tee -a /etc/shells >/dev/null
+  fi
+
+  if command -v chsh >/dev/null 2>&1 && $SUDO chsh -s "$shell_bin" "$user" 2>/dev/null; then
+    return 0
+  fi
+
+  printf "%s chsh unavailable or refused — rewriting the passwd entry\n" "$(PLUS)"
+  $SUDO sed -i "s|^\(${user}:.*:\)[^:]*$|\1${shell_bin}|" /etc/passwd
+}
+
 # ──[ Alpine ]──────────────────────────────────────────────────────────────────
 # Alpine is a lightweight distro and is treated as one here. Every package below
 # comes from the official main/community repos on 3.24 — no GitHub tarballs, no
@@ -662,6 +683,7 @@ bootstrap_alpine() {
     ripgrep fd                            # search
     lazygit delta                         # git ux
     yazi btop ncdu tree less lynx         # files + monitoring
+    fastfetch                             # system info
     jq unzip                              # misc
     shadow musl-utils                     # provides chsh and getent
   )
@@ -735,15 +757,9 @@ os_post() {
   # session's startup shell and goes stale after a chsh in the same session.
   # awk over /etc/passwd rather than getent: on musl that lives in musl-utils.
   login_shell="$(awk -F: -v u="$user" '$1 == u { print $7 }' /etc/passwd)"
-  if ! command -v chsh >/dev/null 2>&1; then
-    printf "%s chsh not available — set the login shell manually\n" "$(PLUS)"
-  elif [[ -n "$zsh_bin" && "$login_shell" != "$zsh_bin" ]]; then
+  if [[ -n "$zsh_bin" && "$login_shell" != "$zsh_bin" ]]; then
     printf "%s Setting zsh as default shell\n" "$(BANNER)"
-    # /etc/shells must list zsh for chsh to accept it
-    if ! grep -qx "$zsh_bin" /etc/shells; then
-      printf "%s\n" "$zsh_bin" | $SUDO tee -a /etc/shells >/dev/null
-    fi
-    $SUDO chsh -s "$zsh_bin" "$user"
+    set_login_shell "$zsh_bin" "$user"
     printf "%s Default shell set to %s\n" "$(COMPLETE)" "$zsh_bin"
   else
     printf "%s zsh is already the default shell\n" "$(COMPLETE)"
@@ -839,12 +855,10 @@ os_uninstall_shell() {
   # Read the real login shell from passwd, not $SHELL (stale after chsh in-session).
   # awk over /etc/passwd rather than getent: on musl that lives in musl-utils.
   login_shell="$(awk -F: -v u="$user" '$1 == u { print $7 }' /etc/passwd)"
-  if ! command -v chsh >/dev/null 2>&1; then
-    printf "%s chsh not available — revert the login shell manually\n" "$(PLUS)"
-  elif [[ -n "$bash_bin" && "$login_shell" != "$bash_bin" ]]; then
-    $SUDO chsh -s "$bash_bin" "$user" \
+  if [[ -n "$bash_bin" && "$login_shell" != "$bash_bin" ]]; then
+    set_login_shell "$bash_bin" "$user" \
       && printf "%s Default shell reverted to %s\n" "$(COMPLETE)" "$bash_bin" \
-      || warn "chsh failed — revert manually: $SUDO chsh -s $bash_bin $user"
+      || warn "Could not revert the login shell to $bash_bin"
   else
     printf "%s Shell already bash or bash not found, skipping\n" "$(PLUS)"
   fi

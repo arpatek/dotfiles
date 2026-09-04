@@ -129,6 +129,13 @@ as root, `doas` where that is the convention (Alpine, BSD), `sudo` everywhere el
 Scripts call `$SUDO cmd`. Do not hardcode `sudo` in new code — it breaks Alpine and
 breaks running as root in a container.
 
+**fastfetch logo stranded below the text** — `logo.padding.top` only lines a logo
+up against a *long* module list. On a headless box the desktop modules (GPU, DE,
+theme, fonts) resolve to nothing, the text column collapses, and the padded logo
+ends up below it instead of beside it. `install.sh` picks
+`config-headless.jsonc` (padding 0, desktop modules dropped) via `is_headless()`.
+Re-run `./install.sh --skip-packages` if a box changes state.
+
 **macOS PATH order** — `/etc/zprofile` runs `path_helper` at login and reorders PATH. Our PATH
 is built in `~/.zprofile` (which runs *after* it), so our entries stay in front. Do not move
 PATH construction into `.zshenv`, or path_helper will shove `/usr/bin` ahead of it.

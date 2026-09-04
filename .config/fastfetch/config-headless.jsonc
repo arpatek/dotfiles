@@ -1,0 +1,127 @@
+// Headless variant — no graphical session, so the desktop modules are
+// dropped and the logo padding is zero. A padded logo only lines up
+// against a long module list; here it would sit stranded below it.
+// Selected automatically by install.sh via is_headless().
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+  "logo": {
+    "type": "auto",
+    "padding": {
+      "top": 0,
+      "right": 6,
+      "left": 2
+    }
+  },
+  "modules": [
+    "break",
+    {
+      "type": "title"
+    },
+    {
+      "type": "separator"
+    },
+    {
+      "type": "custom",
+      "format": "\u001b[90m┌───────────────────── Hardware ─────────────────────┐\u001b[0m"
+    },
+    {
+      "type": "host",
+      "key": "PC",
+      "keyColor": "green"
+    },
+    {
+      "type": "cpu",
+      "key": "│ ├ CPU",
+      "keyColor": "green",
+      "showPeCoreCount": true
+    },
+    {
+      "type": "disk",
+      "key": "│ ├󰋊 Disk",
+      "keyColor": "green"
+    },
+    {
+      "type": "memory",
+      "key": "│ ├ RAM",
+      "keyColor": "green"
+    },
+    {
+      "type": "swap",
+      "key": "└ └󰯍 Swap",
+      "keyColor": "green"
+    },
+    {
+      "type": "custom",
+      "format": "\u001b[90m└────────────────────────────────────────────────────┘\u001b[0m"
+    },
+    "break",
+    {
+      "type": "custom",
+      "format": "\u001b[90m┌───────────────────── Software ─────────────────────┐\u001b[0m"
+    },
+    {
+      "type": "os",
+      "key": "OS",
+      "keyColor": "blue"
+    },
+    {
+      "type": "kernel",
+      "key": "│ ├ Kernel",
+      "keyColor": "blue"
+    },
+    {
+      "type": "shell",
+      "key": "│ ├󰆍 Shell",
+      "keyColor": "blue"
+    },
+    {
+      "type": "terminal",
+      "key": "│ ├ Term",
+      "keyColor": "blue"
+    },
+    {
+      "type": "packages",
+      "key": "└ └󰏖 Pkgs",
+      "keyColor": "blue"
+    },
+    {
+      "type": "custom",
+      "format": "\u001b[90m└────────────────────────────────────────────────────┘\u001b[0m"
+    },
+    "break",
+    {
+      "type": "custom",
+      "format": "\u001b[90m┌──────────────── Network / System ──────────────────┐\u001b[0m"
+    },
+    {
+      "type": "localip",
+      "key": "IP",
+      "keyColor": "magenta"
+    },
+    {
+      "type": "uptime",
+      "key": "│ ├󱫐 Uptime",
+      "keyColor": "magenta"
+    },
+    {
+      "type": "dateTime",
+      "key": "│ ├󰃭 DateTime",
+      "keyColor": "magenta"
+    },
+    {
+      "type": "locale",
+      "key": "└ └ Locale",
+      "keyColor": "magenta"
+    },
+    {
+      "type": "custom",
+      "format": "\u001b[90m└────────────────────────────────────────────────────┘\u001b[0m"
+    },
+    "break",
+    {
+      "type": "custom",
+      "format": "\u001b[30m \u001b[31m \u001b[32m \u001b[33m \u001b[34m \u001b[35m \u001b[36m \u001b[37m \u001b[90m \u001b[91m \u001b[92m \u001b[93m \u001b[94m \u001b[95m \u001b[96m \u001b[97m\u001b[0m"
+    },
+    "break"
+  ]
+}
