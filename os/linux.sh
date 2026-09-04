@@ -159,6 +159,22 @@ bootstrap_packages() {
 }
 
 bootstrap_pyenv() {
+  # .zshenv exports PYENV_ROOT under XDG, but that only applies to zsh sessions —
+  # this installer runs under bash, where it is unset and pyenv.run silently
+  # falls back to ~/.pyenv. The guard below then looks in the XDG path, misses,
+  # and re-runs the installer, which refuses because ~/.pyenv already exists.
+  local pyenv_root="$HOME/.local/share/pyenv"
+  export PYENV_ROOT="$pyenv_root"
+
+  # Relocate a ~/.pyenv left behind by a run made before PYENV_ROOT was set.
+  if [[ -d "$HOME/.pyenv" && ! -d "$pyenv_root" ]]; then
+    printf "%s Migrating ~/.pyenv to %s\n" "$(PLUS)" "$pyenv_root"
+    mkdir -p "$(dirname "$pyenv_root")"
+    mv "$HOME/.pyenv" "$pyenv_root" \
+      && printf "%s pyenv relocated\n" "$(COMPLETE)" \
+      || printf "%s Could not relocate ~/.pyenv\n" "$(FAILED)" >&2
+  fi
+
   if $UPDATE && command -v pyenv >/dev/null 2>&1; then
     printf "%s Updating pyenv...\n" "$(PLUS)"
     pyenv update
@@ -166,7 +182,7 @@ bootstrap_pyenv() {
     return
   fi
 
-  if ! $UPDATE && (command -v pyenv >/dev/null 2>&1 || [[ -d "$HOME/.local/share/pyenv" ]]); then
+  if ! $UPDATE && (command -v pyenv >/dev/null 2>&1 || [[ -d "$pyenv_root" ]]); then
     printf "%s pyenv already installed\n" "$(COMPLETE)"
     return
   fi
