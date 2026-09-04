@@ -70,7 +70,7 @@ remove_file() {
   local use_sudo="${2:-false}"
   if [[ -f "$target" || -L "$target" ]]; then
     if $use_sudo; then
-      sudo rm -f "$target" && printf "%s Removed %s\n" "$(COMPLETE)" "$target" \
+      $SUDO rm -f "$target" && printf "%s Removed %s\n" "$(COMPLETE)" "$target" \
         || warn "Could not remove $target"
     else
       rm -f "$target" && printf "%s Removed %s\n" "$(COMPLETE)" "$target" \

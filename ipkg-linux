@@ -52,16 +52,16 @@ case "$PKG_MGR" in
     LIST_REMOVE='pacman -Qqe 2>/dev/null'
     PREVIEW_INSTALL='pacman -Sii {2} 2>/dev/null'
     PREVIEW_REMOVE='pacman -Qi {2} 2>/dev/null'
-    INSTALL_CMD="sudo pacman -S --noconfirm"
-    REMOVE_CMD="sudo pacman -Rns --noconfirm"
+    INSTALL_CMD="$SUDO pacman -S --noconfirm"
+    REMOVE_CMD="$SUDO pacman -Rns --noconfirm"
     ;;
   nala | apt)
     LIST_INSTALL='apt-cache pkgnames 2>/dev/null | sort'
     LIST_REMOVE='apt list --installed 2>/dev/null | awk -F/ '\''NR>1{print $1}'\'' | sort'
     PREVIEW_INSTALL='apt-cache show {2} 2>/dev/null | head -60'
     PREVIEW_REMOVE='dpkg -s {2} 2>/dev/null | head -40'
-    INSTALL_CMD="sudo $PKG_MGR install -y"
-    REMOVE_CMD="sudo $PKG_MGR remove -y"
+    INSTALL_CMD="$SUDO $PKG_MGR install -y"
+    REMOVE_CMD="$SUDO $PKG_MGR remove -y"
     ;;
   dnf | yum)
     # DNF5 (Fedora 41+) changed --qf behaviour — use list + awk to strip arch
@@ -70,8 +70,8 @@ case "$PKG_MGR" in
     LIST_REMOVE="rpm -qa --qf '%{NAME}\n' 2>/dev/null | sort -u"
     PREVIEW_INSTALL="$PKG_MGR info {2} 2>/dev/null"
     PREVIEW_REMOVE="$PKG_MGR info {2} 2>/dev/null"
-    INSTALL_CMD="sudo $PKG_MGR install -y"
-    REMOVE_CMD="sudo $PKG_MGR remove -y"
+    INSTALL_CMD="$SUDO $PKG_MGR install -y"
+    REMOVE_CMD="$SUDO $PKG_MGR remove -y"
     ;;
   zypper)
     # --no-refresh suppresses stdout status lines that would corrupt the list;
@@ -80,8 +80,8 @@ case "$PKG_MGR" in
     LIST_REMOVE="zypper --no-refresh packages --installed-only 2>/dev/null | awk -F'|' 'NF>=4 && \$3 !~ /^ *Name *$|^ *-+/{gsub(/ /,\"\",\$3); if(\$3) print \$3}' | sort -u"
     PREVIEW_INSTALL='zypper info {2} 2>/dev/null'
     PREVIEW_REMOVE='zypper info {2} 2>/dev/null'
-    INSTALL_CMD="sudo zypper install -y"
-    REMOVE_CMD="sudo zypper remove -y"
+    INSTALL_CMD="$SUDO zypper install -y"
+    REMOVE_CMD="$SUDO zypper remove -y"
     ;;
   apk)
     LIST_INSTALL='apk search --quiet 2>/dev/null | sort'
@@ -89,24 +89,24 @@ case "$PKG_MGR" in
     # apk info -a only works for installed packages; use search for install preview
     PREVIEW_INSTALL='apk search -v {2} 2>/dev/null | head -20'
     PREVIEW_REMOVE='apk info -a {2} 2>/dev/null'
-    INSTALL_CMD="sudo apk add"
-    REMOVE_CMD="sudo apk del"
+    INSTALL_CMD="$SUDO apk add"
+    REMOVE_CMD="$SUDO apk del"
     ;;
   xbps-install)
     LIST_INSTALL="xbps-query -Rs '*' 2>/dev/null | awk '{print \$2}' | sed 's/-[0-9][^-]*\$//' | sort -u"
     LIST_REMOVE="xbps-query -l 2>/dev/null | awk '{print \$2}' | sed 's/-[0-9][^-]*\$//' | sort -u"
     PREVIEW_INSTALL='xbps-query -RS {2} 2>/dev/null'
     PREVIEW_REMOVE='xbps-query -S {2} 2>/dev/null'
-    INSTALL_CMD="sudo xbps-install -y"
-    REMOVE_CMD="sudo xbps-remove -Ro"
+    INSTALL_CMD="$SUDO xbps-install -y"
+    REMOVE_CMD="$SUDO xbps-remove -Ro"
     ;;
   pkg)
     LIST_INSTALL='pkg rquery "%n" 2>/dev/null | sort -u'
     LIST_REMOVE='pkg query "%n" 2>/dev/null | sort -u'
     PREVIEW_INSTALL='pkg search -S name -Q description {2} 2>/dev/null | head -40'
     PREVIEW_REMOVE='pkg info {2} 2>/dev/null'
-    INSTALL_CMD="sudo pkg install -y"
-    REMOVE_CMD="sudo pkg delete -y"
+    INSTALL_CMD="$SUDO pkg install -y"
+    REMOVE_CMD="$SUDO pkg delete -y"
     ;;
 esac
 

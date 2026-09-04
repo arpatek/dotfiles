@@ -87,6 +87,15 @@ The installer detects the OS and:
 - **Linux** — detects the distro package manager, installs missing packages, then Go,
   lazygit, fzf, zoxide, starship, eza, bat, yazi, and JetBrains Mono Nerd Font from
   upstream; sets zsh as the default shell via `chsh`; archives leftover bash configs.
+- **Alpine** — takes a deliberately lean path: quality-of-life packages from the
+  official `main`/`community` repos in a single `apk add`, and nothing else. No
+  upstream tarballs, no source builds, no pyenv, no Go toolchain, no Nerd Font.
+  Alpine is a lightweight distro and is treated as one. Requires `bash` first:
+
+  ```bash
+  apk add bash && ./install.sh
+  ```
+
 - **macOS** — installs Xcode CLT and Homebrew, then everything in the `Brewfile`.
 - **Both** — clone zsh and tmux plugins (no plugin manager), clone the LazyVim starter (nvim ≥ 0.11.2,
   else `init.vim`), symlink all shared config, link the OS-specific config, and launch zsh.
@@ -109,6 +118,16 @@ restores archived bash configs; on macOS it uninstalls Brewfile packages (with a
 `/usr/bin/nvim` shadows the script's `/usr/local/bin/nvim`; the version check reads the wrong
 binary and falls back to `init.vim`. Remove the apt package (`sudo apt remove neovim`) and
 re-run.
+
+**Alpine needs bash before anything runs** — every script here is bash (associative
+arrays, `BASH_VERSINFO`), and Alpine ships busybox `ash` only. `./install.sh` fails
+with "no such file or directory" until `apk add bash`. This is intentional: rewriting
+22k of `declare -A` logic for POSIX sh buys nothing.
+
+**Privilege escalation is resolved, not assumed** — `lib.sh` sets `$SUDO` once: empty
+as root, `doas` where that is the convention (Alpine, BSD), `sudo` everywhere else.
+Scripts call `$SUDO cmd`. Do not hardcode `sudo` in new code — it breaks Alpine and
+breaks running as root in a container.
 
 **macOS PATH order** — `/etc/zprofile` runs `path_helper` at login and reorders PATH. Our PATH
 is built in `~/.zprofile` (which runs *after* it), so our entries stay in front. Do not move

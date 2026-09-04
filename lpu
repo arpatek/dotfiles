@@ -102,14 +102,14 @@ nala)
     printf "%s Package manager nala Found\n" "$(COMPLETE)"
     sleep 1
     printf "%s Updating Packages\n" "$(PLUS)"
-    run sudo nala update
+    run $SUDO nala update
     sleep 1
     printf "%s Upgrading Packages\n" "$(PLUS)"
-    run sudo nala full-upgrade -y
+    run $SUDO nala full-upgrade -y
     sleep 1
     printf "%s Removing Unused Packages\n" "$(PLUS)"
-    run sudo nala autoremove -y
-    run sudo nala clean
+    run $SUDO nala autoremove -y
+    run $SUDO nala clean
     sleep 1
     printf "%s Update Complete\n" "$(COMPLETE)"
     ;;
@@ -117,14 +117,14 @@ apt)
     printf "%s Package manager apt Found\n" "$(COMPLETE)"
     sleep 1
     printf "%s Updating Packages\n" "$(PLUS)"
-    run sudo apt update
+    run $SUDO apt update
     sleep 1
     printf "%s Upgrading Packages\n" "$(PLUS)"
-    run sudo apt full-upgrade -y
+    run $SUDO apt full-upgrade -y
     sleep 1
     printf "%s Removing Unused Packages\n" "$(PLUS)"
-    run sudo apt autoremove -y
-    run sudo apt autoclean
+    run $SUDO apt autoremove -y
+    run $SUDO apt autoclean
     sleep 1
     printf "%s Update Complete\n" "$(COMPLETE)"
     ;;
@@ -132,10 +132,10 @@ dnf)
     printf "%s Package manager dnf Found\n" "$(COMPLETE)"
     sleep 1
     printf "%s Updating & Upgrading Packages\n" "$(PLUS)"
-    run sudo dnf update -y
+    run $SUDO dnf update -y
     sleep 1
     printf "%s Removing Unused Packages\n" "$(PLUS)"
-    run sudo dnf autoremove -y
+    run $SUDO dnf autoremove -y
     sleep 1
     printf "%s Update Complete\n" "$(COMPLETE)"
     ;;
@@ -143,14 +143,14 @@ pacman)
     printf "%s Package manager pacman Found\n" "$(COMPLETE)"
     sleep 1
     printf "%s Updating & Upgrading Packages\n" "$(PLUS)"
-    run sudo pacman -Syu --noconfirm
+    run $SUDO pacman -Syu --noconfirm
     sleep 1
     printf "%s Removing Orphaned Packages\n" "$(PLUS)"
     if $DRY_RUN; then
-        printf "%s [dry-run] sudo pacman -Rns --noconfirm <orphans>\n" "$(PLUS)"
+        printf "%s [dry-run] $SUDO pacman -Rns --noconfirm <orphans>\n" "$(PLUS)"
     else
         mapfile -t _orphans < <(pacman -Qtdq 2>/dev/null || true)
-        ((${#_orphans[@]} > 0)) && sudo pacman -Rns --noconfirm "${_orphans[@]}"
+        ((${#_orphans[@]} > 0)) && $SUDO pacman -Rns --noconfirm "${_orphans[@]}"
     fi
     sleep 1
     printf "%s Update Complete\n" "$(COMPLETE)"
@@ -159,10 +159,10 @@ yum)
     printf "%s Package manager yum Found\n" "$(COMPLETE)"
     sleep 1
     printf "%s Updating & Upgrading Packages\n" "$(PLUS)"
-    run sudo yum update -y
+    run $SUDO yum update -y
     sleep 1
     printf "%s Removing Unused Packages\n" "$(PLUS)"
-    run sudo yum autoremove -y
+    run $SUDO yum autoremove -y
     sleep 1
     printf "%s Update Complete\n" "$(COMPLETE)"
     ;;
@@ -170,11 +170,11 @@ zypper)
     printf "%s Package manager zypper Found\n" "$(COMPLETE)"
     sleep 1
     printf "%s Updating & Upgrading Packages\n" "$(PLUS)"
-    run sudo zypper refresh
-    run sudo zypper update -y
+    run $SUDO zypper refresh
+    run $SUDO zypper update -y
     sleep 1
     printf "%s Cleaning Cache\n" "$(PLUS)"
-    run sudo zypper clean
+    run $SUDO zypper clean
     sleep 1
     printf "%s Update Complete\n" "$(COMPLETE)"
     ;;
@@ -182,11 +182,11 @@ apk)
     printf "%s Package manager apk Found\n" "$(COMPLETE)"
     sleep 1
     printf "%s Updating & Upgrading Packages\n" "$(PLUS)"
-    run sudo apk update
-    run sudo apk upgrade
+    run $SUDO apk update
+    run $SUDO apk upgrade
     sleep 1
     printf "%s Cleaning Cache\n" "$(PLUS)"
-    run sudo apk cache clean
+    run $SUDO apk cache clean
     sleep 1
     printf "%s Update Complete\n" "$(COMPLETE)"
     ;;
@@ -194,10 +194,10 @@ xbps-install)
     printf "%s Package manager xbps Found\n" "$(COMPLETE)"
     sleep 1
     printf "%s Updating & Upgrading Packages\n" "$(PLUS)"
-    run sudo xbps-install -Su
+    run $SUDO xbps-install -Su
     sleep 1
     printf "%s Removing Unused Packages\n" "$(PLUS)"
-    run sudo xbps-remove -Oo
+    run $SUDO xbps-remove -Oo
     sleep 1
     printf "%s Update Complete\n" "$(COMPLETE)"
     ;;
@@ -205,11 +205,11 @@ emerge)
     printf "%s Package manager emerge Found\n" "$(COMPLETE)"
     sleep 1
     printf "%s Syncing & Upgrading Packages\n" "$(PLUS)"
-    run sudo emerge --sync
-    run sudo emerge -uDN @world
+    run $SUDO emerge --sync
+    run $SUDO emerge -uDN @world
     sleep 1
     printf "%s Removing Unused Packages\n" "$(PLUS)"
-    run sudo emerge --depclean
+    run $SUDO emerge --depclean
     sleep 1
     printf "%s Update Complete\n" "$(COMPLETE)"
     ;;
@@ -217,11 +217,11 @@ pkg)
     printf "%s Package manager pkg Found\n" "$(COMPLETE)"
     sleep 1
     printf "%s Updating & Upgrading Packages\n" "$(PLUS)"
-    run sudo pkg update
-    run sudo pkg upgrade -y
+    run $SUDO pkg update
+    run $SUDO pkg upgrade -y
     sleep 1
     printf "%s Removing Unused Packages\n" "$(PLUS)"
-    run sudo pkg autoremove -y
+    run $SUDO pkg autoremove -y
     sleep 1
     printf "%s Update Complete\n" "$(COMPLETE)"
     ;;

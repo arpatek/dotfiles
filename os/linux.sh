@@ -36,15 +36,15 @@ bootstrap_epel() {
   # On actual RHEL, epel-release is not in the default repos — install from the
   # Fedora EPEL URL. On CentOS/AlmaLinux/Rocky it is available as a package.
   if grep -qi "red hat enterprise" /etc/redhat-release 2>/dev/null; then
-    sudo dnf install -y \
+    $SUDO dnf install -y \
       "https://dl.fedoraproject.org/pub/epel/epel-release-latest-${rhel_ver}.noarch.rpm"
   else
-    sudo dnf install -y epel-release
+    $SUDO dnf install -y epel-release
   fi
 
   # Many EPEL packages require CRB — install dnf-plugins-core if needed
-  command -v crb >/dev/null 2>&1 || sudo dnf install -y dnf-plugins-core
-  sudo crb enable
+  command -v crb >/dev/null 2>&1 || $SUDO dnf install -y dnf-plugins-core
+  $SUDO crb enable
   printf "%s CRB enabled\n" "$(COMPLETE)"
 
   printf "%s EPEL enabled\n" "$(COMPLETE)"
@@ -71,7 +71,7 @@ bootstrap_packages() {
   # Force color output for dnf — sudo strips TERM so dnf defaults to no color
   if [[ "$pm" == "dnf" || "$pm" == "yum" ]]; then
     grep -q "^color=" /etc/dnf/dnf.conf 2>/dev/null \
-      || echo "color=always" | sudo tee -a /etc/dnf/dnf.conf >/dev/null
+      || echo "color=always" | $SUDO tee -a /etc/dnf/dnf.conf >/dev/null
     printf "%s dnf color output enabled\n" "$(COMPLETE)"
   fi
 
@@ -127,12 +127,12 @@ bootstrap_packages() {
     # rather than aborting the entire run (e.g. yazi on Debian/Ubuntu).
     for pkg in "${missing[@]}"; do
       case "$pm" in
-        nala)        sudo nala install -y "$pkg"          || printf "%s Skipped: %s (not in repos)\n" "$(PLUS)" "$pkg" ;;
-        apt)         sudo apt install -y  "$pkg"          || printf "%s Skipped: %s (not in repos)\n" "$(PLUS)" "$pkg" ;;
-        dnf | yum)   sudo "$pm" install -y "$pkg"        || printf "%s Skipped: %s (not in repos)\n" "$(PLUS)" "$pkg" ;;
-        pacman)      sudo pacman -S --noconfirm "$pkg"   || printf "%s Skipped: %s (not in repos)\n" "$(PLUS)" "$pkg" ;;
-        zypper)      sudo zypper install -y "$pkg"       || printf "%s Skipped: %s (not in repos)\n" "$(PLUS)" "$pkg" ;;
-        apk)         sudo apk add "$pkg"                 || printf "%s Skipped: %s (not in repos)\n" "$(PLUS)" "$pkg" ;;
+        nala)        $SUDO nala install -y "$pkg"          || printf "%s Skipped: %s (not in repos)\n" "$(PLUS)" "$pkg" ;;
+        apt)         $SUDO apt install -y  "$pkg"          || printf "%s Skipped: %s (not in repos)\n" "$(PLUS)" "$pkg" ;;
+        dnf | yum)   $SUDO "$pm" install -y "$pkg"        || printf "%s Skipped: %s (not in repos)\n" "$(PLUS)" "$pkg" ;;
+        pacman)      $SUDO pacman -S --noconfirm "$pkg"   || printf "%s Skipped: %s (not in repos)\n" "$(PLUS)" "$pkg" ;;
+        zypper)      $SUDO zypper install -y "$pkg"       || printf "%s Skipped: %s (not in repos)\n" "$(PLUS)" "$pkg" ;;
+        apk)         $SUDO apk add "$pkg"                 || printf "%s Skipped: %s (not in repos)\n" "$(PLUS)" "$pkg" ;;
       esac
     done
     printf "%s Core packages installed\n" "$(COMPLETE)"
@@ -145,13 +145,13 @@ bootstrap_packages() {
   sleep 0.5
   case "$pm" in
     nala | apt)
-      sudo apt install -y "${PYTHON_DEPS_APT[@]}"
+      $SUDO apt install -y "${PYTHON_DEPS_APT[@]}"
       ;;
     dnf | yum)
-      sudo "$pm" install -y "${PYTHON_DEPS_DNF[@]}"
+      $SUDO "$pm" install -y "${PYTHON_DEPS_DNF[@]}"
       ;;
     pacman)
-      sudo pacman -S --noconfirm "${PYTHON_DEPS_PACMAN[@]}"
+      $SUDO pacman -S --noconfirm "${PYTHON_DEPS_PACMAN[@]}"
       ;;
   esac
   printf "%s Python build dependencies installed\n" "$(COMPLETE)"
@@ -229,7 +229,7 @@ bootstrap_fzf() {
     "https://github.com/junegunn/fzf/releases/download/${fzf_tag}/fzf-${fzf_tag#v}-linux_${arch}.tar.gz" \
     -o "$tmp_dir/fzf.tar.gz"
   tar -xf "$tmp_dir/fzf.tar.gz" -C "$tmp_dir"
-  sudo install "$tmp_dir/fzf" -D -t /usr/local/bin/
+  $SUDO install "$tmp_dir/fzf" -D -t /usr/local/bin/
   printf "%s fzf %s installed\n" "$(COMPLETE)" "${fzf_tag#v}"
 }
 
@@ -250,7 +250,7 @@ bootstrap_zoxide() {
   # Try package manager first — zoxide is in Fedora, Arch, and Ubuntu 21.10+
   case "$pm" in
     dnf | yum | pacman | nala | apt)
-      if sudo "${pm/nala/apt}" install -y zoxide 2>/dev/null \
+      if $SUDO "${pm/nala/apt}" install -y zoxide 2>/dev/null \
          && command -v zoxide >/dev/null 2>&1; then
         printf "%s zoxide installed\n" "$(COMPLETE)"
         return
@@ -283,7 +283,7 @@ bootstrap_zoxide() {
     "https://github.com/ajeetdsouza/zoxide/releases/download/${zoxide_tag}/zoxide-${zoxide_tag#v}-${arch}-unknown-linux-musl.tar.gz" \
     -o "$tmp_dir/zoxide.tar.gz"
   tar -xf "$tmp_dir/zoxide.tar.gz" -C "$tmp_dir"
-  sudo install "$tmp_dir/zoxide" -D -t /usr/local/bin/
+  $SUDO install "$tmp_dir/zoxide" -D -t /usr/local/bin/
   printf "%s zoxide %s installed\n" "$(COMPLETE)" "${zoxide_tag#v}"
 }
 
@@ -303,9 +303,9 @@ bootstrap_fastfetch() {
 
   # Try package manager first — fastfetch is in Fedora, Arch, and Ubuntu 24.04+
   case "$pm" in
-    dnf | yum)  sudo "$pm" install -y fastfetch 2>/dev/null && command -v fastfetch >/dev/null 2>&1 && { printf "%s fastfetch installed\n" "$(COMPLETE)"; return; } ;;
-    pacman)     sudo pacman -S --noconfirm fastfetch 2>/dev/null && command -v fastfetch >/dev/null 2>&1 && { printf "%s fastfetch installed\n" "$(COMPLETE)"; return; } ;;
-    nala | apt) sudo "$pm" install -y fastfetch 2>/dev/null && command -v fastfetch >/dev/null 2>&1 && { printf "%s fastfetch installed\n" "$(COMPLETE)"; return; } ;;
+    dnf | yum)  $SUDO "$pm" install -y fastfetch 2>/dev/null && command -v fastfetch >/dev/null 2>&1 && { printf "%s fastfetch installed\n" "$(COMPLETE)"; return; } ;;
+    pacman)     $SUDO pacman -S --noconfirm fastfetch 2>/dev/null && command -v fastfetch >/dev/null 2>&1 && { printf "%s fastfetch installed\n" "$(COMPLETE)"; return; } ;;
+    nala | apt) $SUDO "$pm" install -y fastfetch 2>/dev/null && command -v fastfetch >/dev/null 2>&1 && { printf "%s fastfetch installed\n" "$(COMPLETE)"; return; } ;;
   esac
 
   # Fall back to GitHub releases for distros without fastfetch in repos
@@ -333,7 +333,7 @@ bootstrap_fastfetch() {
     "https://github.com/fastfetch-cli/fastfetch/releases/download/${ff_tag}/fastfetch-linux-${arch}.tar.gz" \
     -o "$tmp_dir/fastfetch.tar.gz"
   tar -xf "$tmp_dir/fastfetch.tar.gz" -C "$tmp_dir"
-  sudo install "$tmp_dir/usr/bin/fastfetch" -D -t /usr/local/bin/
+  $SUDO install "$tmp_dir/usr/bin/fastfetch" -D -t /usr/local/bin/
   printf "%s fastfetch %s installed\n" "$(COMPLETE)" "${ff_tag#v}"
 }
 
@@ -394,8 +394,8 @@ bootstrap_go() {
 
   curl -fsSL "https://go.dev/dl/${go_version}.linux-${arch}.tar.gz" \
     -o "$tmp_dir/go.tar.gz"
-  sudo rm -rf /usr/local/go
-  sudo tar -C /usr/local -xzf "$tmp_dir/go.tar.gz"
+  $SUDO rm -rf /usr/local/go
+  $SUDO tar -C /usr/local -xzf "$tmp_dir/go.tar.gz"
   printf "%s Go %s installed to /usr/local/go\n" "$(COMPLETE)" "$go_version"
 }
 
@@ -430,7 +430,7 @@ bootstrap_lazygit() {
     "https://github.com/jesseduffield/lazygit/releases/download/${lg_tag}/lazygit_${lg_ver}_Linux_${arch}.tar.gz" \
     -o "$tmp_dir/lazygit.tar.gz"
   tar -xf "$tmp_dir/lazygit.tar.gz" -C "$tmp_dir" lazygit
-  sudo install "$tmp_dir/lazygit" -D -t /usr/local/bin/
+  $SUDO install "$tmp_dir/lazygit" -D -t /usr/local/bin/
   printf "%s lazygit %s installed\n" "$(COMPLETE)" "$lg_ver"
 }
 
@@ -472,9 +472,9 @@ bootstrap_nvim() {
     "https://github.com/neovim/neovim/releases/download/${nvim_tag}/nvim-linux-${nvim_arch}.tar.gz" \
     -o "$tmp_dir/nvim.tar.gz"
   tar -xf "$tmp_dir/nvim.tar.gz" -C "$tmp_dir"
-  sudo rm -rf /opt/nvim
-  sudo mv "$tmp_dir/nvim-linux-${nvim_arch}" /opt/nvim
-  sudo ln -sf /opt/nvim/bin/nvim /usr/local/bin/nvim
+  $SUDO rm -rf /opt/nvim
+  $SUDO mv "$tmp_dir/nvim-linux-${nvim_arch}" /opt/nvim
+  $SUDO ln -sf /opt/nvim/bin/nvim /usr/local/bin/nvim
   printf "%s nvim %s installed to /opt/nvim\n" "$(COMPLETE)" "${nvim_tag#v}"
 }
 
@@ -503,11 +503,11 @@ bootstrap_bat() {
 
   printf "%s Installing bat...\n" "$(PLUS)"
   case "$pm" in
-    nala | apt)  sudo "$pm" install -y bat ;;
-    dnf | yum)   sudo "$pm" install -y bat ;;
-    pacman)      sudo pacman -S --noconfirm bat ;;
-    zypper)      sudo zypper install -y bat ;;
-    apk)         sudo apk add bat ;;
+    nala | apt)  $SUDO "$pm" install -y bat ;;
+    dnf | yum)   $SUDO "$pm" install -y bat ;;
+    pacman)      $SUDO pacman -S --noconfirm bat ;;
+    zypper)      $SUDO zypper install -y bat ;;
+    apk)         $SUDO apk add bat ;;
     *)
       printf "%s No supported package manager — skipping bat\n" "$(PLUS)"
       return
@@ -554,8 +554,8 @@ bootstrap_yazi() {
     "https://github.com/sxyazi/yazi/releases/download/${yazi_tag}/yazi-${arch}-unknown-linux-gnu.zip" \
     -o "$tmp_dir/yazi.zip"
   unzip -q "$tmp_dir/yazi.zip" -d "$tmp_dir"
-  sudo install "$tmp_dir/yazi-${arch}-unknown-linux-gnu/yazi" -D -t /usr/local/bin/
-  sudo install "$tmp_dir/yazi-${arch}-unknown-linux-gnu/ya"   -D -t /usr/local/bin/
+  $SUDO install "$tmp_dir/yazi-${arch}-unknown-linux-gnu/yazi" -D -t /usr/local/bin/
+  $SUDO install "$tmp_dir/yazi-${arch}-unknown-linux-gnu/ya"   -D -t /usr/local/bin/
   printf "%s yazi %s installed\n" "$(COMPLETE)" "$yazi_tag"
 }
 
@@ -575,8 +575,8 @@ bootstrap_eza() {
 
   # Try package manager first — eza is in repos on Debian/Ubuntu and Arch
   case "$pm" in
-    nala | apt) sudo "$pm" install -y eza 2>/dev/null && command -v eza >/dev/null 2>&1 && { printf "%s eza installed\n" "$(COMPLETE)"; return; } ;;
-    pacman)     sudo pacman -S --noconfirm eza 2>/dev/null && command -v eza >/dev/null 2>&1 && { printf "%s eza installed\n" "$(COMPLETE)"; return; } ;;
+    nala | apt) $SUDO "$pm" install -y eza 2>/dev/null && command -v eza >/dev/null 2>&1 && { printf "%s eza installed\n" "$(COMPLETE)"; return; } ;;
+    pacman)     $SUDO pacman -S --noconfirm eza 2>/dev/null && command -v eza >/dev/null 2>&1 && { printf "%s eza installed\n" "$(COMPLETE)"; return; } ;;
   esac
 
   # Fall back to GitHub releases (RHEL, and any other distro without eza in repos)
@@ -604,7 +604,7 @@ bootstrap_eza() {
     "https://github.com/eza-community/eza/releases/download/${eza_tag}/eza_${arch}-unknown-linux-gnu.tar.gz" \
     -o "$tmp_dir/eza.tar.gz"
   tar -xf "$tmp_dir/eza.tar.gz" -C "$tmp_dir"
-  sudo install "$tmp_dir/eza" -D -t /usr/local/bin/
+  $SUDO install "$tmp_dir/eza" -D -t /usr/local/bin/
   printf "%s eza %s installed\n" "$(COMPLETE)" "$eza_tag"
 }
 
@@ -642,8 +642,52 @@ cleanup_bash_configs() {
   done
 }
 
+# ──[ Alpine ]──────────────────────────────────────────────────────────────────
+# Alpine is a lightweight distro and is treated as one here. Every package below
+# comes from the official main/community repos on 3.24 — no GitHub tarballs, no
+# source builds, no pyenv, no Go toolchain, no Nerd Fonts. Quality of life only.
+
+is_alpine() {
+  grep -qi '^ID=alpine' /etc/os-release 2>/dev/null
+}
+
+bootstrap_alpine() {
+  # Grouped by purpose. apk resolves the set in one transaction, so there is no
+  # per-package skipping — every name here is verified present in the repos.
+  local -a pkgs=(
+    zsh git tmux                          # shell + core
+    neovim                                # editor
+    curl wget openssh-client-default      # network
+    starship fzf zoxide eza bat           # prompt + navigation
+    ripgrep fd                            # search
+    lazygit delta                         # git ux
+    yazi btop ncdu tree less lynx         # files + monitoring
+    jq unzip                              # misc
+    shadow musl-utils                     # provides chsh and getent
+  )
+
+  printf "%s Alpine detected — installing official packages only\n" "$(BANNER)"
+  sleep 0.5
+
+  printf "%s Updating package index...\n" "$(PLUS)"
+  $SUDO apk update
+
+  printf "%s Installing %d packages...\n" "$(PLUS)" "${#pkgs[@]}"
+  $SUDO apk add "${pkgs[@]}"
+
+  printf "%s Alpine packages installed\n" "$(COMPLETE)"
+  printf "\n"
+}
+
 # ──[ OS Entry Points ]─────────────────────────────────────────────────────────
 os_bootstrap() {
+  # Alpine takes the lean path and returns — none of the upstream fetching below
+  # applies to it, and its repos already cover everything worth having.
+  if is_alpine; then
+    bootstrap_alpine
+    return
+  fi
+
   bootstrap_epel
   bootstrap_packages
   bootstrap_go
@@ -662,11 +706,11 @@ os_bootstrap() {
 
 os_link() {
   printf "%s Installing lpu\n" "$(BANNER)"
-  sudo ln -sf "$DOTFILES_DIR/lpu" /usr/local/bin/lpu
+  $SUDO ln -sf "$DOTFILES_DIR/lpu" /usr/local/bin/lpu
   printf "%s lpu installed to /usr/local/bin/lpu\n" "$(COMPLETE)"
 
   printf "%s Installing ipkg\n" "$(BANNER)"
-  sudo ln -sf "$DOTFILES_DIR/ipkg-linux" /usr/local/bin/ipkg
+  $SUDO ln -sf "$DOTFILES_DIR/ipkg-linux" /usr/local/bin/ipkg
   printf "%s ipkg installed to /usr/local/bin/ipkg\n" "$(COMPLETE)"
 
   link "$DOTFILES_DIR/.config/starship-sysadmin.toml" "$HOME/.config/starship-sysadmin.toml"
@@ -683,18 +727,23 @@ os_post() {
   printf "%s Cleaning Up Shell Config Files\n" "$(BANNER)"
   cleanup_bash_configs
 
-  local zsh_bin login_shell
+  local zsh_bin login_shell user
   zsh_bin="$(command -v zsh 2>/dev/null)"
+  # id -un rather than $USER — the variable is routinely unset in containers.
+  user="$(id -un)"
   # Read the real login shell from passwd, not $SHELL — $SHELL reflects the
   # session's startup shell and goes stale after a chsh in the same session.
-  login_shell="$(getent passwd "$USER" | cut -d: -f7)"
-  if [[ -n "$zsh_bin" && "$login_shell" != "$zsh_bin" ]]; then
+  # awk over /etc/passwd rather than getent: on musl that lives in musl-utils.
+  login_shell="$(awk -F: -v u="$user" '$1 == u { print $7 }' /etc/passwd)"
+  if ! command -v chsh >/dev/null 2>&1; then
+    printf "%s chsh not available — set the login shell manually\n" "$(PLUS)"
+  elif [[ -n "$zsh_bin" && "$login_shell" != "$zsh_bin" ]]; then
     printf "%s Setting zsh as default shell\n" "$(BANNER)"
     # /etc/shells must list zsh for chsh to accept it
     if ! grep -qx "$zsh_bin" /etc/shells; then
-      printf "%s\n" "$zsh_bin" | sudo tee -a /etc/shells >/dev/null
+      printf "%s\n" "$zsh_bin" | $SUDO tee -a /etc/shells >/dev/null
     fi
-    sudo chsh -s "$zsh_bin" "$USER"
+    $SUDO chsh -s "$zsh_bin" "$user"
     printf "%s Default shell set to %s\n" "$(COMPLETE)" "$zsh_bin"
   else
     printf "%s zsh is already the default shell\n" "$(COMPLETE)"
@@ -731,7 +780,7 @@ remove_dnf_packages() {
     if rpm -q "$pkg" >/dev/null 2>&1; then
       found=true
       printf "%s Removing %s...\n" "$(PLUS)" "$pkg"
-      sudo dnf remove -y "$pkg" \
+      $SUDO dnf remove -y "$pkg" \
         && printf "%s Removed %s\n" "$(COMPLETE)" "$pkg" \
         || warn "Could not remove $pkg"
     else
@@ -765,7 +814,7 @@ os_uninstall() {
     go clean -modcache || warn "go clean -modcache failed"
   fi
   if [[ -d /usr/local/go ]]; then
-    sudo rm -rf /usr/local/go && printf "%s Removed /usr/local/go\n" "$(COMPLETE)" \
+    $SUDO rm -rf /usr/local/go && printf "%s Removed /usr/local/go\n" "$(COMPLETE)" \
       || warn "Could not remove /usr/local/go"
   fi
   remove_dir "$HOME/go"
@@ -784,14 +833,18 @@ os_uninstall() {
 
 os_uninstall_shell() {
   printf "%s Reverting default shell to bash\n" "$(BANNER)"
-  local bash_bin login_shell
+  local bash_bin login_shell user
   bash_bin="$(command -v bash 2>/dev/null || true)"
+  user="$(id -un)"
   # Read the real login shell from passwd, not $SHELL (stale after chsh in-session).
-  login_shell="$(getent passwd "$USER" | cut -d: -f7)"
-  if [[ -n "$bash_bin" && "$login_shell" != "$bash_bin" ]]; then
-    sudo chsh -s "$bash_bin" "$USER" \
+  # awk over /etc/passwd rather than getent: on musl that lives in musl-utils.
+  login_shell="$(awk -F: -v u="$user" '$1 == u { print $7 }' /etc/passwd)"
+  if ! command -v chsh >/dev/null 2>&1; then
+    printf "%s chsh not available — revert the login shell manually\n" "$(PLUS)"
+  elif [[ -n "$bash_bin" && "$login_shell" != "$bash_bin" ]]; then
+    $SUDO chsh -s "$bash_bin" "$user" \
       && printf "%s Default shell reverted to %s\n" "$(COMPLETE)" "$bash_bin" \
-      || warn "chsh failed — revert manually: sudo chsh -s $bash_bin $USER"
+      || warn "chsh failed — revert manually: $SUDO chsh -s $bash_bin $user"
   else
     printf "%s Shell already bash or bash not found, skipping\n" "$(PLUS)"
   fi
