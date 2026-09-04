@@ -50,6 +50,21 @@ bootstrap_epel() {
   printf "%s EPEL enabled\n" "$(COMPLETE)"
 }
 
+# ──[ Package Install Helper ]──────────────────────────────────────────────────
+# One entry point for every package manager so the batch and per-package paths
+# cannot drift apart. $pm is set by bootstrap_packages before this is called.
+pm_install() {
+  case "$pm" in
+    nala)      $SUDO nala install -y "$@" ;;
+    apt)       $SUDO apt install -y "$@" ;;
+    dnf | yum) $SUDO "$pm" install -y "$@" ;;
+    pacman)    $SUDO pacman -S --noconfirm "$@" ;;
+    zypper)    $SUDO zypper install -y "$@" ;;
+    apk)       $SUDO apk add "$@" ;;
+    *)         return 1 ;;
+  esac
+}
+
 # ──[ Package Bootstrap ]───────────────────────────────────────────────────────
 bootstrap_packages() {
   local pm=""
@@ -123,18 +138,19 @@ bootstrap_packages() {
   if (( ${#missing[@]} > 0 )); then
     printf "\n%s Installing %d missing package(s)...\n" "$(BANNER)" "${#missing[@]}"
     sleep 0.5
-    # Install one at a time so a package absent from the repos skips gracefully
-    # rather than aborting the entire run (e.g. yazi on Debian/Ubuntu).
-    for pkg in "${missing[@]}"; do
-      case "$pm" in
-        nala)        $SUDO nala install -y "$pkg"          || printf "%s Skipped: %s (not in repos)\n" "$(PLUS)" "$pkg" ;;
-        apt)         $SUDO apt install -y  "$pkg"          || printf "%s Skipped: %s (not in repos)\n" "$(PLUS)" "$pkg" ;;
-        dnf | yum)   $SUDO "$pm" install -y "$pkg"        || printf "%s Skipped: %s (not in repos)\n" "$(PLUS)" "$pkg" ;;
-        pacman)      $SUDO pacman -S --noconfirm "$pkg"   || printf "%s Skipped: %s (not in repos)\n" "$(PLUS)" "$pkg" ;;
-        zypper)      $SUDO zypper install -y "$pkg"       || printf "%s Skipped: %s (not in repos)\n" "$(PLUS)" "$pkg" ;;
-        apk)         $SUDO apk add "$pkg"                 || printf "%s Skipped: %s (not in repos)\n" "$(PLUS)" "$pkg" ;;
-      esac
-    done
+    # One transaction first. dnf pays a heavy metadata cost per invocation, so
+    # installing 13 packages individually dominated the RHEL runtime (~10 min
+    # against ~1 min elsewhere). The per-package loop is kept as the fallback:
+    # it is what lets a package missing from the repos skip gracefully rather
+    # than abort the run (e.g. yazi on Debian/Ubuntu).
+    if pm_install "${missing[@]}"; then
+      printf "%s Installed %d package(s) in one transaction\n" "$(COMPLETE)" "${#missing[@]}"
+    else
+      printf "%s Batch install failed — retrying one at a time\n" "$(PLUS)"
+      for pkg in "${missing[@]}"; do
+        pm_install "$pkg" || printf "%s Skipped: %s (not in repos)\n" "$(PLUS)" "$pkg"
+      done
+    fi
     printf "%s Core packages installed\n" "$(COMPLETE)"
   else
     printf "%s All core packages already present\n" "$(COMPLETE)"
