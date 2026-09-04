@@ -181,7 +181,17 @@ setup_lazyvim() {
   fi
 
   local nvim_ver nvim_minor nvim_patch
-  nvim_ver=$(nvim --version 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+  # || true — grep exits 1 when it matches nothing, and under pipefail that
+  # would abort the whole installer on a version string we simply can't parse.
+  nvim_ver=$(nvim --version 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1) || true
+
+  if [[ -z "$nvim_ver" ]]; then
+    printf "%s Could not read nvim version — linking init.vim fallback\n" "$(PLUS)"
+    mkdir -p "$nvim_config_dir"
+    link "$init_vim_src" "$nvim_config_dir/init.vim"
+    return
+  fi
+
   nvim_minor=$(printf "%s" "$nvim_ver" | cut -d. -f2)
   nvim_patch=$(printf "%s" "$nvim_ver" | cut -d. -f3)
 

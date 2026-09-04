@@ -444,10 +444,11 @@ bootstrap_nvim() {
 
   if ! $UPDATE && command -v nvim >/dev/null 2>&1; then
     local nvim_ver nvim_minor nvim_patch
-    nvim_ver=$(nvim --version 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+    # || true — see setup_lazyvim: an unparseable version must not abort the run.
+    nvim_ver=$(nvim --version 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1) || true
     nvim_minor=$(printf "%s" "$nvim_ver" | cut -d. -f2)
     nvim_patch=$(printf "%s" "$nvim_ver" | cut -d. -f3)
-    if (( nvim_minor > 11 || ( nvim_minor == 11 && nvim_patch >= 2 ) )); then
+    if [[ -n "$nvim_ver" ]] && (( nvim_minor > 11 || ( nvim_minor == 11 && nvim_patch >= 2 ) )); then
       printf "%s nvim %s already meets requirement (>= 0.11.2)\n" "$(COMPLETE)" "$nvim_ver"
       return
     fi
