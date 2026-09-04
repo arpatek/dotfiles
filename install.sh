@@ -49,6 +49,18 @@ source "$DOTFILES_DIR/lib.sh"
 # ──[ Error Trap ]──────────────────────────────────────────────────────────────
 trap 'printf "\n%s Installation failed. Aborting.\n" "$(FAILED)"' ERR
 
+# ──[ Timing ]──────────────────────────────────────────────────────────────────
+# -t reports how long each phase took. SECONDS is maintained by bash itself, so
+# this costs no subprocesses — it stays silent and free when the flag is off.
+_phase_mark=0
+
+phase() {
+  $TIMER || return 0
+  local now=$SECONDS
+  printf "%s %s — %ds (total %ds)\n" "$(PLUS)" "$1" "$((now - _phase_mark))" "$now"
+  _phase_mark=$now
+}
+
 # ──[ OS Detection ]────────────────────────────────────────────────────────────
 case "$(uname -s)" in
   Darwin) OS="darwin" ;;
@@ -59,11 +71,13 @@ esac
 # ──[ Argument Parsing ]────────────────────────────────────────────────────────
 SKIP_PACKAGES=false
 UPDATE=false
+TIMER=false
 
 usage() {
   printf "Usage: install.sh [OPTIONS]\n"
   printf "Options:\n"
   printf "  -h, --help            Show this help message\n"
+  printf "  -t, --timer           Report elapsed time per phase and a total\n"
   printf "  --skip-packages       Skip package bootstrap (symlinks only)\n"
   printf "  --update              Re-fetch bootstrapped tools from upstream (Linux)\n"
 }
@@ -71,6 +85,7 @@ usage() {
 while [[ $# -gt 0 ]]; do
   case "$1" in
   -h | --help) usage; exit 0 ;;
+  -t | --timer)    TIMER=true ;;
   --skip-packages) SKIP_PACKAGES=true ;;
   --update)        UPDATE=true ;;
   *) printf "Unknown option: %s\n" "$1" >&2; usage >&2; exit 1 ;;
@@ -228,7 +243,9 @@ if ! $SKIP_PACKAGES; then
   sleep 0.5
   os_bootstrap
   bootstrap_zsh_plugins
+  phase "zsh plugins"
   bootstrap_tmux_plugins
+  phase "tmux plugins"
   printf "\n"
 fi
 
@@ -238,6 +255,7 @@ mkdir -p "$HOME"/.config/{zsh,git,tmux,lazygit,fastfetch,ghostty,kube,npm}
 mkdir -p "$HOME"/.cache/{kube,npm}
 mkdir -p "$HOME/.vim" "$HOME/.ssh" "$HOME/.claude"
 printf "%s Directories ready\n\n" "$(COMPLETE)"
+phase "directories"
 
 printf "%s Symlinking Dotfiles\n" "$(BANNER)"
 sleep 0.5
@@ -263,14 +281,17 @@ else
 fi
 link "$DOTFILES_DIR/.config/ghostty/config"          "$HOME/.config/ghostty/config"
 link "$DOTFILES_DIR/.claude/statusline-command.sh"   "$HOME/.claude/statusline-command.sh"
+phase "symlinks"
 printf "\n"
 
 setup_lazyvim
+phase "lazyvim"
 printf "\n"
 
 printf "%s Installing OS-specific Configs\n" "$(BANNER)"
 sleep 0.5
 os_link
+phase "os-specific configs"
 printf "\n"
 
 printf "%s Installing SSH Config\n" "$(BANNER)"
@@ -280,9 +301,15 @@ chmod 600 "$HOME/.ssh/config"
 printf "%s SSH config installed\n\n" "$(COMPLETE)"
 
 os_post
+phase "post-install"
 printf "\n"
 
 printf "%s Installation Complete\n" "$(COMPLETE)"
+# if/fi, not `$TIMER && ...` — the latter returns 1 when the flag is off and
+# set -e would abort the script here, right before the shell handoff.
+if $TIMER; then
+  printf "%s Total elapsed: %dm %02ds\n" "$(COMPLETE)" "$((SECONDS / 60))" "$((SECONDS % 60))"
+fi
 [[ -d "$BACKUP_DIR" ]] && printf "%s Backups saved to %s\n" "$(PLUS)" "$BACKUP_DIR"
 printf "%s Deployment complete. Entering the shell.\n" "$(LAMBDA)"
 exec zsh

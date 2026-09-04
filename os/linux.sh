@@ -740,23 +740,26 @@ os_bootstrap() {
   # applies to it, and its repos already cover everything worth having.
   if is_alpine; then
     bootstrap_alpine
+    phase "alpine packages"
     return
   fi
 
-  bootstrap_epel
-  bootstrap_packages
-  bootstrap_go
-  bootstrap_lazygit
-  bootstrap_bat
-  bootstrap_yazi
-  bootstrap_eza
-  bootstrap_fzf
-  bootstrap_zoxide
-  bootstrap_starship
-  bootstrap_fastfetch
-  bootstrap_pyenv
-  bootstrap_fonts
-  bootstrap_nvim
+  # phase() is a no-op unless install.sh was given -t. Each upstream fetch is a
+  # separate network round trip, so this is where a slow run shows its cause.
+  bootstrap_epel;      phase "epel"
+  bootstrap_packages;  phase "core packages"
+  bootstrap_go;        phase "go"
+  bootstrap_lazygit;   phase "lazygit"
+  bootstrap_bat;       phase "bat"
+  bootstrap_yazi;      phase "yazi"
+  bootstrap_eza;       phase "eza"
+  bootstrap_fzf;       phase "fzf"
+  bootstrap_zoxide;    phase "zoxide"
+  bootstrap_starship;  phase "starship"
+  bootstrap_fastfetch; phase "fastfetch"
+  bootstrap_pyenv;     phase "pyenv"
+  bootstrap_fonts;     phase "fonts"
+  bootstrap_nvim;      phase "nvim"
 }
 
 os_link() {

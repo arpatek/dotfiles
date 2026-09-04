@@ -101,6 +101,7 @@ The installer detects the OS and:
   else `init.vim`), symlink all shared config, link the OS-specific config, and launch zsh.
 
 ```bash
+./install.sh -t                # report elapsed time per phase and a total
 ./install.sh --skip-packages   # re-link only, no package bootstrap
 ./install.sh --update          # re-fetch upstream-installed tools (Linux)
 ./uninstall.sh                 # full teardown, restores a clean state
