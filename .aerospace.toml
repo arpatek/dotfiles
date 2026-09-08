@@ -95,7 +95,14 @@ on-mode-changed = []
     # turns that check off; `open` passes the variable through to the app.
     alt-enter   = 'exec-and-forget open -a Ghostty'
     alt-b       = 'exec-and-forget env MOZ_DISABLE_SAFE_MODE_KEY=1 open -a Zen'
-    alt-shift-c = 'exec-and-forget open -a VSCodium'
+    alt-c       = 'exec-and-forget open -a VSCodium'
+
+    # New Ghostty window in the *running* instance. `open -a` only focuses it
+    # and `open -na` spawns a whole second process with its own restored
+    # session. AppleScript reaches into the existing one. Ghostty makes the
+    # window then fails to hand back a reference (error -2710) — cosmetic,
+    # exec-and-forget discards the exit code.
+    alt-g       = "exec-and-forget osascript -e 'tell application \"Ghostty\" to make new window'"
 
 # ──[ Service Mode ]────────────────────────────────────────────────────────────
 [mode.service.binding]
