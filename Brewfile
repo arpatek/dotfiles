@@ -63,7 +63,8 @@ brew "neovim"
 brew "wireguard-tools"   # wg and wg-quick CLI — pulls in wireguard-go as dependency
 
 # ──[ Fonts ]───────────────────────────────────────────────────────────────────
-cask "font-jetbrains-mono-nerd-font"
+cask "font-jetbrains-mono-nerd-font"   # patched build — terminal, editors
+cask "font-jetbrains-mono"             # unpatched — anything asking for "JetBrains Mono"
 
 # ──[ Terminals ]───────────────────────────────────────────────────────────────
 cask "ghostty"           # config at .config/ghostty/config, shared with Linux
