@@ -93,7 +93,9 @@ export GPG_TTY=$(tty)
 # ──[ Manpages ]────────────────────────────────────────────────────────────────
 export LESS='-R'
 # bat renders man pages with syntax highlighting — no LESS_TERMCAP_* needed.
-export MANPAGER='bat -l man -p'
+# It doesn't understand groff's backspace overstrike (X\bX is how bold is
+# encoded) and prints the ^H literally, so col strips it before bat sees it.
+export MANPAGER="sh -c 'col -bx | bat -l man -p'"
 
 # ──[ History ]─────────────────────────────────────────────────────────────────
 HISTFILE="$ZDOTDIR/.zsh_history"
