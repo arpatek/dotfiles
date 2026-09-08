@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # =============================================================================
 # Script Name: location-widget.sh
-# Description: tmux status widget — ssh target when the pane is remote, cwd otherwise.
+# Description: tmux status widget — ssh target, running app, or cwd per pane.
 # Author: Juan Garcia (arpatek)
 # Created: 2026-09-08
-# Version: 1.0
+# Version: 1.1
 # =============================================================================
 
 set -eo pipefail
@@ -16,13 +16,26 @@ set -eo pipefail
 pane_tty="${1#/dev/}"
 pane_cmd="$2"
 pane_cwd="$3"
-pane_osc7="${4:-}"   # #{pane_path} — only populated when a shell emits OSC 7
+pane_alt="$4"        # #{alternate_on} — 1 while a fullscreen app holds the screen
+pane_osc7="${5:-}"   # #{pane_path} — only populated when a shell emits OSC 7
 
 # ──[ Theme ]───────────────────────────────────────────────────────────────────
 # Mirrors tokyo-night-tmux's own path widget so the bar stays visually uniform.
 RESET="#[fg=brightwhite,bg=#15161e,nobold,noitalics,nounderscore,nodim]"
 DIR_ICON=""
 SSH_ICON="󰣀"
+APP_ICON=""
+CLAUDE_ICON=""
+VIM_ICON=""
+NVIM_ICON=""
+TMUX_ICON=""
+PAGER_ICON=""
+MONITOR_ICON=""
+GIT_ICON=""
+K8S_ICON="󱃾"
+PYTHON_ICON=""
+NODE_ICON=""
+DOCKER_ICON=""
 
 # ──[ SSH Target ]──────────────────────────────────────────────────────────────
 # Matched by tty rather than by walking the pane's process tree, so ssh started
@@ -103,6 +116,44 @@ short_host() {
   esac
 }
 
+# macOS ships /usr/bin/man and friends as shell scripts, so tmux reports the
+# shell and not the command that was actually run. The outermost shell executing
+# a script names it better than any of its children — the tree under `man ls` is
+# sh -> sh -> bat -> less, where only the script path says "man".
+wrapper_command() {
+  ps -t "$pane_tty" -o pid=,ppid=,args= 2>/dev/null | awk '
+    {
+      cmd = $3; sub(/.*\//, "", cmd)
+      if (cmd !~ /^-?(sh|bash|zsh|dash|ksh)$/) next
+      for (i = 4; i <= NF; i++) {
+        if ($i == "-c") next        # a -c pipeline has no one name
+        if ($i ~ /^-/) continue
+        script = $i; sub(/.*\//, "", script)
+        print script; exit
+      }
+    }'
+}
+
+# A fullscreen app owns the pane, so name the app — the cwd it was launched from
+# tells you nothing while it is on screen. Anything unmapped keeps its own name
+# behind a generic terminal glyph rather than being dropped.
+app_icon() {
+  case "$1" in
+    claude)                printf '%s' "$CLAUDE_ICON" ;;
+    vim|vi|view)           printf '%s' "$VIM_ICON" ;;
+    nvim)                  printf '%s' "$NVIM_ICON" ;;
+    tmux)                  printf '%s' "$TMUX_ICON" ;;
+    less|more|man)         printf '%s' "$PAGER_ICON" ;;
+    top|htop|btop)         printf '%s' "$MONITOR_ICON" ;;
+    lazygit|tig)           printf '%s' "$GIT_ICON" ;;
+    k9s)                   printf '%s' "$K8S_ICON" ;;
+    [Pp]ython|python3)     printf '%s' "$PYTHON_ICON" ;;
+    node)                  printf '%s' "$NODE_ICON" ;;
+    docker|lazydocker)     printf '%s' "$DOCKER_ICON" ;;
+    *)                     printf '%s' "$APP_ICON" ;;
+  esac
+}
+
 render() {
   printf '#[fg=%s,bg=default]░ %s %s#[bg=default]%s ' "$1" "$2" "$RESET" "$3"
 }
@@ -116,6 +167,14 @@ if [ "$pane_cmd" = "ssh" ] && target="$(ssh_target)"; then
   else
     render magenta "$SSH_ICON" "$target"
   fi
+elif [ "$pane_alt" = "1" ]; then
+  app="$pane_cmd"
+  case "$app" in
+    sh|bash|zsh|dash|ksh) app="$(wrapper_command)" ;;
+  esac
+  [ -n "$app" ] || app="$pane_cmd"
+
+  render cyan "$(app_icon "$app")" "$(printf '%s' "$app" | tr '[:upper:]' '[:lower:]')"
 else
   render blue "$DIR_ICON" "$(abbrev_local "$pane_cwd")"
 fi
