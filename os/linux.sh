@@ -737,7 +737,6 @@ bootstrap_alpine() {
   # per-package skipping — every name here is verified present in the repos.
   local -a pkgs=(
     zsh git tmux                          # shell + core
-    neovim                                # editor
     curl wget openssh-client-default      # network
     starship fzf zoxide eza bat           # prompt + navigation
     ripgrep fd                            # search
