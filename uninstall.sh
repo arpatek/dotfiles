@@ -159,6 +159,7 @@ printf "\n"
 printf "%s Removing Dotfile Symlinks\n" "$(BANNER)"
 unlink_file ~/.vim/vimrc
 unlink_file ~/.config/tmux/tmux.conf
+unlink_file ~/.config/tmux/scripts
 unlink_file ~/.config/git/config
 unlink_file ~/.config/git/commit-template
 unlink_file ~/.config/starship.toml
