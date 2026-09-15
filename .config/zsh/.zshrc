@@ -95,6 +95,9 @@ export LESS='-R'
 # bat renders man pages with syntax highlighting — no LESS_TERMCAP_* needed.
 # It doesn't understand groff's backspace overstrike (X\bX is how bold is
 # encoded) and prints the ^H literally, so col strips it before bat sees it.
+# On groff hosts grotty emits SGR escapes rather than overstrike, which col does
+# not touch — -c forces the legacy format so there is something for col to strip.
+export MANROFFOPT='-c'
 export MANPAGER="sh -c 'col -bx | bat -l man -p'"
 
 # ──[ History ]─────────────────────────────────────────────────────────────────
