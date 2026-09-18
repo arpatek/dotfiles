@@ -1,5 +1,7 @@
 # dotfiles
 
+[![built by arpatek](.assets/badge.svg)](https://arpatek.dev)
+
 Personal dotfiles for Zsh, tmux, Vim/Neovim, Git, and SSH — **cross-platform
 (Linux + macOS)**, managed via symlinks with a fully automated, OS-aware bootstrap
 installer.
