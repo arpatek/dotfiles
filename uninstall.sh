@@ -166,7 +166,6 @@ unlink_file ~/.config/starship.toml
 unlink_file ~/.editorconfig
 unlink_file ~/.config/curlrc
 unlink_file ~/.config/lazygit/config.yml
-unlink_file ~/.claude/statusline-command.sh
 unlink_file ~/.config/zsh/.zsh_aliases
 unlink_file ~/.config/zsh/.zprofile
 unlink_file ~/.config/zsh/os.d

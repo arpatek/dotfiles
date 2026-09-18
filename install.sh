@@ -253,7 +253,7 @@ printf "%s Creating Directories\n" "$(BANNER)"
 sleep 0.5
 mkdir -p "$HOME"/.config/{zsh,git,tmux,lazygit,fastfetch,ghostty,kube,npm}
 mkdir -p "$HOME"/.cache/{kube,npm}
-mkdir -p "$HOME/.vim" "$HOME/.ssh" "$HOME/.claude"
+mkdir -p "$HOME/.vim" "$HOME/.ssh"
 printf "%s Directories ready\n\n" "$(COMPLETE)"
 phase "directories"
 
@@ -281,7 +281,6 @@ else
   link "$DOTFILES_DIR/.config/fastfetch/config.jsonc"          "$HOME/.config/fastfetch/config.jsonc"
 fi
 link "$DOTFILES_DIR/.config/ghostty/config"          "$HOME/.config/ghostty/config"
-link "$DOTFILES_DIR/.claude/statusline-command.sh"   "$HOME/.claude/statusline-command.sh"
 phase "symlinks"
 printf "\n"
 
