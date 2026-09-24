@@ -42,6 +42,16 @@ ZSH_AUTOSUGGEST_STRATEGY=(history completion)
 # pipeline history entries cause noticeable lag on every keystroke.
 ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
 
+# ──[ Keymap ]──────────────────────────────────────────────────────────────────
+# zsh links viins to main at startup when VISUAL or EDITOR contains the string
+# "vi" — a naive substring match, so 'nvim' triggers it. That leaves ^A on
+# self-insert, printing a literal ^A instead of jumping to column 0. Force the
+# choice instead of inheriting it (zshzle(1) recommends exactly this).
+#
+# Must stay above every bindkey call below: bindings made before this line land
+# in viins and then disappear when main flips to emacs.
+bindkey -e
+
 # ──[ History Substring Search ]────────────────────────────────────────────────
 # Type any part of a previous command, then Up/Down to cycle matches. Complements
 # the inline autosuggestion. Must load before fast-syntax-highlighting.
