@@ -55,6 +55,26 @@ is_headless() {
   return 0
 }
 
+# ──[ Prompting ]───────────────────────────────────────────────────────────────
+# Shared by install.sh and uninstall.sh. The -t 0 guard matters: without it a
+# piped run (curl … | bash, or any non-interactive invocation) has `read`
+# consume a line of the pipe instead of asking, and the answer is whatever
+# happened to be next in the script.
+#
+# $1 question, $2 default when there is no TTY ("y" or "n", default "n").
+confirm() {
+  local default="${2:-n}"
+  if [[ ! -t 0 ]]; then
+    printf "%s %s [%s, non-interactive]\n" "$(BANNER)" "$1" "$default"
+    [[ "$default" == "y" ]]
+    return
+  fi
+  printf "%s %s [y/N] " "$(BANNER)" "$1"
+  local reply
+  read -r reply
+  [[ "$reply" =~ ^[Yy]$ ]]
+}
+
 # ──[ Sudo Session Caching ]────────────────────────────────────────────────────
 cache_sudo() {
   # Nothing to cache as root, and doas has no credential-refresh equivalent.

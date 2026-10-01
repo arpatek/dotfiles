@@ -81,12 +81,6 @@ remove_file() {
   fi
 }
 
-confirm() {
-  printf "%s %s [y/N] " "$(BANNER)" "$1"
-  read -r reply
-  [[ "$reply" =~ ^[Yy]$ ]]
-}
-
 # ──[ Restore Backups ]─────────────────────────────────────────────────────────
 restore_backups() {
   local backup_base="$HOME/.local/share/dotfiles_backup"

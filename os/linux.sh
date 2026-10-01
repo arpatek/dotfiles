@@ -494,6 +494,14 @@ bootstrap_lazygit() {
 }
 
 bootstrap_nvim() {
+  # Only the workstation profile runs nvim-arpa, and only nvim-arpa needs 0.12.
+  # A server uses vim, so whatever nvim the distro packaged is already enough
+  # for the init.vim fallback — no reason to pull a tarball from GitHub.
+  if [[ "${PROFILE:-workstation}" == "server" ]]; then
+    printf "%s server profile — keeping the packaged nvim\n" "$(PLUS)"
+    return
+  fi
+
   local arch nvim_arch
   case "$(uname -m)" in
     x86_64)  arch="x86_64"; nvim_arch="x86_64" ;;

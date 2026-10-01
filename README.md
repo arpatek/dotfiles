@@ -84,6 +84,22 @@ cd ~/dotfiles
 ./install.sh
 ```
 
+### Profiles
+
+| Profile | Editor | For |
+|---|---|---|
+| `workstation` | [nvim-arpa](https://codeberg.org/arpatek/nvim-arpa), needs nvim 0.12+ | a machine you sit at |
+| `server` | `vim` with `~/.vim/vimrc`, nothing to compile | a machine you SSH into |
+
+macOS is always a workstation. On Linux the installer asks, or takes
+`--profile=workstation` / `--profile=server`. With no TTY it defaults to
+`server`, so an unattended run never installs a toolchain into a box nobody is
+watching.
+
+The server profile skips the nvim 0.12 upstream fetch and the `nvim-arpa` clone
+entirely. `~/.vim/vimrc` is linked on every profile, so `syntax on`, 4-space
+indent and persistent undo are there regardless.
+
 The installer detects the OS and:
 
 - **Linux** — detects the distro package manager, installs missing packages, then Go,

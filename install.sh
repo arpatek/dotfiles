@@ -72,6 +72,7 @@ esac
 SKIP_PACKAGES=false
 UPDATE=false
 TIMER=false
+PROFILE=""
 
 usage() {
   printf "Usage: install.sh [OPTIONS]\n"
@@ -80,6 +81,9 @@ usage() {
   printf "  -t, --timer           Report elapsed time per phase and a total\n"
   printf "  --skip-packages       Skip package bootstrap (symlinks only)\n"
   printf "  --update              Re-fetch bootstrapped tools from upstream (Linux)\n"
+  printf "  --profile=NAME        workstation or server (Linux only; macOS is always a\n"
+  printf "                        workstation). Omitted, Linux asks; with no TTY it\n"
+  printf "                        defaults to server.\n"
 }
 
 while [[ $# -gt 0 ]]; do
@@ -88,10 +92,42 @@ while [[ $# -gt 0 ]]; do
   -t | --timer)    TIMER=true ;;
   --skip-packages) SKIP_PACKAGES=true ;;
   --update)        UPDATE=true ;;
+  --profile=*)
+    PROFILE="${1#*=}"
+    if [[ "$PROFILE" != "workstation" && "$PROFILE" != "server" ]]; then
+      printf "Invalid profile: %s (expected workstation or server)\n" "$PROFILE" >&2
+      exit 1
+    fi
+    ;;
   *) printf "Unknown option: %s\n" "$1" >&2; usage >&2; exit 1 ;;
   esac
   shift
 done
+
+# ──[ Profile ]─────────────────────────────────────────────────────────────────
+# workstation — zsh, nvim-arpa, the full toolchain. A machine that is sat at.
+# server      — bash, vim with syntax on, nothing to compile. A machine that is
+#               SSHed into.
+#
+# macOS is always a workstation; it is not a server platform here. Linux is
+# either, so it asks, and a non-interactive run takes server: a box nobody is
+# watching should not have a toolchain installed into it by default.
+resolve_profile() {
+  [[ -n "$PROFILE" ]] && return
+  if [[ "$(uname -s)" == "Darwin" ]]; then
+    PROFILE="workstation"
+    return
+  fi
+  if confirm "Install as a workstation? (no = server: bash and vim, no toolchain)"; then
+    PROFILE="workstation"
+  else
+    PROFILE="server"
+  fi
+}
+
+resolve_profile
+printf "%s Profile: %s\n" "$(BANNER)" "$PROFILE"
+export PROFILE
 
 # ──[ Privileged Session Caching ]──────────────────────────────────────────────
 cache_sudo
@@ -185,9 +221,10 @@ bootstrap_tmux_plugins() {
 
 # ──[ Shared: Neovim ]──────────────────────────────────────────────────────────
 setup_nvim() {
-  # Two tiers. nvim-arpa is the real config and needs nvim 0.12 for
-  # vim.pack and vim.lsp.config. init.vim is the zero-dependency fallback for
-  # anything older: RHEL's nvim, containers, a box with no network.
+  # nvim-arpa is the workstation config and needs nvim 0.12 for vim.pack and
+  # vim.lsp.config. init.vim is the zero-dependency fallback, used for the
+  # server profile and for anything older than 0.12: RHEL's nvim, containers,
+  # a box with no network.
   local init_vim_src="$DOTFILES_DIR/.config/nvim/init.vim"
   local nvim_config_dir="$HOME/.config/nvim"
   local nvim_repo="https://codeberg.org/arpatek/nvim-arpa"
@@ -199,6 +236,16 @@ setup_nvim() {
 
   if ! command -v nvim >/dev/null 2>&1; then
     printf "%s nvim not found — skipping\n" "$(PLUS)"
+    return
+  fi
+
+  # Server profile stops here. vim is the editor on a box that is SSHed into,
+  # and ~/.vim/vimrc is linked unconditionally further down, so it already has
+  # syntax highlighting, 4-space indent and persistent undo. nvim gets the
+  # fallback only so it behaves consistently if something invokes $EDITOR.
+  if [[ "${PROFILE:-workstation}" == "server" ]]; then
+    printf "%s server profile — linking init.vim, skipping nvim-arpa\n" "$(PLUS)"
+    link_fallback
     return
   fi
 
