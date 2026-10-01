@@ -30,6 +30,8 @@ brew "fastfetch"
 brew "btop"
 brew "ncdu"
 brew "fzf"
+brew "ripgrep"       # rg — :grep, grepprg, and fzf-lua live_grep
+brew "fd"            # fzf-lua prefers it over BSD find
 brew "zoxide"
 brew "lynx"
 brew "shellcheck"
@@ -58,6 +60,30 @@ brew "yt-dlp"
 
 # ──[ Editors ]─────────────────────────────────────────────────────────────────
 brew "neovim"
+
+# ──[ Language Servers ]────────────────────────────────────────────────────────
+# Neovim's nvim-arpatek config declares these via vim.lsp.config and starts
+# whichever it finds on PATH. They live here rather than in Mason so that
+# provisioning a new machine installs them, and so `which` can see them.
+brew "bash-language-server"        # also runs shellcheck
+brew "pyright"
+brew "ruff"                        # lint + format, replaces black and flake8
+brew "terraform-ls"
+brew "ansible-language-server"     # also runs ansible-lint
+brew "yaml-language-server"
+brew "lua-language-server"
+brew "marksman"                    # markdown; pulls dotnet@9, ~620MB
+brew "vscode-langservers-extracted" # provides vscode-json-language-server
+
+# ──[ Linters & Formatters ]────────────────────────────────────────────────────
+# shellcheck and shfmt are already under Modern CLI.
+brew "stylua"
+brew "hadolint"                    # Dockerfile
+brew "markdownlint-cli2"
+brew "ansible-lint"
+# tree-sitter CLI: nvim-treesitter's main branch shells out to it to compile
+# parsers. Without it, :checkhealth passes but no parser ever builds.
+brew "tree-sitter-cli"
 
 # ──[ VPN ]─────────────────────────────────────────────────────────────────────
 brew "wireguard-tools"   # wg and wg-quick CLI — pulls in wireguard-go as dependency
