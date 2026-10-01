@@ -1,7 +1,7 @@
 # ┌──────────────────────────────────────────────────────────────┐
 # │ arpatek - Zsh, macOS                                         │
-# │ Only what bash cannot share. Portable macOS bits live in      │
-# │ .config/shell/os.d/darwin, sourced by .zshrc just before this.│
+# │ Only what bash cannot share. Portable macOS bits live in     │
+# │ .config/shell/os.d/darwin, sourced by .zshrc first.          │
 # └──────────────────────────────────────────────────────────────┘
 
 # viins is a separate keymap: the bindings in .zshrc cover emacs mode, and

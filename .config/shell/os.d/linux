@@ -1,7 +1,7 @@
 # ┌──────────────────────────────────────────────────────────────┐
 # │ arpatek - Shared OS Delta, Linux                             │
-# │ Sourced by both shells. Shell-specific Linux bits live in     │
-# │ .config/zsh/os.d/linux.zsh — bash needs none.                 │
+# │ Sourced by both shells. Shell-specific Linux bits live in    │
+# │ .config/zsh/os.d/linux.zsh — bash needs none.                │
 # └──────────────────────────────────────────────────────────────┘
 
 export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border=rounded'
