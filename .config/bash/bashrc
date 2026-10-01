@@ -105,7 +105,18 @@ unset _os_file
 # fzf and zoxide would each run as root on every prompt, and root's shell does
 # not need completion niceties. It needs to be unmistakable.
 if [[ $EUID -eq 0 ]]; then
-    PS1='\[\e[1;31m\]┌─[root@\h][\w]\n└─▪# \[\e[0m\]'
+    # Same shape and palette as .config/starship.toml, hand-built because root
+    # does not run starship. Hex values are the arpatek palette:
+    #   #4C566A structure — brackets, └─▪, and the @ separator (muted)
+    #   #E67E80 alert     — root, the hostname, and # in place of ❯
+    #   #85C0B1 path      — directory
+    # \[ \] wrap every escape so readline does not count them toward the line
+    # width; without that, long paths wrap in the wrong column.
+    _p_struct='\[\e[0;38;2;76;86;106m\]'
+    _p_alert='\[\e[1;38;2;230;127;128m\]'
+    _p_path='\[\e[1;38;2;133;192;177m\]'
+    _p_reset='\[\e[0m\]'
+    PS1="${_p_struct}┌─[${_p_alert}\u${_p_struct}@${_p_alert}\h${_p_struct}][${_p_path}\w${_p_struct}]\n└─▪${_p_alert}# ${_p_reset}"
 else
     if command -v starship >/dev/null 2>&1; then
         # id -un rather than $USER: the variable is routinely unset in containers.

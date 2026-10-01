@@ -825,15 +825,14 @@ os_post() {
   printf "%s Cleaning Up Shell Config Files\n" "$(BANNER)"
   cleanup_bash_configs
 
-  # The login shell follows the profile: zsh on a workstation, bash on a server.
-  # Both configs are linked either way, so this only decides which one you land
-  # in — a server still has a working zsh if you ask for it by name.
+  # zsh on every profile, for the local account running this installer. The bash
+  # config is not the server shell — it is what root, IPA users and recovery
+  # shells land in. IPA sets its users to /bin/bash deliberately: that is the one
+  # shell present on every enrolled host, so pointing IPA at zsh would couple the
+  # identity to per-host package state and break logins on a freshly enrolled box
+  # that has not been provisioned yet.
   local want_shell shell_bin login_shell user
-  if [[ "${PROFILE:-workstation}" == "server" ]]; then
-    want_shell="bash"
-  else
-    want_shell="zsh"
-  fi
+  want_shell="zsh"
   shell_bin="$(command -v "$want_shell" 2>/dev/null)"
   # id -un rather than $USER — the variable is routinely unset in containers.
   user="$(id -un)"
