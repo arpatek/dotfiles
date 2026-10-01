@@ -503,7 +503,7 @@ bootstrap_nvim() {
 
   if ! $UPDATE && command -v nvim >/dev/null 2>&1; then
     local nvim_ver nvim_minor nvim_patch
-    # || true — see setup_lazyvim: an unparseable version must not abort the run.
+    # || true — see setup_nvim: an unparseable version must not abort the run.
     nvim_ver=$(nvim --version 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1) || true
     nvim_minor=$(printf "%s" "$nvim_ver" | cut -d. -f2)
     nvim_patch=$(printf "%s" "$nvim_ver" | cut -d. -f3)

@@ -183,54 +183,71 @@ bootstrap_tmux_plugins() {
   done
 }
 
-# ──[ Shared: LazyVim ]─────────────────────────────────────────────────────────
-setup_lazyvim() {
-  # init.vim is the zero-dependency fallback for nvim on any system where
-  # LazyVim cannot be used (old nvim, no network, containers, etc.)
+# ──[ Shared: Neovim ]──────────────────────────────────────────────────────────
+setup_nvim() {
+  # Two tiers. nvim-arpatek is the real config and needs nvim 0.12 for
+  # vim.pack and vim.lsp.config. init.vim is the zero-dependency fallback for
+  # anything older: RHEL's nvim, containers, a box with no network.
   local init_vim_src="$DOTFILES_DIR/.config/nvim/init.vim"
   local nvim_config_dir="$HOME/.config/nvim"
+  local nvim_repo="https://codeberg.org/arpatek/nvim-arpatek"
+
+  link_fallback() {
+    mkdir -p "$nvim_config_dir"
+    link "$init_vim_src" "$nvim_config_dir/init.vim"
+  }
 
   if ! command -v nvim >/dev/null 2>&1; then
     printf "%s nvim not found — skipping\n" "$(PLUS)"
     return
   fi
 
-  local nvim_ver nvim_minor nvim_patch
+  local nvim_ver nvim_minor
   # || true — grep exits 1 when it matches nothing, and under pipefail that
   # would abort the whole installer on a version string we simply can't parse.
   nvim_ver=$(nvim --version 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1) || true
 
   if [[ -z "$nvim_ver" ]]; then
     printf "%s Could not read nvim version — linking init.vim fallback\n" "$(PLUS)"
-    mkdir -p "$nvim_config_dir"
-    link "$init_vim_src" "$nvim_config_dir/init.vim"
+    link_fallback
     return
   fi
 
   nvim_minor=$(printf "%s" "$nvim_ver" | cut -d. -f2)
-  nvim_patch=$(printf "%s" "$nvim_ver" | cut -d. -f3)
 
-  # LazyVim requires nvim >= 0.11.2
-  if (( nvim_minor < 11 || ( nvim_minor == 11 && nvim_patch < 2 ) )); then
-    printf "%s nvim %s < 0.11.2 — linking init.vim fallback\n" "$(PLUS)" "$nvim_ver"
-    mkdir -p "$nvim_config_dir"
-    link "$init_vim_src" "$nvim_config_dir/init.vim"
+  # nvim-arpatek requires vim.pack, which landed in 0.12
+  if ((nvim_minor < 12)); then
+    printf "%s nvim %s < 0.12 — linking init.vim fallback\n" "$(PLUS)" "$nvim_ver"
+    link_fallback
+    return
+  fi
+
+  # Already our config: pull instead of re-cloning, so this is idempotent.
+  if [[ -d "$nvim_config_dir/.git" ]]; then
+    if git -C "$nvim_config_dir" remote get-url origin 2>/dev/null | grep -q "nvim-arpatek"; then
+      printf "%s Updating nvim-arpatek...\n" "$(PLUS)"
+      if git -C "$nvim_config_dir" pull --ff-only --quiet 2>/dev/null; then
+        printf "%s nvim-arpatek up to date\n" "$(COMPLETE)"
+      else
+        printf "%s nvim-arpatek has local changes or diverged — leaving it alone\n" "$(PLUS)"
+      fi
+      return
+    fi
+    printf "%s ~/.config/nvim is a different repo — leaving it alone\n" "$(PLUS)"
     return
   fi
 
   if [[ -d "$nvim_config_dir" && -n "$(ls -A "$nvim_config_dir" 2>/dev/null)" ]]; then
-    printf "%s ~/.config/nvim already populated — skipping LazyVim install\n" "$(PLUS)"
+    printf "%s ~/.config/nvim already populated — skipping nvim-arpatek install\n" "$(PLUS)"
     return
   fi
 
-  printf "%s Installing LazyVim starter...\n" "$(PLUS)"
-  if git clone --depth 1 https://github.com/LazyVim/starter "$nvim_config_dir" 2>/dev/null; then
-    rm -rf "$nvim_config_dir/.git"
-    printf "%s LazyVim installed — open nvim to complete plugin setup\n" "$(COMPLETE)"
+  printf "%s Installing nvim-arpatek...\n" "$(PLUS)"
+  if git clone --depth 1 "$nvim_repo" "$nvim_config_dir" 2>/dev/null; then
+    printf "%s nvim-arpatek installed — open nvim to fetch plugins and parsers\n" "$(COMPLETE)"
   else
-    printf "%s LazyVim clone failed (no network?) — linking init.vim fallback\n" "$(PLUS)"
-    mkdir -p "$nvim_config_dir"
-    link "$init_vim_src" "$nvim_config_dir/init.vim"
+    printf "%s Clone failed (no network?) — linking init.vim fallback\n" "$(PLUS)"
+    link_fallback
   fi
 }
 
@@ -284,8 +301,8 @@ link "$DOTFILES_DIR/.config/ghostty/config"          "$HOME/.config/ghostty/conf
 phase "symlinks"
 printf "\n"
 
-setup_lazyvim
-phase "lazyvim"
+setup_nvim
+phase "nvim"
 printf "\n"
 
 printf "%s Installing OS-specific Configs\n" "$(BANNER)"

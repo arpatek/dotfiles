@@ -18,7 +18,7 @@ The OS-specific surface is small and quarantined into modules; everything else i
 
 | Layer | Detects OS via | Shared | Per-OS module |
 |---|---|---|---|
-| Install (`bash`) | `uname -s` in `install.sh` | packages-agnostic flow, symlinks, zsh plugins, LazyVim | `os/linux.sh`, `os/darwin.sh` |
+| Install (`bash`) | `uname -s` in `install.sh` | packages-agnostic flow, symlinks, zsh plugins, Neovim | `os/linux.sh`, `os/darwin.sh` |
 | Shell runtime (`zsh`) | `$OSTYPE` in `.zshrc` | plugins, completion, history, keybinds | `.config/zsh/os.d/{linux,darwin}.zsh` |
 
 **`os/<os>.sh`** (install) defines `os_bootstrap`, `os_link`, `os_post`, `os_uninstall`,
@@ -66,7 +66,7 @@ Two portability details make one config correct on both platforms:
 | `.config/starship.toml` | Starship prompt — catppuccin macchiato, two-line |
 | `.config/git/{config,commit-template}` | Git config + conventional commit template |
 | `.config/tmux/tmux.conf` | tmux — truecolor, vi copy mode, 50k scrollback, tokyo-night |
-| `.config/vim/vimrc`, `.config/nvim/init.vim` | Vim config + Neovim fallback for nvim < 0.11.2 |
+| `.config/vim/vimrc`, `.config/nvim/init.vim` | Vim config + Neovim fallback for nvim < 0.12 |
 | `.config/lazygit/config.yml`, `.config/curlrc` | lazygit theme, curl defaults |
 | `.config/ghostty/config` | Ghostty — arpatek palette, JetBrainsMono NFM; shared by macOS and Linux |
 | `.config/vscodium/{settings.json,extensions.txt}` | VSCodium settings + extension manifest, restored by `os/darwin.sh` |
@@ -99,8 +99,10 @@ The installer detects the OS and:
   ```
 
 - **macOS** — installs Xcode CLT and Homebrew, then everything in the `Brewfile`.
-- **Both** — clone zsh and tmux plugins (no plugin manager), clone the LazyVim starter (nvim ≥ 0.11.2,
-  else `init.vim`), symlink all shared config, link the OS-specific config, and launch zsh.
+- **Both** — clone zsh and tmux plugins (no plugin manager), clone
+  [nvim-arpatek](https://codeberg.org/arpatek/nvim-arpatek) into `~/.config/nvim`
+  (nvim ≥ 0.12, else `init.vim`), symlink all shared config, link the OS-specific
+  config, and launch zsh.
 
 ```bash
 ./install.sh -t                # report elapsed time per phase and a total
@@ -109,7 +111,7 @@ The installer detects the OS and:
 ./uninstall.sh                 # full teardown, restores a clean state
 ```
 
-`uninstall.sh` removes symlinks, tools, plugins, pyenv, and LazyVim on both platforms;
+`uninstall.sh` removes symlinks, tools, plugins, pyenv, and the Neovim config on both platforms;
 on Linux it also removes bootstrapped packages, reverts the default shell to bash, and
 restores archived bash configs; on macOS it uninstalls Brewfile packages (with a prompt).
 
@@ -117,10 +119,10 @@ restores archived bash configs; on macOS it uninstalls Brewfile packages (with a
 
 ## Known Gotchas
 
-**LazyVim not loading after install (Linux)** — if nvim was previously installed via apt,
-`/usr/bin/nvim` shadows the script's `/usr/local/bin/nvim`; the version check reads the wrong
-binary and falls back to `init.vim`. Remove the apt package (`sudo apt remove neovim`) and
-re-run.
+**nvim-arpatek not loading after install (Linux)** — if nvim was previously installed via
+apt, `/usr/bin/nvim` shadows the script's `/usr/local/bin/nvim`; the version check reads the
+wrong binary and falls back to `init.vim`. Remove the apt package (`sudo apt remove neovim`)
+and re-run.
 
 **Alpine needs bash before anything runs** — every script here is bash (associative
 arrays, `BASH_VERSINFO`), and Alpine ships busybox `ash` only. `./install.sh` fails
