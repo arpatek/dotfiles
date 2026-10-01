@@ -1,0 +1,85 @@
+# ┌──────────────────────────────────────────────────────────────┐
+# │ arpatek - Bash Profile                                       │
+# │ Login shells. Builds PATH, then hands off to bashrc.          │
+# └──────────────────────────────────────────────────────────────┘
+#
+# Counterpart to .config/zsh/.zprofile. Unlike zsh, bash does not read its rc
+# file for login shells, so this sources it explicitly — without that, an SSH
+# session gets PATH and nothing else.
+
+XDG_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}"
+
+# ──[ Homebrew (macOS) ]────────────────────────────────────────────────────────
+# Must run before the PATH block. Apple Silicon uses /opt/homebrew; Intel /usr/local.
+if [[ "$OSTYPE" == darwin* ]]; then
+    if [[ -x /opt/homebrew/bin/brew ]]; then
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+    elif [[ -x /usr/local/bin/brew ]]; then
+        eval "$(/usr/local/bin/brew shellenv)"
+    fi
+fi
+
+# ──[ PATH ]────────────────────────────────────────────────────────────────────
+# zsh dedupes with typeset -U; bash has no equivalent, so the check is explicit.
+# Without it, every re-login prepends the same directories again.
+path_prepend() {
+    [[ -d "$1" ]] || return 0
+    case ":$PATH:" in
+    *":$1:"*) return 0 ;;
+    esac
+    PATH="$1:$PATH"
+}
+
+# Lowest priority first, same order as .zprofile.
+path_prepend "/usr/local/bin"
+path_prepend "$HOME/bin"
+path_prepend "$HOME/.local/bin"
+path_prepend "${CARGO_HOME:-$HOME/.cargo}/bin"
+path_prepend "/usr/local/go/bin"
+path_prepend "$HOME/go/bin"
+path_prepend "${PYENV_ROOT:-$HOME/.local/share/pyenv}/bin"
+
+# The bash equivalent of .zshenv's `typeset -U path`. path_prepend only guards
+# what it adds; entries that arrive already duplicated do not go through it —
+# `brew shellenv` prepends /opt/homebrew/bin unconditionally, so a login shell
+# nested inside another one accumulates copies. zsh dedupes automatically and
+# bash has no equivalent, so it is done by hand, once, at the end.
+path_dedupe() {
+    local IFS=: d seen="" out=""
+    for d in $PATH; do
+        case ":$seen:" in
+        *":$d:"*) continue ;;
+        esac
+        seen="$seen:$d"
+        out="${out:+$out:}$d"
+    done
+    PATH="$out"
+}
+path_dedupe
+export PATH
+
+# ──[ Environment ]─────────────────────────────────────────────────────────────
+# Mirrors .zshenv, which bash has no equivalent of — BASH_ENV only covers
+# non-interactive shells. These are exported, so a nested shell inherits them
+# without this file running again.
+export PYENV_ROOT="$HOME/.local/share/pyenv"
+export CARGO_HOME="$HOME/.local/share/cargo"
+export RUSTUP_HOME="$HOME/.local/share/rustup"
+export KUBECONFIG="$HOME/.config/kube/config"
+export KUBECACHEDIR="$HOME/.cache/kube"
+export NPM_CONFIG_USERCONFIG="$HOME/.config/npm/npmrc"
+export NPM_CONFIG_CACHE="$HOME/.cache/npm"
+
+# .zshenv hardcodes nvim, which is right on a workstation and wrong on a server
+# where nvim may not be packaged. An unset-but-wrong EDITOR is worse than a
+# plain one: `ansible-vault edit` and `git commit` both fail on it.
+for _ed in nvim vim vi; do
+    if command -v "$_ed" >/dev/null 2>&1; then
+        export EDITOR="$_ed" VISUAL="$_ed"
+        break
+    fi
+done
+unset _ed
+
+# ──[ Interactive Config ]──────────────────────────────────────────────────────
+[[ -r "$XDG_CONFIG/bash/bashrc" ]] && source "$XDG_CONFIG/bash/bashrc"

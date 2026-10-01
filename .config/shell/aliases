@@ -1,0 +1,54 @@
+# ┌──────────────────────────────────────────────────────────────┐
+# │ arpatek - Shared Aliases                                     │
+# │ Sourced by both zsh and bash. Shell-specific aliases live in  │
+# │ .config/zsh/.zsh_aliases and .config/bash/bash_aliases;       │
+# │ OS-specific ones in each shell's os.d/.                       │
+# └──────────────────────────────────────────────────────────────┘
+
+# ──[ Listing (eza) ]───────────────────────────────────────────────────────────
+# Guarded: these shadow ls, and a server without eza would otherwise have no
+# working ls at all. Same reasoning for bat and cat below.
+if command -v eza >/dev/null 2>&1; then
+    alias ls='eza -A --icons --git'               # hidden files, icons, git status
+    alias l='eza -F --icons'                      # column view with type symbols
+    alias ll='eza -lagh --icons --git'            # long, human-readable, git status
+    alias lll='eza -lagShi --icons --git'         # long, sorted by size
+    alias tree='eza -T --icons --git'             # recursive tree
+fi
+
+# ──[ Navigation ]──────────────────────────────────────────────────────────────
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+
+# ──[ Git ]─────────────────────────────────────────────────────────────────────
+alias gs='git status'
+alias ga='git add'
+alias gc='git commit -m'
+alias gp='git push'
+alias gl='git pull'
+alias gd='git diff'
+alias gco='git checkout'
+
+# ──[ Core Overrides ]──────────────────────────────────────────────────────────
+if command -v bat >/dev/null 2>&1; then
+    alias cat='bat --plain --pager=never'  # drop-in cat — no decorations, no pager
+    alias bcat='bat'                       # full bat — numbers, highlighting, pager
+fi
+alias mkdir='mkdir -pv'                    # always create parents, print each made
+
+# ──[ Networking ]──────────────────────────────────────────────────────────────
+alias ports='lsof -i -P -n'
+alias pingg='ping 8.8.8.8'
+
+# ──[ System ]──────────────────────────────────────────────────────────────────
+alias reboot='sudo reboot'
+
+# ──[ SSH ]─────────────────────────────────────────────────────────────────────
+# Ghostty sets TERM=xterm-ghostty which remote machines may not have in their
+# terminfo database. Wrapping ssh downgrades TERM for the session only.
+# A function, not an alias, so it works identically in both shells.
+ssh() { TERM=xterm-256color command ssh "$@"; }
+alias pi='ssh netrunner'
+alias rhel='ssh rhel-0'
+alias dev='ssh ubuntu-0'

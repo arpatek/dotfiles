@@ -1,16 +1,15 @@
 # ┌──────────────────────────────────────────────────────────────┐
-# │ arpatek - Zsh Aliases                                        │
+# │ arpatek - Bash Aliases                                       │
 # │ Only what cannot be shared. Everything portable lives in      │
-# │ .config/shell/aliases. OS-specific ones in os.d/.             │
+# │ .config/shell/aliases.                                        │
 # └──────────────────────────────────────────────────────────────┘
 
 # ──[ Shell Config ]────────────────────────────────────────────────────────────
-# shellconfig is the name bash uses too, so the word works in either shell.
-# zshconfig stays for muscle memory.
-alias shellconfig='${EDITOR:-vi} ~/.config/zsh/.zshrc'
-alias zshconfig='${EDITOR:-vi} ~/.config/zsh/.zshrc'
+# Named for the shell rather than 'bashconfig', so the same word works in
+# either shell and muscle memory transfers.
+alias shellconfig='${EDITOR:-vi} ~/.config/bash/bashrc'
 alias aliases='${EDITOR:-vi} ~/.config/shell/aliases'
 
-# exec zsh, not exec $SHELL: reload should reload the shell you are in, not
-# switch you to whatever chsh happens to say.
-alias reload='exec zsh'
+# exec bash, not exec $SHELL: chsh may say zsh while this session is bash, and
+# reload should reload the shell you are in, not switch you to another one.
+alias reload='exec bash'

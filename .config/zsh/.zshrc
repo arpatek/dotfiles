@@ -94,6 +94,9 @@ eval "$(fzf --zsh)"
 eval "$(zoxide init zsh)"
 
 # ──[ User Aliases ]────────────────────────────────────────────────────────────
+# Shared with bash; see .config/shell/aliases. Sourced first so a zsh-specific
+# alias of the same name wins.
+[[ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/aliases" ]] && source "${XDG_CONFIG_HOME:-$HOME/.config}/shell/aliases"
 [[ -f "$ZDOTDIR/.zsh_aliases" ]] && source "$ZDOTDIR/.zsh_aliases"
 
 # ──[ GPG ]─────────────────────────────────────────────────────────────────────

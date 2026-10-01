@@ -1,0 +1,120 @@
+# ┌──────────────────────────────────────────────────────────────┐
+# │ arpatek - Bash Config                                        │
+# │ Interactive shells. Bash has no ZDOTDIR, so ~/.bashrc is a    │
+# │ stub that sources this file.                                  │
+# └──────────────────────────────────────────────────────────────┘
+#
+# Server-profile counterpart to .config/zsh/.zshrc. Everything here is bash
+# builtins and readline configuration — no plugin framework, nothing fetched
+# from upstream. The two features zsh has that are missing are autosuggestions
+# and syntax highlighting; both would mean ble.sh, which is a readline
+# reimplementation sourced into every interactive shell. A server is where the
+# shell should be boring.
+
+# Interactive only. A non-interactive bash (scp, rsync, a remote command) that
+# produces output here breaks the protocol it is speaking.
+case $- in
+*i*) ;;
+*) return ;;
+esac
+
+XDG_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}"
+
+# ──[ History ]─────────────────────────────────────────────────────────────────
+# erasedups drops older duplicates; ignoreboth also skips leading-space commands
+# and consecutive repeats. histappend matters with multiple shells open: without
+# it the last one to exit overwrites the file instead of adding to it.
+HISTFILE="$XDG_CONFIG/bash/bash_history"
+HISTSIZE=50000
+HISTFILESIZE=50000
+HISTCONTROL=ignoreboth:erasedups
+HISTTIMEFORMAT='%F %T '
+shopt -s histappend
+
+# ──[ Shell Behaviour ]─────────────────────────────────────────────────────────
+shopt -s checkwinsize   # keep LINES/COLUMNS right after a terminal resize
+shopt -s cdspell        # fix minor typos in cd arguments
+shopt -s no_empty_cmd_completion
+
+# macOS still ships bash 3.2, where these two do not exist and each prints
+# "invalid shell option name" on every interactive shell. Servers are 4.4+, but
+# /bin/bash here is not, and an error on startup is an error on startup.
+if ((BASH_VERSINFO[0] >= 4)); then
+    shopt -s dirspell   # typo correction in directory name completion
+    shopt -s globstar   # ** matches recursively, as zsh does by default
+fi
+
+# ──[ Readline ]────────────────────────────────────────────────────────────────
+# This is the parity work. zsh gets these from plugins and zstyle; bash has them
+# built into readline, they are just off by default.
+bind '"\e[A": history-search-backward'   # up arrow searches on what is typed,
+bind '"\e[B": history-search-forward'    # the zsh-history-substring-search job
+bind 'set completion-ignore-case on'
+bind 'set completion-map-case on'        # treat - and _ as equivalent
+bind 'set show-all-if-ambiguous on'      # one TAB, not two, to list
+bind 'set colored-stats on'              # colour completions by file type
+bind 'set colored-completion-prefix on'
+bind 'set menu-complete-display-prefix on'
+bind 'TAB: menu-complete'               # cycle forward through matches
+bind '"\e[Z": menu-complete-backward'   # shift-TAB cycles back
+bind 'set mark-symlinked-directories on'
+bind 'set skip-completed-text on'
+
+# Alt+Alt toggles vi and emacs editing, matching the zsh binding.
+_toggle_editing_mode() {
+    if [[ "$(set -o | awk '$1=="vi"{print $2}')" == "on" ]]; then
+        set -o emacs
+    else
+        set -o vi
+    fi
+}
+bind -x '"\e\e": _toggle_editing_mode'
+
+# ──[ Completion ]──────────────────────────────────────────────────────────────
+# Distro-packaged, unlike zsh's vendored zsh-completions. Path differs by distro.
+for _c in /usr/share/bash-completion/bash_completion \
+    /etc/bash_completion \
+    /opt/homebrew/etc/profile.d/bash_completion.sh; do
+    [[ -r "$_c" ]] && source "$_c" && break
+done
+unset _c
+
+# ──[ Environment ]─────────────────────────────────────────────────────────────
+export GPG_TTY
+GPG_TTY=$(tty)
+export LESS='-R'
+export MANROFFOPT='-c'
+command -v bat >/dev/null 2>&1 &&
+    export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+
+# ──[ Aliases ]─────────────────────────────────────────────────────────────────
+[[ -r "$XDG_CONFIG/shell/aliases" ]] && source "$XDG_CONFIG/shell/aliases"
+[[ -r "$XDG_CONFIG/bash/bash_aliases" ]] && source "$XDG_CONFIG/bash/bash_aliases"
+
+# ──[ OS-Specific ]─────────────────────────────────────────────────────────────
+case "$(uname -s)" in
+Linux) _os_file="$XDG_CONFIG/bash/os.d/linux.bash" ;;
+Darwin) _os_file="$XDG_CONFIG/bash/os.d/darwin.bash" ;;
+*) _os_file="" ;;
+esac
+[[ -n "$_os_file" && -r "$_os_file" ]] && source "$_os_file"
+unset _os_file
+
+# ──[ Prompt ]──────────────────────────────────────────────────────────────────
+# Three tiers. root deliberately gets none of the third-party tooling: starship,
+# fzf and zoxide would each run as root on every prompt, and root's shell does
+# not need completion niceties. It needs to be unmistakable.
+if [[ $EUID -eq 0 ]]; then
+    PS1='\[\e[1;31m\]┌─[root@\h][\w]\n└─▪# \[\e[0m\]'
+else
+    if command -v starship >/dev/null 2>&1; then
+        # id -un rather than $USER: the variable is routinely unset in containers.
+        [[ "${USER:-$(id -un)}" == "sysadmin" ]] &&
+            export STARSHIP_CONFIG="$XDG_CONFIG/starship-sysadmin.toml"
+        eval "$(starship init bash)"
+    else
+        PS1='┌─[\u@\h][\w]\n└─▪$ '
+    fi
+    command -v fzf >/dev/null 2>&1 && eval "$(fzf --bash)"
+    command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init bash)"
+fi

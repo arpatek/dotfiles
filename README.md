@@ -62,7 +62,11 @@ Two portability details make one config correct on both platforms:
 | `.config/zsh/.zprofile` | Login-shell PATH (built after macOS path_helper) |
 | `.config/zsh/.zshrc` | Interactive config — plugins, fzf, zoxide, pyenv, `$OSTYPE` module |
 | `.config/zsh/os.d/{linux,darwin}.zsh` | Per-OS interactive delta — keybinds, fzf, aliases, prompt |
-| `.config/zsh/.zsh_aliases` | Shared aliases (OS-specific ones live in `os.d/`) |
+| `.config/zsh/.zsh_aliases` | Zsh-only aliases — `reload`, `zshconfig` |
+| `.config/shell/aliases` | Aliases shared by zsh and bash |
+| `.bashrc`, `.bash_profile` | Two-line stubs; bash has no `ZDOTDIR` so these paths are fixed |
+| `.config/bash/{bashrc,bash_profile,bash_aliases}` | Bash config — readline parity, three-tier prompt |
+| `.config/bash/os.d/linux.bash` | Per-OS interactive delta, mirroring the zsh one |
 | `.config/starship.toml` | Starship prompt — catppuccin macchiato, two-line |
 | `.config/git/{config,commit-template}` | Git config + conventional commit template |
 | `.config/tmux/tmux.conf` | tmux — truecolor, vi copy mode, 50k scrollback, tokyo-night |
@@ -71,7 +75,7 @@ Two portability details make one config correct on both platforms:
 | `.config/ghostty/config` | Ghostty — arpatek palette, JetBrainsMono NFM; shared by macOS and Linux |
 | `.config/vscodium/{settings.json,extensions.txt}` | VSCodium settings + extension manifest, restored by `os/darwin.sh` |
 | `.aerospace.toml`, `.config/zed/` | macOS-only — linked by `os/darwin.sh` |
-| `.config/starship-sysadmin.toml` | Linux-only alt prompt for the `sysadmin` user |
+| `.config/starship-sysadmin.toml` | Alt prompt for the `sysadmin` user; root gets a plain red `PS1` |
 | `.ssh/config`, `.editorconfig`, `.gitignore` | SSH templates, editor rules, repo ignores |
 
 ---
@@ -99,6 +103,33 @@ watching.
 The server profile skips the nvim 0.12 upstream fetch and the `nvim-arpa` clone
 entirely. `~/.vim/vimrc` is linked on every profile, so `syntax on`, 4-space
 indent and persistent undo are there regardless.
+
+### Shells
+
+Both shell configs are linked on every profile — bash is the fallback shell on
+every box, so it is worth configuring even on a workstation. Only the *login*
+shell follows the profile: zsh on a workstation, bash on a server.
+
+Aliases are split so they cannot drift: everything portable lives in
+`.config/shell/aliases`, sourced by both. Only `reload`, `shellconfig` and
+`aliases` are per-shell, because they name the shell or the file they open.
+
+The bash config reaches zsh parity through readline rather than plugins —
+history search on the arrows, case-insensitive coloured completion, menu
+cycling on TAB, and the same `Alt-Alt` vi/emacs toggle. The two features it
+does not have are autosuggestions and syntax highlighting, which would mean
+`ble.sh`; a server is where the shell should be boring.
+
+Three prompt tiers, selected at runtime rather than install time:
+
+| Identity | Prompt |
+|---|---|
+| root | plain red `PS1`, no starship, fzf or zoxide evaluated |
+| `sysadmin` | starship with `starship-sysadmin.toml` |
+| anyone else | starship with `starship.toml` |
+
+root is deliberately bare: starship, fzf and zoxide would each run as root on
+every prompt, and root's shell needs to be unmistakable rather than pleasant.
 
 The installer detects the OS and:
 

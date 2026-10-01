@@ -810,6 +810,9 @@ os_link() {
 
   link "$DOTFILES_DIR/.config/starship-sysadmin.toml" "$HOME/.config/starship-sysadmin.toml"
 
+  mkdir -p "$HOME/.config/bash/os.d"
+  link "$DOTFILES_DIR/.config/bash/os.d/linux.bash" "$HOME/.config/bash/os.d/linux.bash"
+
   # VSCodium is not part of the Linux bootstrap — these VMs are headless. Link
   # the config anyway so a desktop install picks it up without extra steps.
   # Path is XDG here, unlike macOS's ~/Library/Application Support.
@@ -822,20 +825,28 @@ os_post() {
   printf "%s Cleaning Up Shell Config Files\n" "$(BANNER)"
   cleanup_bash_configs
 
-  local zsh_bin login_shell user
-  zsh_bin="$(command -v zsh 2>/dev/null)"
+  # The login shell follows the profile: zsh on a workstation, bash on a server.
+  # Both configs are linked either way, so this only decides which one you land
+  # in — a server still has a working zsh if you ask for it by name.
+  local want_shell shell_bin login_shell user
+  if [[ "${PROFILE:-workstation}" == "server" ]]; then
+    want_shell="bash"
+  else
+    want_shell="zsh"
+  fi
+  shell_bin="$(command -v "$want_shell" 2>/dev/null)"
   # id -un rather than $USER — the variable is routinely unset in containers.
   user="$(id -un)"
   # Read the real login shell from passwd, not $SHELL — $SHELL reflects the
   # session's startup shell and goes stale after a chsh in the same session.
   # awk over /etc/passwd rather than getent: on musl that lives in musl-utils.
   login_shell="$(awk -F: -v u="$user" '$1 == u { print $7 }' /etc/passwd)"
-  if [[ -n "$zsh_bin" && "$login_shell" != "$zsh_bin" ]]; then
-    printf "%s Setting zsh as default shell\n" "$(BANNER)"
-    set_login_shell "$zsh_bin" "$user"
-    printf "%s Default shell set to %s\n" "$(COMPLETE)" "$zsh_bin"
+  if [[ -n "$shell_bin" && "$login_shell" != "$shell_bin" ]]; then
+    printf "%s Setting %s as default shell\n" "$(BANNER)" "$want_shell"
+    set_login_shell "$shell_bin" "$user"
+    printf "%s Default shell set to %s\n" "$(COMPLETE)" "$shell_bin"
   else
-    printf "%s zsh is already the default shell\n" "$(COMPLETE)"
+    printf "%s %s is already the default shell\n" "$(COMPLETE)" "$want_shell"
   fi
 
   # Only runs where VSCodium is actually installed — headless VMs skip this.

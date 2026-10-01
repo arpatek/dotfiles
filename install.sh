@@ -331,6 +331,20 @@ link "$DOTFILES_DIR/.config/zsh/os.d"                "$HOME/.config/zsh/os.d"
 link "$DOTFILES_DIR/.config/git/config"              "$HOME/.config/git/config"
 link "$DOTFILES_DIR/.config/git/commit-template"     "$HOME/.config/git/commit-template"
 link "$DOTFILES_DIR/.config/vim/vimrc"               "$HOME/.vim/vimrc"
+
+# Shared by both shells. Linked on every profile.
+mkdir -p "$HOME/.config/shell" "$HOME/.config/bash/os.d"
+link "$DOTFILES_DIR/.config/shell/aliases"           "$HOME/.config/shell/aliases"
+
+# bash is linked unconditionally even on a workstation: it is the fallback shell
+# on every box, and the stubs at ~/.bashrc and ~/.bash_profile cannot be moved
+# because bash has no ZDOTDIR equivalent. Only the login shell follows the
+# profile, in os_post.
+link "$DOTFILES_DIR/.config/bash/bashrc"             "$HOME/.config/bash/bashrc"
+link "$DOTFILES_DIR/.config/bash/bash_profile"       "$HOME/.config/bash/bash_profile"
+link "$DOTFILES_DIR/.config/bash/bash_aliases"       "$HOME/.config/bash/bash_aliases"
+link "$DOTFILES_DIR/.bashrc"                         "$HOME/.bashrc"
+link "$DOTFILES_DIR/.bash_profile"                   "$HOME/.bash_profile"
 link "$DOTFILES_DIR/.config/tmux/tmux.conf"          "$HOME/.config/tmux/tmux.conf"
 link "$DOTFILES_DIR/.config/tmux/scripts"            "$HOME/.config/tmux/scripts"
 link "$DOTFILES_DIR/.config/starship.toml"           "$HOME/.config/starship.toml"
