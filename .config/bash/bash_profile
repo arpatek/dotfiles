@@ -1,6 +1,6 @@
 # ┌──────────────────────────────────────────────────────────────┐
 # │ arpatek - Bash Profile                                       │
-# │ Login shells. Builds PATH, then hands off to bashrc.          │
+# │ Login shells. Builds PATH, then hands off to bashrc.         │
 # └──────────────────────────────────────────────────────────────┘
 #
 # Counterpart to .config/zsh/.zprofile. Unlike zsh, bash does not read its rc

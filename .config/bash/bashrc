@@ -1,7 +1,7 @@
 # ┌──────────────────────────────────────────────────────────────┐
 # │ arpatek - Bash Config                                        │
-# │ Interactive shells. Bash has no ZDOTDIR, so ~/.bashrc is a    │
-# │ stub that sources this file.                                  │
+# │ Interactive shells. Bash has no ZDOTDIR, so ~/.bashrc is a   │
+# │ stub that sources this file.                                 │
 # └──────────────────────────────────────────────────────────────┘
 #
 # Server-profile counterpart to .config/zsh/.zshrc. Everything here is bash

@@ -1,7 +1,7 @@
 # ┌──────────────────────────────────────────────────────────────┐
 # │ arpatek - Bash Aliases                                       │
-# │ Only what cannot be shared. Everything portable lives in      │
-# │ .config/shell/aliases.                                        │
+# │ Only what cannot be shared. Everything portable lives in     │
+# │ .config/shell/aliases.                                       │
 # └──────────────────────────────────────────────────────────────┘
 
 # ──[ Shell Config ]────────────────────────────────────────────────────────────

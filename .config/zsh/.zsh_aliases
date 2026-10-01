@@ -1,7 +1,7 @@
 # ┌──────────────────────────────────────────────────────────────┐
 # │ arpatek - Zsh Aliases                                        │
-# │ Only what cannot be shared. Everything portable lives in      │
-# │ .config/shell/aliases. OS-specific ones in os.d/.             │
+# │ Only what cannot be shared. Everything portable lives in     │
+# │ .config/shell/aliases. OS-specific ones in os.d/.            │
 # └──────────────────────────────────────────────────────────────┘
 
 # ──[ Shell Config ]────────────────────────────────────────────────────────────

@@ -1,8 +1,8 @@
 # ┌──────────────────────────────────────────────────────────────┐
 # │ arpatek - Shared Aliases                                     │
-# │ Sourced by both zsh and bash. Shell-specific aliases live in  │
-# │ .config/zsh/.zsh_aliases and .config/bash/bash_aliases;       │
-# │ OS-specific ones in each shell's os.d/.                       │
+# │ Sourced by both zsh and bash. Shell-specific aliases live in │
+# │ .config/zsh/.zsh_aliases and .config/bash/bash_aliases;      │
+# │ OS-specific ones in each shell's os.d/.                      │
 # └──────────────────────────────────────────────────────────────┘
 
 # ──[ Listing (eza) ]───────────────────────────────────────────────────────────
