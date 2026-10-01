@@ -135,7 +135,17 @@ command -v pyenv >/dev/null && eval "$(pyenv init -)"
 # ──[ Platform Module ]─────────────────────────────────────────────────────────
 # OS-specific interactive bits — keybinds, fzf border, OS aliases, and the prompt.
 # Starship init must run last, so each module ends with it.
+# The shared module carries the portable half and must run first: the zsh module
+# ends with starship init, which needs STARSHIP_CONFIG already exported.
+_shell_os_d="${XDG_CONFIG_HOME:-$HOME/.config}/shell/os.d"
 case "$OSTYPE" in
-  darwin*) source "$ZDOTDIR/os.d/darwin.zsh" ;;
-  linux*)  source "$ZDOTDIR/os.d/linux.zsh"  ;;
+  darwin*)
+    [[ -r "$_shell_os_d/darwin" ]] && source "$_shell_os_d/darwin"
+    source "$ZDOTDIR/os.d/darwin.zsh"
+    ;;
+  linux*)
+    [[ -r "$_shell_os_d/linux" ]] && source "$_shell_os_d/linux"
+    source "$ZDOTDIR/os.d/linux.zsh"
+    ;;
 esac
+unset _shell_os_d

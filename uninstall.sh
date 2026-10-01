@@ -163,6 +163,22 @@ unlink_file ~/.config/lazygit/config.yml
 unlink_file ~/.config/zsh/.zsh_aliases
 unlink_file ~/.config/zsh/.zprofile
 unlink_file ~/.config/zsh/os.d
+
+# bash. The stubs at ~/.bashrc and ~/.bash_profile are symlinks, which
+# cleanup_bash_configs deliberately skips (it only archives real files), so they
+# have to be unlinked here or they survive as dangling links into a deleted repo.
+unlink_file ~/.bashrc
+unlink_file ~/.bash_profile
+unlink_file ~/.config/bash/bashrc
+unlink_file ~/.config/bash/bash_profile
+unlink_file ~/.config/bash/bash_aliases
+remove_dir "$HOME/.config/bash"
+
+# Shared by both shells.
+unlink_file ~/.config/shell/aliases
+unlink_file ~/.config/shell/os.d
+remove_dir "$HOME/.config/shell"
+
 # .zshrc and .zshenv removed last — removing them earlier kills PATH
 unlink_file ~/.config/zsh/.zshrc
 unlink_file ~/.zshenv

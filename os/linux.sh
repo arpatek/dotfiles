@@ -117,6 +117,7 @@ bootstrap_packages() {
     [btop]="btop"
     [ncdu]="ncdu"
     [lynx]="lynx"         [unzip]="unzip"
+    [ripgrep]="rg"
     [fontconfig]="fc-cache" [gcc]="gcc"
     [make]="make"
   )
@@ -595,6 +596,100 @@ bootstrap_bat() {
   fi
 }
 
+bootstrap_fd() {
+  if ! $UPDATE && command -v fd >/dev/null 2>&1; then
+    printf "%s fd already installed\n" "$(COMPLETE)"
+    return
+  fi
+
+  # Debian/Ubuntu ship it as fdfind to avoid a clash with an unrelated package,
+  # exactly as they do for bat/batcat — if it is already there just wire it up.
+  if ! $UPDATE && command -v fdfind >/dev/null 2>&1; then
+    mkdir -p "$HOME/.local/bin"
+    ln -sf "$(command -v fdfind)" "$HOME/.local/bin/fd"
+    printf "%s fd symlinked from fdfind\n" "$(COMPLETE)"
+    return
+  fi
+
+  local pm=""
+  for candidate in nala apt dnf pacman yum zypper apk; do
+    if command -v "$candidate" >/dev/null 2>&1; then
+      pm="$candidate"
+      break
+    fi
+  done
+
+  printf "%s Installing fd...\n" "$(PLUS)"
+  case "$pm" in
+  nala | apt)  $SUDO "$pm" install -y fd-find ;;
+  dnf | yum)   $SUDO "$pm" install -y fd-find ;;
+  pacman)      $SUDO pacman -S --noconfirm fd ;;
+  zypper)      $SUDO zypper install -y fd ;;
+  apk)         $SUDO apk add fd ;;
+  *)
+    printf "%s No supported package manager — skipping fd\n" "$(PLUS)"
+    return
+    ;;
+  esac
+
+  if ! command -v fd >/dev/null 2>&1 && command -v fdfind >/dev/null 2>&1; then
+    mkdir -p "$HOME/.local/bin"
+    ln -sf "$(command -v fdfind)" "$HOME/.local/bin/fd"
+    printf "%s fd symlinked from fdfind\n" "$(COMPLETE)"
+  else
+    printf "%s fd installed\n" "$(COMPLETE)"
+  fi
+}
+
+bootstrap_treesitter() {
+  # Workstation only. nvim-treesitter's main branch shells out to this CLI to
+  # compile every parser, so without it nvim-arpa installs its plugins and then
+  # highlights nothing. A server runs vim, which does not need it.
+  if [[ "${PROFILE:-workstation}" == "server" ]]; then
+    printf "%s server profile — skipping tree-sitter CLI\n" "$(PLUS)"
+    return
+  fi
+
+  if ! $UPDATE && command -v tree-sitter >/dev/null 2>&1; then
+    printf "%s tree-sitter already installed\n" "$(COMPLETE)"
+    return
+  fi
+
+  # No distro packages it reliably, and upstream advises against the npm build.
+  # The release carries a static binary per arch, so fetch that rather than make
+  # a Rust toolchain a dependency of syntax highlighting.
+  local arch
+  case "$(uname -m)" in
+  x86_64) arch="x64" ;;
+  aarch64) arch="arm64" ;;
+  *)
+    printf "%s Unsupported architecture for tree-sitter: %s\n" "$(FAILED)" "$(uname -m)" >&2
+    return 1
+    ;;
+  esac
+
+  printf "%s Installing tree-sitter CLI...\n" "$(PLUS)"
+  local ts_tag tmp_dir
+  ts_tag=$(curl -fsSL "https://api.github.com/repos/tree-sitter/tree-sitter/releases/latest" |
+    grep '"tag_name"' | grep -o 'v[0-9][^"]*' | tr -d '\r') || true
+
+  if [[ -z "$ts_tag" ]]; then
+    printf "%s Could not determine latest tree-sitter version — skipping\n" "$(PLUS)"
+    return
+  fi
+
+  tmp_dir="$(mktemp -d)"
+  trap 'rm -rf "$tmp_dir"' RETURN
+
+  curl -fsSL \
+    "https://github.com/tree-sitter/tree-sitter/releases/download/${ts_tag}/tree-sitter-linux-${arch}.gz" \
+    -o "$tmp_dir/tree-sitter.gz"
+  gunzip -f "$tmp_dir/tree-sitter.gz"
+  chmod +x "$tmp_dir/tree-sitter"
+  $SUDO install "$tmp_dir/tree-sitter" -D -t /usr/local/bin/
+  printf "%s tree-sitter %s installed\n" "$(COMPLETE)" "${ts_tag#v}"
+}
+
 bootstrap_yazi() {
   if ! $UPDATE && command -v yazi >/dev/null 2>&1; then
     printf "%s yazi already installed\n" "$(COMPLETE)"
@@ -788,6 +883,8 @@ os_bootstrap() {
   bootstrap_go;        phase "go"
   bootstrap_lazygit;   phase "lazygit"
   bootstrap_bat;       phase "bat"
+  bootstrap_fd;        phase "fd"
+  bootstrap_treesitter; phase "tree-sitter"
   bootstrap_yazi;      phase "yazi"
   bootstrap_eza;       phase "eza"
   bootstrap_fzf;       phase "fzf"
@@ -810,8 +907,6 @@ os_link() {
 
   link "$DOTFILES_DIR/.config/starship-sysadmin.toml" "$HOME/.config/starship-sysadmin.toml"
 
-  mkdir -p "$HOME/.config/bash/os.d"
-  link "$DOTFILES_DIR/.config/bash/os.d/linux.bash" "$HOME/.config/bash/os.d/linux.bash"
 
   # VSCodium is not part of the Linux bootstrap — these VMs are headless. Link
   # the config anyway so a desktop install picks it up without extra steps.

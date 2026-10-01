@@ -335,6 +335,9 @@ link "$DOTFILES_DIR/.config/vim/vimrc"               "$HOME/.vim/vimrc"
 # Shared by both shells. Linked on every profile.
 mkdir -p "$HOME/.config/shell" "$HOME/.config/bash/os.d"
 link "$DOTFILES_DIR/.config/shell/aliases"           "$HOME/.config/shell/aliases"
+# Directory link, matching how .config/zsh/os.d is handled: new per-OS files
+# appear without touching the installer.
+link "$DOTFILES_DIR/.config/shell/os.d"              "$HOME/.config/shell/os.d"
 
 # bash is linked unconditionally even on a workstation: it is the fallback shell
 # on every box, and the stubs at ~/.bashrc and ~/.bash_profile cannot be moved

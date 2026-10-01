@@ -92,13 +92,15 @@ command -v bat >/dev/null 2>&1 &&
 [[ -r "$XDG_CONFIG/bash/bash_aliases" ]] && source "$XDG_CONFIG/bash/bash_aliases"
 
 # ──[ OS-Specific ]─────────────────────────────────────────────────────────────
+# Shared with zsh. Must come before the prompt block below, which reads the
+# STARSHIP_CONFIG this may export.
 case "$(uname -s)" in
-Linux) _os_file="$XDG_CONFIG/bash/os.d/linux.bash" ;;
-Darwin) _os_file="$XDG_CONFIG/bash/os.d/darwin.bash" ;;
-*) _os_file="" ;;
+Linux) _os=linux ;;
+Darwin) _os=darwin ;;
+*) _os="" ;;
 esac
-[[ -n "$_os_file" && -r "$_os_file" ]] && source "$_os_file"
-unset _os_file
+[[ -n "$_os" && -r "$XDG_CONFIG/shell/os.d/$_os" ]] && source "$XDG_CONFIG/shell/os.d/$_os"
+unset _os
 
 # ──[ Prompt ]──────────────────────────────────────────────────────────────────
 # Three tiers. root deliberately gets none of the third-party tooling: starship,
@@ -119,9 +121,7 @@ if [[ $EUID -eq 0 ]]; then
     PS1="${_p_struct}┌─[${_p_alert}\u${_p_struct}@${_p_alert}\h${_p_struct}][${_p_path}\w${_p_struct}]\n└─▪${_p_alert}# ${_p_reset}"
 else
     if command -v starship >/dev/null 2>&1; then
-        # id -un rather than $USER: the variable is routinely unset in containers.
-        [[ "${USER:-$(id -un)}" == "sysadmin" ]] &&
-            export STARSHIP_CONFIG="$XDG_CONFIG/starship-sysadmin.toml"
+        # STARSHIP_CONFIG, if any, was exported by the shared os.d module above.
         eval "$(starship init bash)"
     else
         PS1='┌─[\u@\h][\w]\n└─▪$ '

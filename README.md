@@ -61,12 +61,12 @@ Two portability details make one config correct on both platforms:
 | `.zshenv` | `ZDOTDIR`, `typeset -U path`, tool-root env vars |
 | `.config/zsh/.zprofile` | Login-shell PATH (built after macOS path_helper) |
 | `.config/zsh/.zshrc` | Interactive config — plugins, fzf, zoxide, pyenv, `$OSTYPE` module |
-| `.config/zsh/os.d/{linux,darwin}.zsh` | Per-OS interactive delta — keybinds, fzf, aliases, prompt |
 | `.config/zsh/.zsh_aliases` | Zsh-only aliases — `reload`, `zshconfig` |
 | `.config/shell/aliases` | Aliases shared by zsh and bash |
 | `.bashrc`, `.bash_profile` | Two-line stubs; bash has no `ZDOTDIR` so these paths are fixed |
 | `.config/bash/{bashrc,bash_profile,bash_aliases}` | Bash config — readline parity, three-tier prompt |
-| `.config/bash/os.d/linux.bash` | Per-OS interactive delta, mirroring the zsh one |
+| `.config/shell/os.d/{linux,darwin}` | Per-OS aliases and exports, shared by both shells |
+| `.config/zsh/os.d/{linux,darwin}.zsh` | Only the zsh-specific half — keybinds and `starship init` |
 | `.config/starship.toml` | Starship prompt — catppuccin macchiato, two-line |
 | `.config/git/{config,commit-template}` | Git config + conventional commit template |
 | `.config/tmux/tmux.conf` | tmux — truecolor, vi copy mode, 50k scrollback, tokyo-night |
@@ -100,8 +100,15 @@ macOS is always a workstation. On Linux the installer asks, or takes
 `server`, so an unattended run never installs a toolchain into a box nobody is
 watching.
 
-The server profile skips the nvim 0.12 upstream fetch and the `nvim-arpa` clone
-entirely. `~/.vim/vimrc` is linked on every profile, so `syntax on`, 4-space
+On Linux the workstation profile additionally installs what `nvim-arpa` needs
+and the distros do not reliably package: `ripgrep` and `fd` from the package
+manager, and the `tree-sitter` CLI as a static binary from its GitHub release —
+nvim-treesitter's `main` branch shells out to it to compile every parser, so
+without it the plugins install and nothing highlights. A Rust toolchain is not
+required.
+
+The server profile skips all of that, along with the nvim 0.12 upstream fetch
+and the `nvim-arpa` clone. `~/.vim/vimrc` is linked on every profile, so `syntax on`, 4-space
 indent and persistent undo are there regardless.
 
 ### Shells
