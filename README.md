@@ -76,6 +76,7 @@ Two portability details make one config correct on both platforms:
 | `.config/vscodium/{settings.json,extensions.txt}` | VSCodium settings + extension manifest, restored by `os/darwin.sh` |
 | `.aerospace.toml`, `.config/zed/` | macOS-only — linked by `os/darwin.sh` |
 | `.config/starship-sysadmin.toml` | Alt prompt for the `sysadmin` user; root gets a plain red `PS1` |
+| `root-setup.sh` | Installs the bash and vim config for root, as copies |
 | `.ssh/config`, `.editorconfig`, `.gitignore` | SSH templates, editor rules, repo ignores |
 
 ---
@@ -149,6 +150,28 @@ Three prompt tiers, selected at runtime rather than install time:
 
 root is deliberately bare: starship, fzf and zoxide would each run as root on
 every prompt, and root's shell needs to be unmistakable rather than pleasant.
+
+### root
+
+```bash
+sudo ./root-setup.sh
+```
+
+Separate from `install.sh`, and it **copies rather than symlinks**. Pointing
+root's config at a clone in a user's home would be a privilege escalation — any
+process running as that user could append to root's `.bashrc` and own root on
+the next `sudo -i`. Copies cannot be edited by a non-root user, and a static
+root config is right anyway: root's shell should not change because somebody
+pulled a repo.
+
+It installs the bash stubs, `bash/`, `shell/aliases`, the per-OS module and
+`vim/vimrc`. No zsh, no plugins, no starship, no fonts, no packages, and no
+`chsh` — root's login shell stays the system default so a rescue boot lands
+somewhere that exists.
+
+Idempotent, and it backs up anything it replaces into
+`/root/.local/share/dotfiles_backup/`. Because these are copies, re-run it after
+changing the shell config.
 
 The installer detects the OS and:
 
