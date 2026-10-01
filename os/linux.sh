@@ -502,16 +502,19 @@ bootstrap_nvim() {
   esac
 
   if ! $UPDATE && command -v nvim >/dev/null 2>&1; then
-    local nvim_ver nvim_minor nvim_patch
+    local nvim_ver nvim_minor
     # || true — see setup_nvim: an unparseable version must not abort the run.
     nvim_ver=$(nvim --version 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1) || true
     nvim_minor=$(printf "%s" "$nvim_ver" | cut -d. -f2)
-    nvim_patch=$(printf "%s" "$nvim_ver" | cut -d. -f3)
-    if [[ -n "$nvim_ver" ]] && (( nvim_minor > 11 || ( nvim_minor == 11 && nvim_patch >= 2 ) )); then
-      printf "%s nvim %s already meets requirement (>= 0.11.2)\n" "$(COMPLETE)" "$nvim_ver"
+    # Must match setup_nvim's gate in install.sh. nvim-arpa needs vim.pack,
+    # which landed in 0.12 — accepting 0.11.x here would leave the box on a
+    # version setup_nvim then rejects, silently dropping it to the init.vim
+    # fallback with no indication that an upgrade was available.
+    if [[ -n "$nvim_ver" ]] && ((nvim_minor >= 12)); then
+      printf "%s nvim %s already meets requirement (>= 0.12)\n" "$(COMPLETE)" "$nvim_ver"
       return
     fi
-    printf "%s nvim %s < 0.11.2 — upgrading from GitHub releases\n" "$(PLUS)" "$nvim_ver"
+    printf "%s nvim %s < 0.12 — upgrading from GitHub releases\n" "$(PLUS)" "$nvim_ver"
   else
     printf "%s Installing nvim from GitHub releases...\n" "$(PLUS)"
   fi
