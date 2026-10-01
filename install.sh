@@ -185,12 +185,12 @@ bootstrap_tmux_plugins() {
 
 # ──[ Shared: Neovim ]──────────────────────────────────────────────────────────
 setup_nvim() {
-  # Two tiers. nvim-arpatek is the real config and needs nvim 0.12 for
+  # Two tiers. nvim-arpa is the real config and needs nvim 0.12 for
   # vim.pack and vim.lsp.config. init.vim is the zero-dependency fallback for
   # anything older: RHEL's nvim, containers, a box with no network.
   local init_vim_src="$DOTFILES_DIR/.config/nvim/init.vim"
   local nvim_config_dir="$HOME/.config/nvim"
-  local nvim_repo="https://codeberg.org/arpatek/nvim-arpatek"
+  local nvim_repo="https://codeberg.org/arpatek/nvim-arpa"
 
   link_fallback() {
     mkdir -p "$nvim_config_dir"
@@ -215,7 +215,7 @@ setup_nvim() {
 
   nvim_minor=$(printf "%s" "$nvim_ver" | cut -d. -f2)
 
-  # nvim-arpatek requires vim.pack, which landed in 0.12
+  # nvim-arpa requires vim.pack, which landed in 0.12
   if ((nvim_minor < 12)); then
     printf "%s nvim %s < 0.12 — linking init.vim fallback\n" "$(PLUS)" "$nvim_ver"
     link_fallback
@@ -224,12 +224,12 @@ setup_nvim() {
 
   # Already our config: pull instead of re-cloning, so this is idempotent.
   if [[ -d "$nvim_config_dir/.git" ]]; then
-    if git -C "$nvim_config_dir" remote get-url origin 2>/dev/null | grep -q "nvim-arpatek"; then
-      printf "%s Updating nvim-arpatek...\n" "$(PLUS)"
+    if git -C "$nvim_config_dir" remote get-url origin 2>/dev/null | grep -q "nvim-arpa"; then
+      printf "%s Updating nvim-arpa...\n" "$(PLUS)"
       if git -C "$nvim_config_dir" pull --ff-only --quiet 2>/dev/null; then
-        printf "%s nvim-arpatek up to date\n" "$(COMPLETE)"
+        printf "%s nvim-arpa up to date\n" "$(COMPLETE)"
       else
-        printf "%s nvim-arpatek has local changes or diverged — leaving it alone\n" "$(PLUS)"
+        printf "%s nvim-arpa has local changes or diverged — leaving it alone\n" "$(PLUS)"
       fi
       return
     fi
@@ -238,13 +238,13 @@ setup_nvim() {
   fi
 
   if [[ -d "$nvim_config_dir" && -n "$(ls -A "$nvim_config_dir" 2>/dev/null)" ]]; then
-    printf "%s ~/.config/nvim already populated — skipping nvim-arpatek install\n" "$(PLUS)"
+    printf "%s ~/.config/nvim already populated — skipping nvim-arpa install\n" "$(PLUS)"
     return
   fi
 
-  printf "%s Installing nvim-arpatek...\n" "$(PLUS)"
+  printf "%s Installing nvim-arpa...\n" "$(PLUS)"
   if git clone --depth 1 "$nvim_repo" "$nvim_config_dir" 2>/dev/null; then
-    printf "%s nvim-arpatek installed — open nvim to fetch plugins and parsers\n" "$(COMPLETE)"
+    printf "%s nvim-arpa installed — open nvim to fetch plugins and parsers\n" "$(COMPLETE)"
   else
     printf "%s Clone failed (no network?) — linking init.vim fallback\n" "$(PLUS)"
     link_fallback

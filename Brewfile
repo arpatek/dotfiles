@@ -62,7 +62,7 @@ brew "yt-dlp"
 brew "neovim"
 
 # ──[ Language Servers ]────────────────────────────────────────────────────────
-# Neovim's nvim-arpatek config declares these via vim.lsp.config and starts
+# Neovim's nvim-arpa config declares these via vim.lsp.config and starts
 # whichever it finds on PATH. They live here rather than in Mason so that
 # provisioning a new machine installs them, and so `which` can see them.
 brew "bash-language-server"        # also runs shellcheck

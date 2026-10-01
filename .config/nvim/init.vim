@@ -1,12 +1,12 @@
 " ┌───────────────────────────────────────────────────────────┐
 " │ arpatek – init.vim for Neovim                             │
 " │ Zero-dependency fallback for systems where                │
-" │ nvim-arpatek cannot run: nvim < 0.12, no network,         │
+" │ nvim-arpa cannot run: nvim < 0.12, no network,            │
 " │ or a minimal container.                                   │
 " └───────────────────────────────────────────────────────────┘
 "
 " Usage: nvim -u ~/.config/nvim/init.vim
-"   or symlink as ~/.config/nvim/init.vim when nvim-arpatek is not installed
+"   or symlink as ~/.config/nvim/init.vim when nvim-arpa is not installed
 
 set nocompatible
 filetype plugin indent on
