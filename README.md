@@ -95,10 +95,22 @@ cd ~/dotfiles
 | `workstation` | [nvim-arpa](https://codeberg.org/arpatek/nvim-arpa), needs nvim 0.12+ | a machine you sit at |
 | `server` | `vim` with `~/.vim/vimrc`, nothing to compile | a machine you SSH into |
 
-macOS is always a workstation. On Linux the installer asks, or takes
-`--profile=workstation` / `--profile=server`. With no TTY it defaults to
-`server`, so an unattended run never installs a toolchain into a box nobody is
-watching.
+Two independent axes, both defaulting to the fuller option, both set by flag
+rather than prompt — so a human, a playbook and cron all get the same result:
+
+| Flag | Effect |
+|---|---|
+| *(none)* | workstation, full |
+| `--server` | vim rather than `nvim-arpa`, no toolchain |
+| `--minimal` | distro packages only; skip everything fetched from upstream |
+
+`--minimal` needs no pairing with `--server`: it skips the nvim 0.12 fetch, and
+`setup_nvim`'s version gate then falls back to `init.vim` on its own. The shell
+config degrades the same way — the `eza` and `bat` aliases are guarded on
+`command -v`, and `bashrc` falls back to a plain `PS1` without starship.
+
+If you ever call `install.sh` from a playbook, pass the flags you mean. Nothing
+is interactive any more, so the default *is* the behaviour.
 
 On Linux the workstation profile additionally installs what `nvim-arpa` needs
 and the distros do not reliably package: `ripgrep` and `fd` from the package

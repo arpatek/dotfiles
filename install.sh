@@ -72,7 +72,8 @@ esac
 SKIP_PACKAGES=false
 UPDATE=false
 TIMER=false
-PROFILE=""
+PROFILE="workstation"
+MINIMAL=false
 
 usage() {
   printf "Usage: install.sh [OPTIONS]\n"
@@ -81,9 +82,10 @@ usage() {
   printf "  -t, --timer           Report elapsed time per phase and a total\n"
   printf "  --skip-packages       Skip package bootstrap (symlinks only)\n"
   printf "  --update              Re-fetch bootstrapped tools from upstream (Linux)\n"
-  printf "  --profile=NAME        workstation or server (Linux only; macOS is always a\n"
-  printf "                        workstation). Omitted, Linux asks; with no TTY it\n"
-  printf "                        defaults to server.\n"
+  printf "  --server              Server profile: vim rather than nvim-arpa, no\n"
+  printf "                        toolchain. Default is a workstation.\n"
+  printf "  --minimal             Distro packages only — skip everything fetched from\n"
+  printf "                        upstream. Default installs the full set.\n"
 }
 
 while [[ $# -gt 0 ]]; do
@@ -92,42 +94,28 @@ while [[ $# -gt 0 ]]; do
   -t | --timer)    TIMER=true ;;
   --skip-packages) SKIP_PACKAGES=true ;;
   --update)        UPDATE=true ;;
-  --profile=*)
-    PROFILE="${1#*=}"
-    if [[ "$PROFILE" != "workstation" && "$PROFILE" != "server" ]]; then
-      printf "Invalid profile: %s (expected workstation or server)\n" "$PROFILE" >&2
-      exit 1
-    fi
-    ;;
+  --server)        PROFILE="server" ;;
+  --minimal)       MINIMAL=true ;;
   *) printf "Unknown option: %s\n" "$1" >&2; usage >&2; exit 1 ;;
   esac
   shift
 done
 
-# ──[ Profile ]─────────────────────────────────────────────────────────────────
-# workstation — zsh, nvim-arpa, the full toolchain. A machine that is sat at.
-# server      — bash, vim with syntax on, nothing to compile. A machine that is
-#               SSHed into.
+# ──[ Profile and Tier ]────────────────────────────────────────────────────────
+# Two independent axes, both defaulting to the fuller option:
 #
-# macOS is always a workstation; it is not a server platform here. Linux is
-# either, so it asks, and a non-interactive run takes server: a box nobody is
-# watching should not have a toolchain installed into it by default.
-resolve_profile() {
-  [[ -n "$PROFILE" ]] && return
-  if [[ "$(uname -s)" == "Darwin" ]]; then
-    PROFILE="workstation"
-    return
-  fi
-  if confirm "Install as a workstation? (no = server: bash and vim, no toolchain)"; then
-    PROFILE="workstation"
-  else
-    PROFILE="server"
-  fi
-}
-
-resolve_profile
-printf "%s Profile: %s\n" "$(BANNER)" "$PROFILE"
-export PROFILE
+#   profile  workstation (default) — nvim-arpa, needs nvim 0.12
+#            server     --server   — vim with syntax on, nothing to compile
+#   tier     full        (default) — distro packages plus upstream fetches
+#            minimal    --minimal  — distro packages only
+#
+# Flags rather than a prompt, so the result is identical whether a human, a
+# playbook or cron ran it. --minimal needs no interaction with --server: it
+# skips the nvim 0.12 fetch, and setup_nvim's version gate then falls back to
+# init.vim on its own.
+printf "%s Profile: %s (%s)\n" "$(BANNER)" "$PROFILE" \
+  "$($MINIMAL && echo "distro packages only" || echo "full")"
+export PROFILE MINIMAL
 
 # ──[ Privileged Session Caching ]──────────────────────────────────────────────
 cache_sudo

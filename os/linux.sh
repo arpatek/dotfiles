@@ -878,12 +878,25 @@ os_bootstrap() {
 
   # phase() is a no-op unless install.sh was given -t. Each upstream fetch is a
   # separate network round trip, so this is where a slow run shows its cause.
+  # Distro packages first. These run on every profile and tier — bat and fd come
+  # from the package manager, they just need the name shim afterwards.
   bootstrap_epel;      phase "epel"
   bootstrap_packages;  phase "core packages"
-  bootstrap_go;        phase "go"
-  bootstrap_lazygit;   phase "lazygit"
   bootstrap_bat;       phase "bat"
   bootstrap_fd;        phase "fd"
+
+  # Everything below is fetched from upstream, which is the whole distinction
+  # --minimal draws. The shell and editor configs degrade on their own when
+  # these are absent: the aliases are guarded on command -v, and bashrc falls
+  # back to a plain PS1 without starship.
+  if $MINIMAL; then
+    printf "%s --minimal: skipping upstream tools\n" "$(PLUS)"
+    phase "minimal"
+    return
+  fi
+
+  bootstrap_go;        phase "go"
+  bootstrap_lazygit;   phase "lazygit"
   bootstrap_treesitter; phase "tree-sitter"
   bootstrap_yazi;      phase "yazi"
   bootstrap_eza;       phase "eza"
@@ -926,6 +939,14 @@ os_post() {
   # shell present on every enrolled host, so pointing IPA at zsh would couple the
   # identity to per-host package state and break logins on a freshly enrolled box
   # that has not been provisioned yet.
+  # root keeps the system default shell. Changing it means a rescue boot lands
+  # in something that may not be installed, and root's prompt is deliberately
+  # the plain bash one — same reasoning as root getting no starship.
+  if ((EUID == 0)); then
+    printf "%s Running as root — leaving the login shell alone\n" "$(PLUS)"
+    return
+  fi
+
   local want_shell shell_bin login_shell user
   want_shell="zsh"
   shell_bin="$(command -v "$want_shell" 2>/dev/null)"
