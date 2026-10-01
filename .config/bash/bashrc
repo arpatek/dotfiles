@@ -80,12 +80,8 @@ done
 unset _c
 
 # ──[ Environment ]─────────────────────────────────────────────────────────────
-export GPG_TTY
-GPG_TTY=$(tty)
-export LESS='-R'
-export MANROFFOPT='-c'
-command -v bat >/dev/null 2>&1 &&
-    export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+# Shared with zsh: umask, pager, man, GPG_TTY. POSIX only, so both can read it.
+[[ -r "$XDG_CONFIG/shell/env" ]] && source "$XDG_CONFIG/shell/env"
 
 # ──[ Aliases ]─────────────────────────────────────────────────────────────────
 [[ -r "$XDG_CONFIG/shell/aliases" ]] && source "$XDG_CONFIG/shell/aliases"

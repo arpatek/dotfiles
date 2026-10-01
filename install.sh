@@ -365,7 +365,26 @@ printf "\n"
 
 printf "%s Installing SSH Config\n" "$(BANNER)"
 sleep 0.5
+# Copied, not linked: portal-22 writes into this file, and a symlink would mean
+# it edits the repo. That makes the copy destructive, though — portal-22 appends
+# a `Host *` block carrying this machine's default identity after the template's
+# own Portal-22 region, and with IdentitiesOnly that identity is the only key a
+# host without a config.local entry gets offered. So capture anything from the
+# second marker onward and put it back.
+ssh_extra="$(mktemp)"
+if [[ -f "$HOME/.ssh/config" ]]; then
+  awk '/\[ Portal-22 \]/ { n++ } n >= 2' "$HOME/.ssh/config" >"$ssh_extra"
+fi
+
 cp "$DOTFILES_DIR/.ssh/config" "$HOME/.ssh/config"
+
+if [[ -s "$ssh_extra" ]]; then
+  printf '\n' >>"$HOME/.ssh/config"
+  cat "$ssh_extra" >>"$HOME/.ssh/config"
+  printf "%s Preserved the portal-22 identity block\n" "$(PLUS)"
+fi
+rm -f "$ssh_extra"
+
 chmod 600 "$HOME/.ssh/config"
 printf "%s SSH config installed\n\n" "$(COMPLETE)"
 

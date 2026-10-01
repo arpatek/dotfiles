@@ -99,19 +99,13 @@ eval "$(zoxide init zsh)"
 [[ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/aliases" ]] && source "${XDG_CONFIG_HOME:-$HOME/.config}/shell/aliases"
 [[ -f "$ZDOTDIR/.zsh_aliases" ]] && source "$ZDOTDIR/.zsh_aliases"
 
-# ──[ GPG ]─────────────────────────────────────────────────────────────────────
-# GPG commit signing needs the tty for pinentry. Interactive-only.
-export GPG_TTY=$(tty)
-
-# ──[ Manpages ]────────────────────────────────────────────────────────────────
-export LESS='-R'
-# bat renders man pages with syntax highlighting — no LESS_TERMCAP_* needed.
-# It doesn't understand groff's backspace overstrike (X\bX is how bold is
-# encoded) and prints the ^H literally, so col strips it before bat sees it.
-# On groff hosts grotty emits SGR escapes rather than overstrike, which col does
-# not touch — -c forces the legacy format so there is something for col to strip.
-export MANROFFOPT='-c'
-export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+# ──[ Shared Environment ]──────────────────────────────────────────────────────
+# umask, pager, manpages and GPG_TTY, shared with bash. POSIX only, so both
+# shells can read the same file. The MANPAGER reasoning lives there: bat does not
+# understand groff's backspace overstrike, so col strips it first, and
+# MANROFFOPT=-c forces the legacy format that col can actually strip.
+[[ -r "${XDG_CONFIG_HOME:-$HOME/.config}/shell/env" ]] &&
+  source "${XDG_CONFIG_HOME:-$HOME/.config}/shell/env"
 
 # ──[ History ]─────────────────────────────────────────────────────────────────
 HISTFILE="$ZDOTDIR/.zsh_history"
