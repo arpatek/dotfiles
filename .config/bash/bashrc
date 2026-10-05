@@ -110,11 +110,14 @@ if [[ $EUID -eq 0 ]]; then
     #   #85C0B1 path      — directory
     # \[ \] wrap every escape so readline does not count them toward the line
     # width; without that, long paths wrap in the wrong column.
+    # structure is reopened after the \n: readline splits the prompt at the
+    # last newline and re-emits only that line on a refresh, so a span opened
+    # on line one is gone after Ctrl-L.
     _p_struct='\[\e[0;38;2;76;86;106m\]'
     _p_alert='\[\e[1;38;2;230;127;128m\]'
     _p_path='\[\e[1;38;2;133;192;177m\]'
     _p_reset='\[\e[0m\]'
-    PS1="${_p_struct}┌─[${_p_alert}\u${_p_struct}@${_p_alert}\h${_p_struct}][${_p_path}\w${_p_struct}]\n└─▪${_p_alert}# ${_p_reset}"
+    PS1="${_p_struct}┌─[${_p_alert}\u${_p_struct}@${_p_alert}\h${_p_struct}][${_p_path}\w${_p_struct}]\n${_p_struct}└─▪${_p_alert}# ${_p_reset}"
 else
     if command -v starship >/dev/null 2>&1; then
         # STARSHIP_CONFIG, if any, was exported by the shared os.d module above.
